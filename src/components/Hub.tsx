@@ -5,6 +5,8 @@ import { CHARACTERS, ZONES } from '../constants/game';
 import { MapPin, MessageCircle, Play, Heart, Award, Lock, ScrollText } from 'lucide-react';
 import { isAreaUnlocked } from '../lib/badges';
 
+import { fullyHealPokemon } from '../lib/pokemonHeal';
+
 export const Hub: React.FC = () => {
   const { state, setState } = useGame();
   const [showMap, setShowMap] = useState(false);
@@ -44,7 +46,7 @@ export const Hub: React.FC = () => {
       ...prev,
       player: {
         ...prev.player,
-        team: prev.player.team.map(p => ({ ...p, hp: p.maxHp }))
+        team: prev.player.team.map(p => fullyHealPokemon(p))
       }
     }));
     

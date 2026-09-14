@@ -33,119 +33,120 @@ export const ZoneExplorer: React.FC<ZoneExplorerProps> = ({ onEncounter }) => {
     setEncounter(null);
     setTrainerEncounter(null);
     setActiveEvent(null);
-    
-    // Simulate walking
-    await new Promise(resolve => setTimeout(resolve, 800));
 
-    // Check for random events first
-    const events = ZONE_EVENTS[state.player.location] || [];
-    const rollEvent = Math.random();
-    const triggeredEvent = events.find(e => rollEvent <= e.triggerChance);
+    try {
+      // Simulate walking
+      await new Promise(resolve => setTimeout(resolve, 800));
 
-    if (triggeredEvent) {
-      setActiveEvent(triggeredEvent);
-      
-      // Update Quest Progress if applicable
-      const firstStepsQuest = state.player.quests.find(q => q.id === 'first-steps' && q.status === 'active');
-      
-      if (triggeredEvent.type === 'item' && triggeredEvent.item) {
-        setState(prev => {
-          const newState = {
-            ...prev,
-            player: {
-              ...prev.player,
-              inventory: [...prev.player.inventory, { 
-                id: `found-${Date.now()}`,
-                name: triggeredEvent.item!.name!,
-                type: triggeredEvent.item!.type!,
-                count: 1,
-                effectValue: triggeredEvent.item!.effectValue,
-                description: 'Trovato durante l\'esplorazione.'
-              } as Item]
+      // Check for random events first
+      const events = ZONE_EVENTS[state.player.location] || [];
+      const rollEvent = Math.random();
+      const triggeredEvent = events.find(e => rollEvent <= e.triggerChance);
+
+      if (triggeredEvent) {
+        setActiveEvent(triggeredEvent);
+        
+        // Update Quest Progress if applicable
+        const firstStepsQuest = state.player.quests.find(q => q.id === 'first-steps' && q.status === 'active');
+        
+        if (triggeredEvent.type === 'item' && triggeredEvent.item) {
+          setState(prev => {
+            const newState = {
+              ...prev,
+              player: {
+                ...prev.player,
+                inventory: [...prev.player.inventory, { 
+                  id: `found-${Date.now()}`,
+                  name: triggeredEvent.item!.name!,
+                  type: triggeredEvent.item!.type!,
+                  count: 1,
+                  effectValue: triggeredEvent.item!.effectValue,
+                  description: 'Trovato durante l\'esplorazione.'
+                } as Item]
+              }
+            };
+            
+            if (firstStepsQuest) {
+              newState.player.quests = newState.player.quests.map(q => 
+                q.id === 'first-steps' ? { ...q, status: 'completed' as const } : q
+              );
             }
-          };
-          
-          if (firstStepsQuest) {
-            newState.player.quests = newState.player.quests.map(q => 
-              q.id === 'first-steps' ? { ...q, status: 'completed' as const } : q
-            );
-          }
-          
-          return newState;
-        });
-      } else if (triggeredEvent.type === 'heal') {
-        setState(prev => {
-          const newState = {
-            ...prev,
-            player: {
-              ...prev.player,
-              team: prev.player.team.map(p => ({ ...p, hp: p.maxHp }))
+            
+            return newState;
+          });
+        } else if (triggeredEvent.type === 'heal') {
+          setState(prev => {
+            const newState = {
+              ...prev,
+              player: {
+                ...prev.player,
+                team: prev.player.team.map(p => ({ ...p, hp: p.maxHp }))
+              }
+            };
+            
+            if (firstStepsQuest) {
+              newState.player.quests = newState.player.quests.map(q => 
+                q.id === 'first-steps' ? { ...q, status: 'completed' as const } : q
+              );
             }
-          };
-          
-          if (firstStepsQuest) {
-            newState.player.quests = newState.player.quests.map(q => 
-              q.id === 'first-steps' ? { ...q, status: 'completed' as const } : q
-            );
-          }
-          
-          return newState;
-        });
-      }
-      setIsExploring(false);
-      return;
-    }
-
-    // Update Quest Progress for exploration
-    const firstStepsQuest = state.player.quests.find(q => q.id === 'first-steps' && q.status === 'active');
-    if (firstStepsQuest) {
-      setState(prev => ({
-        ...prev,
-        player: {
-          ...prev.player,
-          quests: prev.player.quests.map(q => 
-            q.id === 'first-steps' ? { ...q, status: 'completed' as const } : q
-          )
+            
+            return newState;
+          });
         }
-      }));
-    }
-
-    // Random roll for Trainer vs Wild Pokemon (20% trainer if in zones)
-    const encounterTypeRoll = Math.random();
-    if (encounterTypeRoll < 0.20 && state.player.location !== 'percorso-1') {
-       // Trainer encounter
-       const trainerIds = Object.keys(TRAINERS_DATA) as (keyof typeof TRAINERS_DATA)[];
-       const randomTrainerId = trainerIds[Math.floor(Math.random() * trainerIds.length)];
-       const trainer = await getTrainer(randomTrainerId);
-       setTrainerEncounter(trainer);
-       setIsExploring(false);
-       return;
-    }
-
-    // Random encounter logic
-    const roll = Math.random() * 100;
-    let currentProb = 0;
-    const found = zone.spawnTable.find(s => {
-      currentProb += s.rarity;
-      return roll <= currentProb;
-    });
-
-    if (found) {
-      const level = Math.floor(Math.random() * (found.maxLevel - found.minLevel + 1)) + found.minLevel;
-      const pokemon = await fetchPokemonData(found.pokemonId, level);
-      setEncounter(pokemon);
-    } else {
-      // If no spawn table match, give a default low-rarity common encounter so it doesn't feel empty
-      // but only 50% of the time if it's "silent"
-      if (Math.random() > 0.5 && zone.spawnTable.length > 0) {
-        const common = zone.spawnTable[0];
-        const level = Math.floor(Math.random() * (common.maxLevel - common.minLevel + 1)) + common.minLevel;
-        const pokemon = await fetchPokemonData(common.pokemonId, level);
-        setEncounter(pokemon);
+        return;
       }
+
+      // Update Quest Progress for exploration
+      const firstStepsQuest = state.player.quests.find(q => q.id === 'first-steps' && q.status === 'active');
+      if (firstStepsQuest) {
+        setState(prev => ({
+          ...prev,
+          player: {
+            ...prev.player,
+            quests: prev.player.quests.map(q => 
+              q.id === 'first-steps' ? { ...q, status: 'completed' as const } : q
+            )
+          }
+        }));
+      }
+
+      // Random roll for Trainer vs Wild Pokemon (20% trainer if in zones)
+      const encounterTypeRoll = Math.random();
+      if (encounterTypeRoll < 0.20 && state.player.location !== 'percorso-1') {
+         // Trainer encounter
+         const trainerIds = Object.keys(TRAINERS_DATA) as (keyof typeof TRAINERS_DATA)[];
+         const randomTrainerId = trainerIds[Math.floor(Math.random() * trainerIds.length)];
+         const trainer = await getTrainer(randomTrainerId);
+         setTrainerEncounter(trainer);
+         return;
+      }
+
+      // Random encounter logic
+      const roll = Math.random() * 100;
+      let currentProb = 0;
+      const found = zone.spawnTable.find(s => {
+        currentProb += s.rarity;
+        return roll <= currentProb;
+      });
+
+      if (found) {
+        const level = Math.floor(Math.random() * (found.maxLevel - found.minLevel + 1)) + found.minLevel;
+        const pokemon = await fetchPokemonData(found.pokemonId, level);
+        setEncounter(pokemon);
+      } else {
+        // If no spawn table match, give a default low-rarity common encounter so it doesn't feel empty
+        if (Math.random() > 0.5 && zone.spawnTable.length > 0) {
+          const common = zone.spawnTable[0];
+          const level = Math.floor(Math.random() * (common.maxLevel - common.minLevel + 1)) + common.minLevel;
+          const pokemon = await fetchPokemonData(common.pokemonId, level);
+          setEncounter(pokemon);
+        }
+      }
+    } catch (e) {
+      console.error('Error during exploration:', e);
+    } finally {
+      setIsExploring(false);
     }
-    
-    setIsExploring(false);
   };
 
   const startBattle = () => {

@@ -109,6 +109,13 @@ export interface Move {
   category?: 'physical' | 'special' | 'status';
   pp?: number;
   maxPp?: number;
+  priority?: number;
+  drain?: number; // ratio of damage dealt restored as HP (e.g. 0.5)
+  healing?: number; // ratio of maxHp restored (e.g. 0.5)
+  recoil?: number; // ratio of damage taken as recoil (e.g. 0.25)
+  recoilMaxHp?: number; // ratio of maxHp taken as recoil (e.g. 0.25 for struggle)
+  flinchChance?: number; // chance 0-100 to flinch target
+  confusionChance?: number; // chance 0-100 to confuse target
   stat_changes?: StatChange[];
   statusEffect?: 'paralyzed' | 'poisoned' | 'sleep' | 'frozen' | 'burned';
   effectChance?: number;

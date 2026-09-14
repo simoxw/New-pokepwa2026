@@ -23,6 +23,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { CHARACTERS } from './constants/game';
 import { fetchPokemonData } from './lib/pokeapi';
 import { Pokemon, Move, Trainer, Item } from './types/game';
+import { fullyHealPokemon } from './lib/pokemonHeal';
 
 import { StarterSelection } from './components/StarterSelection';
 
@@ -78,6 +79,19 @@ function GameContent() {
           }
         };
       });
+      setActiveBattle(null);
+      setActiveTrainer(undefined);
+      if (evoCandidate) setShowEvolution(evoCandidate);
+      if (moveCandidate) setShowMoveLearning(moveCandidate);
+    } else if (result === 'lose') {
+      setState(prev => ({
+        ...prev,
+        player: {
+          ...prev.player,
+          location: 'villaggio',
+          team: prev.player.team.map(p => fullyHealPokemon(p))
+        }
+      }));
       setActiveBattle(null);
       setActiveTrainer(undefined);
       if (evoCandidate) setShowEvolution(evoCandidate);

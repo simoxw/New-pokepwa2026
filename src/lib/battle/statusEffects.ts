@@ -2,6 +2,68 @@ import { Pokemon } from '../../types/game';
 
 export type StatusCondition = 'paralyzed' | 'poisoned' | 'sleep' | 'frozen' | 'burned';
 
+export interface VolatileStatus {
+  confusionTurns?: number;
+  isFlinched?: boolean;
+}
+
+export function checkConfusion(pokemon: Pokemon, confusionTurns: number = 0): {
+  isConfused: boolean;
+  hurtSelf: boolean;
+  damage?: number;
+  newTurns: number;
+  msg: string;
+} {
+  if (confusionTurns <= 0) {
+    return { isConfused: false, hurtSelf: false, newTurns: 0, msg: '' };
+  }
+
+  if (confusionTurns === 1) {
+    return {
+      isConfused: false,
+      hurtSelf: false,
+      newTurns: 0,
+      msg: `${pokemon.name} non è più confuso!`
+    };
+  }
+
+  const nextTurns = confusionTurns - 1;
+  // 33% chance to hurt self in confusion
+  const hurtSelf = Math.random() < 0.33;
+
+  if (hurtSelf) {
+    // Standard Pokemon confusion self-hit: 40 power physical, using attacker's own attack and defense
+    const atk = Math.max(1, pokemon.stats.attack);
+    const def = Math.max(1, pokemon.stats.defense);
+    const selfDmg = Math.max(1, Math.floor((Math.floor((2 * pokemon.level / 5 + 2) * 40 * atk / def) / 50) + 2));
+
+    return {
+      isConfused: true,
+      hurtSelf: true,
+      damage: selfDmg,
+      newTurns: nextTurns,
+      msg: `${pokemon.name} è così confuso da colpirsi da solo!`
+    };
+  }
+
+  return {
+    isConfused: true,
+    hurtSelf: false,
+    newTurns: nextTurns,
+    msg: `${pokemon.name} è confuso!`
+  };
+}
+
+export function checkFlinch(pokemon: Pokemon, isFlinched?: boolean): { canAct: boolean; msg?: string } {
+  if (isFlinched) {
+    return {
+      canAct: false,
+      msg: `${pokemon.name} ha tentennato e non riesce a muoversi!`
+    };
+  }
+  return { canAct: true };
+}
+
 export function canMove(pokemon: Pokemon): { canMove: boolean; msg?: string; newStatus?: StatusCondition; newDuration?: number } {
   if (!pokemon.status) return { canMove: true };
 

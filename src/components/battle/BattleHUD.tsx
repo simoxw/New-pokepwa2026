@@ -9,6 +9,7 @@ interface HpBarProps {
   level: number;
   isPlayer?: boolean;
   status?: string;
+  isConfused?: boolean;
   isShiny?: boolean;
   team?: { hp: number }[];
   stages?: Partial<BattleStages>;
@@ -24,7 +25,7 @@ const STAT_DISPLAY_NAMES: Record<string, string> = {
   evasion: 'ELUS',
 };
 
-export const BattleHUD: React.FC<HpBarProps> = ({ current, max, label, level, isPlayer, status, isShiny, team, stages }) => {
+export const BattleHUD: React.FC<HpBarProps> = ({ current, max, label, level, isPlayer, status, isConfused, isShiny, team, stages }) => {
   const percent = Math.max(0, (current / max) * 100);
   const color = percent > 50 ? 'bg-emerald-500' : percent > 20 ? 'bg-yellow-500' : 'bg-red-500';
 
@@ -63,12 +64,17 @@ export const BattleHUD: React.FC<HpBarProps> = ({ current, max, label, level, is
       )}
       
       <div className="flex justify-between items-center mb-1">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-1.5 flex-wrap">
           <span className={`font-bold text-sm uppercase ${isPlayer ? 'text-blue-600' : ''}`}>{label}</span>
           {isShiny && <span className="text-yellow-500 text-xs">★</span>}
           {status && (
             <span className={`${STATUS_COLORS[status] || 'bg-gray-500'} text-[8px] text-white px-1.5 py-0.5 rounded font-black`}>
               {STATUS_LABELS[status] || status}
+            </span>
+          )}
+          {isConfused && (
+            <span className="bg-fuchsia-600 text-[8px] text-white px-1.5 py-0.5 rounded font-black animate-pulse">
+              CONF
             </span>
           )}
         </div>

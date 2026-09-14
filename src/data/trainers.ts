@@ -3,9 +3,12 @@ import { fetchPokemonData } from '../lib/pokeapi';
 import { SPRITES } from '../constants/sprites';
 
 export async function generateTrainerTeam(pokemonIds: {id: number, level: number}[]): Promise<Pokemon[]> {
-  return Promise.all(
-    pokemonIds.map(p => fetchPokemonData(p.id, p.level, 'Sfida Allenatore'))
-  );
+  const team: Pokemon[] = [];
+  for (const p of pokemonIds) {
+    const pokemon = await fetchPokemonData(p.id, p.level, 'Sfida Allenatore');
+    team.push(pokemon);
+  }
+  return team;
 }
 
 export const TRAINERS_DATA = {
