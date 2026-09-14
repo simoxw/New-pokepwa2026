@@ -1,5 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
+import { BattleStages } from '../../types/game';
 
 interface HpBarProps {
   current: number;
@@ -10,9 +11,20 @@ interface HpBarProps {
   status?: string;
   isShiny?: boolean;
   team?: { hp: number }[];
+  stages?: Partial<BattleStages>;
 }
 
-export const BattleHUD: React.FC<HpBarProps> = ({ current, max, label, level, isPlayer, status, isShiny, team }) => {
+const STAT_DISPLAY_NAMES: Record<string, string> = {
+  attack: 'ATK',
+  defense: 'DEF',
+  spAtk: 'ATK.SP',
+  spDef: 'DEF.SP',
+  speed: 'VEL',
+  accuracy: 'PREC',
+  evasion: 'ELUS',
+};
+
+export const BattleHUD: React.FC<HpBarProps> = ({ current, max, label, level, isPlayer, status, isShiny, team, stages }) => {
   const percent = Math.max(0, (current / max) * 100);
   const color = percent > 50 ? 'bg-emerald-500' : percent > 20 ? 'bg-yellow-500' : 'bg-red-500';
 
@@ -69,6 +81,29 @@ export const BattleHUD: React.FC<HpBarProps> = ({ current, max, label, level, is
           className={`h-full ${color}`}
         />
       </div>
+      
+      {/* Stat changes badges */}
+      {stages && Object.entries(stages).some(([, val]) => typeof val === 'number' && val !== 0) && (
+        <div className="flex gap-1 flex-wrap mt-1.5">
+          {Object.entries(stages)
+            .filter(([, val]) => typeof val === 'number' && val !== 0)
+            .map(([stat, val]) => {
+              const num = val as number;
+              const isBuff = num > 0;
+              return (
+                <span
+                  key={stat}
+                  className={`text-[8px] font-black px-1.5 py-0.5 rounded shadow-xs tracking-tight ${
+                    isBuff ? 'bg-blue-600 text-white' : 'bg-rose-600 text-white'
+                  }`}
+                >
+                  {STAT_DISPLAY_NAMES[stat] || stat.toUpperCase()} {isBuff ? `+${num}` : num}
+                </span>
+              );
+            })}
+        </div>
+      )}
+
       {isPlayer && (
         <div className="text-[10px] font-bold text-right mt-1 text-gray-500">
           {current} / {max} HP

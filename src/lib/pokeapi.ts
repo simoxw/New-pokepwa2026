@@ -4,19 +4,142 @@ const CACHE_NAME = 'poke-api-cache';
 
 const NATURES = ['Decisa', 'Audace', 'Scaltra', 'Placida', 'Modesta', 'Mite', 'Calma', 'Vivace', 'Timida', 'Allegra'];
 
-export async function fetchMoveData(url: string): Promise<Move> {
-  const moveData = await fetchWithCache(url);
-  const itMoveName = moveData.names.find((n: any) => n.language.name === 'it')?.name || MOVE_TRANSLATIONS[moveData.name] || moveData.name;
-  
+export function parseMoveObject(moveData: any, fallbackName?: string): Move {
+  const itMoveName = moveData.names?.find((n: any) => n.language.name === 'it')?.name || 
+                     (moveData.name ? MOVE_TRANSLATIONS[moveData.name] : undefined) || 
+                     moveData.name || 
+                     fallbackName || 
+                     'Mossa';
+
+  const category = (moveData.damage_class?.name as 'physical' | 'special' | 'status') || 
+                   (moveData.power ? 'physical' : 'status');
+
+  // Status moves must NEVER have power > 0
+  const power = category === 'status' ? 0 : (typeof moveData.power === 'number' ? moveData.power : 40);
+  const accuracy = typeof moveData.accuracy === 'number' ? moveData.accuracy : 100;
+  const pp = typeof moveData.pp === 'number' ? moveData.pp : 35;
+  const moveType = moveData.type?.name || 'normal';
+
+  // Stat changes extraction
+  let stat_changes = Array.isArray(moveData.stat_changes) 
+    ? moveData.stat_changes.map((sc: any) => ({
+        change: sc.change,
+        stat: { name: sc.stat?.name || sc.stat }
+      }))
+    : [];
+
+  const rawNameLower = (moveData.name || fallbackName || itMoveName || '').toLowerCase().replace(/[\s_]+/g, '-');
+
+  // Fallback stat changes for iconic moves if PokéAPI meta is empty
+  if (stat_changes.length === 0) {
+    if (rawNameLower.includes('growl') || rawNameLower.includes('ruggito')) {
+      stat_changes = [{ change: -1, stat: { name: 'attack' } }];
+    } else if (rawNameLower.includes('tail-whip') || rawNameLower.includes('colpo-di-coda') || rawNameLower.includes('colpo-coda')) {
+      stat_changes = [{ change: -1, stat: { name: 'defense' } }];
+    } else if (rawNameLower.includes('leer') || rawNameLower.includes('fulmisguardo')) {
+      stat_changes = [{ change: -1, stat: { name: 'defense' } }];
+    } else if (rawNameLower.includes('sand-attack') || rawNameLower.includes('turbosabbia')) {
+      stat_changes = [{ change: -1, stat: { name: 'accuracy' } }];
+    } else if (rawNameLower.includes('string-shot') || rawNameLower.includes('millebave')) {
+      stat_changes = [{ change: -1, stat: { name: 'speed' } }];
+    } else if (rawNameLower.includes('screech') || rawNameLower.includes('stridio')) {
+      stat_changes = [{ change: -2, stat: { name: 'defense' } }];
+    } else if (rawNameLower.includes('smokescreen') || rawNameLower.includes('muro-di-fumo')) {
+      stat_changes = [{ change: -1, stat: { name: 'accuracy' } }];
+    } else if (rawNameLower.includes('swords-dance') || rawNameLower.includes('danzaspada') || rawNameLower.includes('danza-spada')) {
+      stat_changes = [{ change: 2, stat: { name: 'attack' } }];
+    } else if (rawNameLower.includes('agility') || rawNameLower.includes('agilit')) {
+      stat_changes = [{ change: 2, stat: { name: 'speed' } }];
+    } else if (rawNameLower.includes('harden') || rawNameLower.includes('rafforzamento') || rawNameLower.includes('rafforzatore') || rawNameLower.includes('withdraw')) {
+      stat_changes = [{ change: 1, stat: { name: 'defense' } }];
+    } else if (rawNameLower.includes('growth') || rawNameLower.includes('crescita')) {
+      stat_changes = [{ change: 1, stat: { name: 'attack' } }, { change: 1, stat: { name: 'special-attack' } }];
+    } else if (rawNameLower.includes('defense-curl') || rawNameLower.includes('ricciolscudo')) {
+      stat_changes = [{ change: 1, stat: { name: 'defense' } }];
+    } else if (rawNameLower.includes('double-team') || rawNameLower.includes('doppioteam')) {
+      stat_changes = [{ change: 1, stat: { name: 'evasion' } }];
+    } else if (rawNameLower.includes('minimize') || rawNameLower.includes('minimizzato')) {
+      stat_changes = [{ change: 2, stat: { name: 'evasion' } }];
+    } else if (rawNameLower.includes('scary-face') || rawNameLower.includes('visotruce')) {
+      stat_changes = [{ change: -2, stat: { name: 'speed' } }];
+    } else if (rawNameLower.includes('charm') || rawNameLower.includes('fascino')) {
+      stat_changes = [{ change: -2, stat: { name: 'attack' } }];
+    } else if (rawNameLower.includes('iron-defense') || rawNameLower.includes('ferroscudo')) {
+      stat_changes = [{ change: 2, stat: { name: 'defense' } }];
+    } else if (rawNameLower.includes('calm-mind') || rawNameLower.includes('calmamene') || rawNameLower.includes('calmamente')) {
+      stat_changes = [{ change: 1, stat: { name: 'special-attack' } }, { change: 1, stat: { name: 'special-defense' } }];
+    } else if (rawNameLower.includes('dragon-dance') || rawNameLower.includes('dragodanza')) {
+      stat_changes = [{ change: 1, stat: { name: 'attack' } }, { change: 1, stat: { name: 'speed' } }];
+    }
+  }
+
+  // Status condition extraction
+  let statusEffect: 'paralyzed' | 'poisoned' | 'sleep' | 'frozen' | 'burned' | undefined = undefined;
+  const ailment = moveData.meta?.ailment?.name;
+  if (ailment === 'paralysis') statusEffect = 'paralyzed';
+  else if (ailment === 'poison' || ailment === 'bad-poison') statusEffect = 'poisoned';
+  else if (ailment === 'burn') statusEffect = 'burned';
+  else if (ailment === 'sleep') statusEffect = 'sleep';
+  else if (ailment === 'freeze') statusEffect = 'frozen';
+
+  // Fallback by name if meta ailment is missing
+  if (!statusEffect) {
+    if (rawNameLower.includes('thunder-wave') || rawNameLower.includes('tuononda') || rawNameLower.includes('stun-spore') || rawNameLower.includes('paralizzante') || rawNameLower.includes('glare')) {
+      statusEffect = 'paralyzed';
+    } else if (rawNameLower.includes('toxic') || rawNameLower.includes('tossina') || rawNameLower.includes('poison-powder') || rawNameLower.includes('velenopolvere') || rawNameLower.includes('poison-gas')) {
+      statusEffect = 'poisoned';
+    } else if (rawNameLower.includes('hypnosis') || rawNameLower.includes('ipnosi') || rawNameLower.includes('sleep-powder') || rawNameLower.includes('sonnifero') || rawNameLower.includes('spore') || rawNameLower.includes('spora') || rawNameLower.includes('sing') || rawNameLower.includes('canto')) {
+      statusEffect = 'sleep';
+    } else if (rawNameLower.includes('will-o-wisp') || rawNameLower.includes('fuocofatuo')) {
+      statusEffect = 'burned';
+    }
+  }
+
+  // Effect chance
+  let effectChance = moveData.meta?.ailment_chance > 0 
+    ? moveData.meta.ailment_chance 
+    : (typeof moveData.effect_chance === 'number' && moveData.effect_chance > 0 
+        ? moveData.effect_chance 
+        : (category === 'status' ? 100 : undefined));
+
+  // Secondary status for attacking moves (e.g. Ember 10% burn, Thunder Shock 10% paralysis)
+  if (!statusEffect && category !== 'status') {
+    if (rawNameLower.includes('ember') || rawNameLower.includes('flamethrower') || rawNameLower.includes('braciere') || rawNameLower.includes('lanciafiamme') || rawNameLower.includes('fuocobomba')) {
+      statusEffect = 'burned';
+      effectChance = effectChance || 10;
+    } else if (rawNameLower.includes('thunder-shock') || rawNameLower.includes('thunderbolt') || rawNameLower.includes('tuonoshock') || rawNameLower.includes('fulmine') || rawNameLower.includes('tuono')) {
+      statusEffect = 'paralyzed';
+      effectChance = effectChance || 10;
+    } else if (rawNameLower.includes('poison-sting') || rawNameLower.includes('sludge') || rawNameLower.includes('velenospina') || rawNameLower.includes('fango')) {
+      statusEffect = 'poisoned';
+      effectChance = effectChance || 30;
+    } else if (rawNameLower.includes('ice-beam') || rawNameLower.includes('geloraggio') || rawNameLower.includes('blizzard')) {
+      statusEffect = 'frozen';
+      effectChance = effectChance || 10;
+    }
+  }
+
+  // Target
+  const target = moveData.target?.name || (category === 'status' && stat_changes.some(sc => sc.change > 0) ? 'user' : 'selected-pokemon');
+
   return {
     name: itMoveName,
-    power: moveData.power || 40,
-    type: moveData.type.name,
-    accuracy: moveData.accuracy || 100,
-    category: moveData.damage_class.name,
-    pp: moveData.pp,
-    maxPp: moveData.pp,
+    power,
+    type: moveType,
+    accuracy,
+    category,
+    pp,
+    maxPp: pp,
+    stat_changes: stat_changes.length > 0 ? stat_changes : undefined,
+    statusEffect,
+    effectChance,
+    target
   };
+}
+
+export async function fetchMoveData(url: string): Promise<Move> {
+  const moveData = await fetchWithCache(url);
+  return parseMoveObject(moveData);
 }
 
 export async function fetchWithCache(url: string) {
@@ -142,26 +265,9 @@ export async function fetchPokemonData(id: number, level: number, location: stri
     data.moves.slice(0, 4).map(async (m: any) => {
       try {
         const moveData = await fetchWithCache(m.move.url);
-        const itMoveName = moveData.names.find((n: any) => n.language.name === 'it')?.name || MOVE_TRANSLATIONS[m.move.name] || m.move.name;
-        return {
-          name: itMoveName,
-          power: moveData.power || 40,
-          type: moveData.type.name,
-          accuracy: moveData.accuracy || 100,
-          category: moveData.damage_class.name,
-          pp: moveData.pp,
-          maxPp: moveData.pp,
-        };
+        return parseMoveObject(moveData, m.move.name);
       } catch (e) {
-        return {
-          name: MOVE_TRANSLATIONS[m.move.name] || m.move.name,
-          power: 40,
-          type: 'normal',
-          accuracy: 100,
-          category: 'physical' as const,
-          pp: 35,
-          maxPp: 35
-        };
+        return parseMoveObject({ name: m.move.name }, m.move.name);
       }
     })
   );

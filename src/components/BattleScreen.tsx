@@ -1,13 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { Pokemon, Move, Trainer, Item } from '../types/game';
+import { Pokemon, Move, Trainer, Item, BattleStages } from '../types/game';
 import { useGame } from '../contexts/GameContext';
 import { calculateExpGain, checkLevelUp, applyEvs } from '../lib/leveling';
 import { fetchMoveData } from '../lib/pokeapi';
 import { BattleHUD } from './battle/BattleHUD';
 import { BattleControls } from './battle/BattleControls';
-import { calculateDamage } from '../lib/battle/battleMath';
-import { canMove, getStatusEffect, StatusCondition } from '../lib/battle/statusEffects';
+import { calculateDamage, getAccuracyMultiplier } from '../lib/battle/battleMath';
+import { canMove, getStatusEffect, StatusCondition, isImmuneToStatus } from '../lib/battle/statusEffects';
 import { checkAbility } from '../lib/battle/abilities';
 import { useItemInBattle } from '../lib/battle/items';
 import { BattleBag } from './battle/BattleBag';
@@ -40,6 +40,24 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
   const [enemyStatus, setEnemyStatus] = useState<{ status?: StatusCondition, duration?: number }>({ 
     status: enemy.status, 
     duration: enemy.statusDuration 
+  });
+  const [playerStages, setPlayerStages] = useState<BattleStages>({
+    attack: 0,
+    defense: 0,
+    spAtk: 0,
+    spDef: 0,
+    speed: 0,
+    accuracy: 0,
+    evasion: 0
+  });
+  const [enemyStages, setEnemyStages] = useState<BattleStages>({
+    attack: 0,
+    defense: 0,
+    spAtk: 0,
+    spDef: 0,
+    speed: 0,
+    accuracy: 0,
+    evasion: 0
   });
   const [logs, setLogs] = useState<string[]>(() => {
     const initialLogs = trainer ? [`L'allenatore ${trainer.name} ti sfida!`, `Inizia la battaglia!`] : ['Inizia la battaglia!'];
@@ -87,6 +105,160 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     return currentHp;
   }, [addLog]);
 
+  const executeMoveAction = React.useCallback((
+    move: Move,
+    user: Pokemon,
+    target: Pokemon,
+    userStages: BattleStages,
+    setUserStages: React.Dispatch<React.SetStateAction<BattleStages>>,
+    targetStages: BattleStages,
+    setTargetStages: React.Dispatch<React.SetStateAction<BattleStages>>,
+    targetStatus: { status?: StatusCondition, duration?: number },
+    setTargetStatus: React.Dispatch<React.SetStateAction<{ status?: StatusCondition, duration?: number }>>,
+    isPlayer: boolean
+  ): { damage: number; hit: boolean } => {
+    addLog(`${user.name} usa ${move.name}!`);
+
+    // Accuracy Check
+    if (move.accuracy && move.accuracy < 100) {
+      const accStage = (userStages.accuracy ?? 0) - (targetStages.evasion ?? 0);
+      const accMultiplier = getAccuracyMultiplier(accStage);
+      const finalAccuracy = Math.min(100, Math.floor(move.accuracy * accMultiplier));
+      if (Math.random() * 100 >= finalAccuracy) {
+        addLog(`Ma il colpo di ${user.name} fallisce!`);
+        return { damage: 0, hit: false };
+      }
+    }
+
+    const applyStatChanges = (changes: typeof move.stat_changes, defaultSelf: boolean) => {
+      if (!changes || changes.length === 0) return;
+      const STAT_MAP: Record<string, keyof BattleStages> = {
+        'attack': 'attack',
+        'defense': 'defense',
+        'special-attack': 'spAtk',
+        'special-defense': 'spDef',
+        'speed': 'speed',
+        'accuracy': 'accuracy',
+        'evasion': 'evasion'
+      };
+      const STAT_LABELS: Record<string, string> = {
+        attack: 'Attacco',
+        defense: 'Difesa',
+        spAtk: 'Attacco Sp.',
+        spDef: 'Difesa Sp.',
+        speed: 'Velocità',
+        accuracy: 'Precisione',
+        evasion: 'Elusione'
+      };
+
+      for (const sc of changes) {
+        const statKey = STAT_MAP[sc.stat?.name || ''];
+        if (!statKey) continue;
+        const isSelf = defaultSelf || move.target === 'user' || sc.change > 0;
+        const recipient = isSelf ? user : target;
+        const setRecipientStages = isSelf ? setUserStages : setTargetStages;
+        const recipientStages = isSelf ? userStages : targetStages;
+        const currVal = recipientStages[statKey] ?? 0;
+        const statLabel = STAT_LABELS[statKey] || statKey;
+
+        if (sc.change > 0 && currVal >= 6) {
+          addLog(`${statLabel} di ${recipient.name} non può salire oltre!`);
+        } else if (sc.change < 0 && currVal <= -6) {
+          addLog(`${statLabel} di ${recipient.name} non può scendere oltre!`);
+        } else {
+          const nextVal = Math.max(-6, Math.min(6, currVal + sc.change));
+          recipientStages[statKey] = nextVal;
+          setRecipientStages(prev => ({ ...prev, [statKey]: nextVal }));
+          if (sc.change > 0) {
+            addLog(`${statLabel} di ${recipient.name} aumenta${sc.change >= 2 ? ' molto' : ''}!`);
+          } else {
+            addLog(`${statLabel} di ${recipient.name} cala${sc.change <= -2 ? ' molto' : ''}!`);
+          }
+        }
+      }
+    };
+
+    const applyStatusCondition = (status: StatusCondition, chance?: number) => {
+      if (targetStatus.status) {
+        if (move.category === 'status') {
+          addLog(`${target.name} ha già un problema di stato!`);
+        }
+        return;
+      }
+      if (isImmuneToStatus(target.types, status)) {
+        addLog(`${target.name} è immune a questo problema di stato!`);
+        return;
+      }
+      const procChance = chance ?? (move.category === 'status' ? 100 : 100);
+      if (Math.random() * 100 < procChance) {
+        const duration = status === 'sleep' ? Math.floor(Math.random() * 3) + 2 : undefined;
+        setTargetStatus({ status, duration });
+        const STATUS_MESSAGES: Record<StatusCondition, string> = {
+          paralyzed: `${target.name} è rimasto paralizzato! Potrebbe non riuscire a muoversi!`,
+          poisoned: `${target.name} è stato avvelenato!`,
+          sleep: `${target.name} si è addormentato!`,
+          burned: `${target.name} si è scottato!`,
+          frozen: `${target.name} è stato congelato!`
+        };
+        addLog(STATUS_MESSAGES[status]);
+      } else if (move.category === 'status') {
+        addLog("Ma non ha avuto effetto!");
+      }
+    };
+
+    // 1. STATUS MOVES (Deal NO damage!)
+    if (move.category === 'status' || !move.power || move.power === 0) {
+      if (move.stat_changes && move.stat_changes.length > 0) {
+        applyStatChanges(move.stat_changes, move.target === 'user');
+      }
+      if (move.statusEffect) {
+        applyStatusCondition(move.statusEffect, move.effectChance);
+      }
+      return { damage: 0, hit: true };
+    }
+
+    // 2. ATTACKING MOVES (Physical / Special)
+    const abilityEffect = isPlayer ? checkAbility(user, 'on_move_use', { move, target }) : null;
+    if (abilityEffect?.msg) addLog(abilityEffect.msg);
+    const damageMult = abilityEffect?.type === 'damage_mult' ? abilityEffect.value || 1 : 1;
+
+    const result = calculateDamage(
+      { ...user, status: isPlayer ? playerStatus.status : enemyStatus.status },
+      { ...target, status: isPlayer ? enemyStatus.status : playerStatus.status },
+      move,
+      { attackerStages: userStages, targetStages }
+    );
+    const finalDamage = Math.floor(result.damage * damageMult);
+
+    if (result.effectiveness > 1) addLog("È superefficace!");
+    if (result.effectiveness < 1 && result.effectiveness > 0) addLog("Non è molto efficace...");
+    if (result.effectiveness === 0) {
+      addLog("Non ha effetto...");
+      return { damage: 0, hit: true };
+    }
+    if (result.isCrit) addLog("Brutto colpo!");
+
+    addLog(`${user.name} infligge ${finalDamage} danni!`);
+
+    // Ability check on target hit
+    const onHitEffect = checkAbility(target, 'on_hit', { move, target: user });
+    if (onHitEffect?.msg) addLog(onHitEffect.msg);
+
+    // Secondary effects on damage
+    if (move.statusEffect && !targetStatus.status) {
+      const chance = move.effectChance ?? 10;
+      applyStatusCondition(move.statusEffect, chance);
+    }
+    if (move.stat_changes && move.stat_changes.length > 0) {
+      const chance = move.effectChance ?? 100;
+      if (Math.random() * 100 < chance) {
+        applyStatChanges(move.stat_changes, move.target === 'user');
+      }
+    }
+
+    return { damage: finalDamage, hit: true };
+  }, [addLog, playerStatus.status, enemyStatus.status]);
+
   const triggerEnemyTurn = React.useCallback(async (currentPlayerHp: number, currentEnemyHp: number) => {
     setIsAnimating(true);
     await new Promise(r => setTimeout(r, 800));
@@ -102,42 +274,48 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     } else {
       if (moveCheck.msg) addLog(moveCheck.msg);
       const enemyMove = enemy.moves[Math.floor(Math.random() * enemy.moves.length)];
-      addLog(`${enemy.name} usa ${enemyMove.name}!`);
       
-      const result = calculateDamage({ ...enemy, status: enemyStatus.status }, { ...playerActive, status: playerStatus.status }, enemyMove);
-      addLog(`${enemy.name} infligge ${result.damage} danni!`);
-      
-      if (result.effectiveness > 1) addLog("È superefficace!");
-      if (result.effectiveness < 1 && result.effectiveness > 0) addLog("Non è molto efficace...");
-      if (result.effectiveness === 0) addLog("Non ha effetto...");
-      if (result.isCrit) addLog("Brutto colpo!");
+      const actionResult = executeMoveAction(
+        enemyMove,
+        enemy,
+        playerActive,
+        enemyStages,
+        setEnemyStages,
+        playerStages,
+        setPlayerStages,
+        playerStatus,
+        setPlayerStatus,
+        false
+      );
 
-      const nextPlayerHp = Math.max(0, currentPlayerHp - result.damage);
-      setPlayerHp(nextPlayerHp);
-      currentPlayerHp = nextPlayerHp;
+      if (actionResult.damage > 0) {
+        const nextPlayerHp = Math.max(0, currentPlayerHp - actionResult.damage);
+        setPlayerHp(nextPlayerHp);
+        currentPlayerHp = nextPlayerHp;
 
-      if (nextPlayerHp <= 0) {
-        addLog(`${playerActive.name} è k.o.!`);
-        await new Promise(r => setTimeout(r, 1000));
-        
-        setState(prev => {
-          const team = [...prev.player.team];
-          team[0] = { ...team[0], hp: 0 };
-          return { ...prev, player: { ...prev.player, team } };
-        });
+        if (nextPlayerHp <= 0) {
+          addLog(`${playerActive.name} è k.o.!`);
+          await new Promise(r => setTimeout(r, 1000));
+          
+          setState(prev => {
+            const team = [...prev.player.team];
+            team[0] = { ...team[0], hp: 0 };
+            return { ...prev, player: { ...prev.player, team } };
+          });
 
-        // Check if there are other pokemon available
-        const hasAvailable = state.player.team.some((p, i) => i !== 0 && p.hp > 0);
-        if (hasAvailable) {
-          addLog("Scegli un altro Pokémon!");
-          setIsAnimating(false); // Allow switching
-          setShowSwitch(true);
-        } else {
-          addLog("Non hai più Pokémon utilizzabili! Prof. Scordarello ti trascina via.");
-          await new Promise(r => setTimeout(r, 1500));
-          setBattleResult({ type: 'lose' });
+          // Check if there are other pokemon available
+          const hasAvailable = state.player.team.some((p, i) => i !== 0 && p.hp > 0);
+          if (hasAvailable) {
+            addLog("Scegli un altro Pokémon!");
+            setIsAnimating(false); // Allow switching
+            setShowSwitch(true);
+          } else {
+            addLog("Non hai più Pokémon utilizzabili! Prof. Scordarello ti trascina via.");
+            await new Promise(r => setTimeout(r, 1500));
+            setBattleResult({ type: 'lose' });
+          }
+          return;
         }
-        return;
       }
     }
 
@@ -145,7 +323,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     await handleStatusEndTurn(enemy, currentEnemyHp, setEnemyHp, enemyStatus.status);
 
     setIsAnimating(false);
-  }, [enemy, playerActive, enemyStatus, playerStatus, addLog, setState, handleStatusEndTurn]);
+  }, [enemy, playerActive, enemyStatus, playerStatus, enemyStages, playerStages, executeMoveAction, addLog, setState, handleStatusEndTurn, state.player.team]);
 
   const handleSwitch = React.useCallback(async (index: number) => {
     if (index === 0 || (isAnimating && playerHp > 0)) return;
@@ -165,6 +343,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
 
     setPlayerHp(nextPkmn.hp);
     setPlayerStatus({ status: nextPkmn.status, duration: nextPkmn.statusDuration });
+    setPlayerStages({ attack: 0, defense: 0, spAtk: 0, spDef: 0, speed: 0, accuracy: 0, evasion: 0 });
     setShowSwitch(false);
     
     if (!wasFainted) {
@@ -257,6 +436,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
         setEnemy(nextEnemy);
         setEnemyHp(nextEnemy.hp);
         setEnemyStatus({ status: nextEnemy.status, duration: nextEnemy.statusDuration });
+        setEnemyStages({ attack: 0, defense: 0, spAtk: 0, spDef: 0, speed: 0, accuracy: 0, evasion: 0 });
         setIsAnimating(false);
         return;
       }
@@ -318,30 +498,23 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       if (moveCheck.msg) addLog(moveCheck.msg);
     } else {
       if (moveCheck.msg) addLog(moveCheck.msg);
-      addLog(`${playerActive.name} usa ${move.name}!`);
+      const actionResult = executeMoveAction(
+        move,
+        playerActive,
+        enemy,
+        playerStages,
+        setPlayerStages,
+        enemyStages,
+        setEnemyStages,
+        enemyStatus,
+        setEnemyStatus,
+        true
+      );
 
-      // Ability check on move use
-      const abilityEffect = checkAbility(playerActive, 'on_move_use', { move, target: enemy });
-      if (abilityEffect?.msg) addLog(abilityEffect.msg);
-      
-      let damageMult = abilityEffect?.type === 'damage_mult' ? abilityEffect.value || 1 : 1;
-      
-      const result = calculateDamage({ ...playerActive, status: playerStatus.status }, { ...enemy, status: enemyStatus.status }, move);
-      const finalDamage = Math.floor(result.damage * damageMult);
-      
-      addLog(`${playerActive.name} infligge ${finalDamage} danni!`);
-      
-      if (result.effectiveness > 1) addLog("È superefficace!");
-      if (result.effectiveness < 1 && result.effectiveness > 0) addLog("Non è molto efficace...");
-      if (result.effectiveness === 0) addLog("Non ha effetto...");
-      if (result.isCrit) addLog("Brutto colpo!");
-
-      currentEnemyHp = Math.max(0, enemyHp - finalDamage);
-      setEnemyHp(currentEnemyHp);
-
-      // Ability check on hit (e.g. Static)
-      const onHitEffect = checkAbility(enemy, 'on_hit', { move, target: playerActive });
-      if (onHitEffect?.msg) addLog(onHitEffect.msg);
+      if (actionResult.damage > 0) {
+        currentEnemyHp = Math.max(0, enemyHp - actionResult.damage);
+        setEnemyHp(currentEnemyHp);
+      }
     }
     
     await new Promise(r => setTimeout(r, 1000));
@@ -379,7 +552,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     }
 
     await triggerEnemyTurn(currentPlayerHp, currentEnemyHp);
-  }, [isAnimating, playerActive, enemy, enemyHp, playerHp, playerStatus, enemyStatus, handleWin, triggerEnemyTurn, addLog, handleStatusEndTurn]);
+  }, [isAnimating, playerActive, enemy, enemyHp, playerHp, playerStatus, enemyStatus, playerStages, enemyStages, executeMoveAction, handleWin, triggerEnemyTurn, addLog, handleStatusEndTurn, state.player.team, setState]);
 
   const handleCatchResult = async (success: boolean) => {
     if (success && catchBall) {
@@ -470,6 +643,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
               status={enemyStatus.status} 
               isShiny={enemy.isShiny}
               team={trainer ? enemyTeam.map(p => p.id === enemy.id ? { ...p, hp: enemyHp } : p) : [{ hp: enemyHp }]}
+              stages={enemyStages}
             />
             <img 
               src={enemy.sprites.artwork} 
@@ -539,6 +713,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
               status={playerStatus.status}
               isShiny={playerActive.isShiny}
               team={state.player.team.map((p, i) => i === 0 ? { ...p, hp: playerHp } : p)}
+              stages={playerStages}
             />
           </motion.div>
         </div>

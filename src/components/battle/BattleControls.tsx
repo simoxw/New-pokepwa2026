@@ -14,6 +14,7 @@ interface BattleControlsProps {
 
 export const BattleControls: React.FC<BattleControlsProps> = ({ moves, onMove, onBag, onEscape, onSwitch, disabled, enemyTypes }) => {
   const renderEffectiveness = (move: Move) => {
+    if (move.category === 'status' || !move.power || move.power === 0) return null;
     if (!enemyTypes || enemyTypes.length === 0) return null;
     
     const effectiveness = getEffectiveness(move.type, enemyTypes);
@@ -54,7 +55,7 @@ export const BattleControls: React.FC<BattleControlsProps> = ({ moves, onMove, o
           >
             <span className="leading-tight text-center">{move.name}</span>
             <span className="text-[8px] sm:text-[9px] opacity-100 uppercase font-black tracking-tight mt-0.5">
-              {move.type} | P:{move.power} A:{move.accuracy}%
+              {move.type} | {move.category === 'status' || !move.power ? 'STAT' : `P:${move.power}`} A:{move.accuracy}%
             </span>
             {renderEffectiveness(move)}
           </button>

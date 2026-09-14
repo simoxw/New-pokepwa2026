@@ -84,6 +84,23 @@ export interface Ability {
   effect?: string;
 }
 
+export interface BattleStages {
+  attack: number;
+  defense: number;
+  spAtk: number;
+  spDef: number;
+  speed: number;
+  accuracy: number;
+  evasion: number;
+}
+
+export interface StatChange {
+  change: number;
+  stat: {
+    name: string;
+  };
+}
+
 export interface Move {
   name: string;
   power: number;
@@ -92,6 +109,11 @@ export interface Move {
   category?: 'physical' | 'special' | 'status';
   pp?: number;
   maxPp?: number;
+  stat_changes?: StatChange[];
+  statusEffect?: 'paralyzed' | 'poisoned' | 'sleep' | 'frozen' | 'burned';
+  effectChance?: number;
+  target?: string;
+  description?: string;
 }
 
 export interface Trainer {

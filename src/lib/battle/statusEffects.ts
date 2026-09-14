@@ -48,6 +48,24 @@ export function getStatusEffect(pokemon: Pokemon): { damage?: number; msg?: stri
   }
 }
 
+export function isImmuneToStatus(types: string[], status: StatusCondition): boolean {
+  const lowerTypes = types.map(t => t.toLowerCase());
+  switch (status) {
+    case 'paralyzed':
+      return lowerTypes.includes('electric');
+    case 'burned':
+      return lowerTypes.includes('fire');
+    case 'poisoned':
+      return lowerTypes.includes('poison') || lowerTypes.includes('steel');
+    case 'frozen':
+      return lowerTypes.includes('ice');
+    case 'sleep':
+      return false;
+    default:
+      return false;
+  }
+}
+
 /**
  * Applica modificatori alle statistiche basati sugli effetti di stato.
  */
