@@ -1,0 +1,235 @@
+export interface Pokemon {
+  id: number;
+  instanceId: string; // Unique ID for this specific Pokemon instance
+  name: string;
+  nickname?: string;
+  level: number;
+  hp: number;
+  maxHp: number;
+  types: string[];
+  ability?: Ability;
+  sprites: {
+    front: string;
+    back: string;
+    artwork: string;
+    home: string;
+    animated?: {
+      front: string;
+      back: string;
+    };
+  };
+  stats: {
+    attack: number;
+    defense: number;
+    spAtk: number;
+    spDef: number;
+    speed: number;
+  };
+  baseStats: {
+    hp: number;
+    attack: number;
+    defense: number;
+    spAtk: number;
+    spDef: number;
+    speed: number;
+  };
+  evYield?: {
+    hp: number;
+    attack: number;
+    defense: number;
+    spAtk: number;
+    spDef: number;
+    speed: number;
+  };
+  moves: Move[];
+  experience: number;
+  nextLevelExp: number;
+  nature: string;
+  ivs: {
+    hp: number;
+    attack: number;
+    defense: number;
+    spAtk: number;
+    spDef: number;
+    speed: number;
+  };
+  evs: {
+    hp: number;
+    attack: number;
+    defense: number;
+    spAtk: number;
+    spDef: number;
+    speed: number;
+  };
+  isShiny: boolean;
+  status?: 'paralyzed' | 'poisoned' | 'sleep' | 'frozen' | 'burned';
+  statusDuration?: number;
+  evolutionInfo?: {
+    nextId: number;
+    level: number;
+    name: string;
+  };
+  learnableMoves?: {
+    level: number;
+    name: string;
+    url: string;
+  }[];
+  caughtAt: number;
+  caughtLocation: string;
+}
+
+export interface Ability {
+  name: string;
+  description: string;
+  effect?: string;
+}
+
+export interface Move {
+  name: string;
+  power: number;
+  type: string;
+  accuracy: number;
+  category?: 'physical' | 'special' | 'status';
+  pp?: number;
+  maxPp?: number;
+}
+
+export interface Trainer {
+  id: string;
+  name: string;
+  type: string;
+  sprite: string;
+  team: Pokemon[];
+  quote: string;
+  winQuote: string;
+  moneyReward: number;
+}
+
+export interface Item {
+  id: string;
+  name: string;
+  description: string;
+  count: number;
+  type: 'healing' | 'capture' | 'other';
+  effectValue?: number;
+}
+
+export interface Quest {
+  id: string;
+  title: string;
+  description: string;
+  objective: string;
+  rewardText: string;
+  reward?: {
+    money?: number;
+    items?: { id: string; count: number }[];
+  };
+  status: 'available' | 'active' | 'completed' | 'claimed';
+  category: 'exploration' | 'battle' | 'collection' | 'social';
+  giver: string;
+}
+
+export interface GameState {
+  player: {
+    name: string;
+    spriteColor: string;
+    team: Pokemon[];
+    box: Pokemon[];
+    pokedex: Record<number, 'seen' | 'caught'>;
+    inventory: Item[];
+    money: number;
+    location: string;
+    badges: string[];
+    quests: Quest[];
+  };
+}
+
+export interface Badge {
+  id: string;
+  name: string;
+  description: string;
+  image: string;
+  unlockedArea?: string;
+  bossName: string;
+}
+
+export const INITIAL_STATE: GameState = {
+  player: {
+    name: 'Allenatore',
+    spriteColor: 'bg-blue-500',
+    team: [],
+    box: [],
+    pokedex: {},
+    inventory: [
+      { id: 'poke-ball', name: 'Poké Ball', description: 'Uno strumento per catturare Pokémon selvatici.', count: 10, type: 'capture' },
+      { id: 'mega-ball', name: 'Mega Ball', description: 'Una Ball con alto tasso di cattura.', count: 0, type: 'capture' },
+      { id: 'ultra-ball', name: 'Ultra Ball', description: 'La migliore Ball in commercio.', count: 0, type: 'capture' },
+      { id: 'master-ball', name: 'Master Ball', description: 'La Ball definitiva: cattura senza mai fallire.', count: 0, type: 'capture' },
+      { id: 'pozione', name: 'Pozione', description: 'Ripristina 20 HP di un Pokémon.', count: 5, type: 'healing', effectValue: 20 },
+      { id: 'super-pozione', name: 'Super Pozione', description: 'Ripristina 50 HP di un Pokémon.', count: 0, type: 'healing', effectValue: 50 },
+      { id: 'iper-pozione', name: 'Iper Pozione', description: 'Ripristina 200 HP di un Pokémon.', count: 0, type: 'healing', effectValue: 200 },
+      { id: 'caramella-rara', name: 'Caramella Rara', description: 'Alza di un livello un Pokémon.', count: 0, type: 'other' },
+      { id: 'revitalizzante', name: 'Revitalizzante', description: 'Rianima un Pokémon esausto con metà PS.', count: 0, type: 'healing', effectValue: 0.5 },
+      { id: 'revitalizzante-max', name: 'Revitalizzante Max', description: 'Rianima un Pokémon esausto con tutti i PS.', count: 0, type: 'healing', effectValue: 1 },
+    ],
+    money: 1000,
+    location: 'villaggio',
+    badges: [],
+    quests: [
+      {
+        id: 'first-steps',
+        title: 'Primi Passi Digitali',
+        description: 'Il Prof. Scordarello vuole assicurarsi che tu non inciampi sui tuoi stessi pixel.',
+        objective: 'Esplora il Bosco dei Selfie per la prima volta.',
+        rewardText: '5 Poké Ball e 200 PokéDollari',
+        reward: { money: 200, items: [{ id: 'poke-ball', count: 5 }] },
+        status: 'active',
+        category: 'exploration',
+        giver: 'Prof. Scordarello'
+      },
+      {
+        id: 'magikarp-fan',
+        title: 'Il Fan di Magikarp',
+        description: 'Un pescatore nella Spiaggia del Refresh è convinto che i Magikarp siano la chiave per dominare il mondo.',
+        objective: 'Cattura un Magikarp e mostralo al pescatore.',
+        rewardText: '1 Caramella Rara',
+        reward: { items: [{ id: 'caramella-rara', count: 1 }] },
+        status: 'available',
+        category: 'collection',
+        giver: 'Pescatore Ginetto'
+      },
+      {
+        id: 'shiny-hunter',
+        title: 'Cacciatore di Bagliori',
+        description: 'Dicono che esistano Pokémon di colori diversi. Lo Speleologo Glitch ne è ossessionato.',
+        objective: 'Trova e cattura un Pokémon Cromatico (Shiny).',
+        rewardText: '1 Master Ball (Sì, davvero!)',
+        reward: { items: [{ id: 'master-ball', count: 1 }] },
+        status: 'available',
+        category: 'collection',
+        giver: 'Speleologo Glitch'
+      }
+    ],
+  },
+};
+
+export const TYPE_COLORS: Record<string, string> = {
+  normal: 'bg-[#A8A77A]',
+  fire: 'bg-[#EE8130]',
+  water: 'bg-[#6390F0]',
+  electric: 'bg-[#F7D02C]',
+  grass: 'bg-[#7AC74C]',
+  ice: 'bg-[#96D9D6]',
+  fighting: 'bg-[#C22E28]',
+  poison: 'bg-[#A33EA1]',
+  ground: 'bg-[#E2BF65]',
+  flying: 'bg-[#A98FF3]',
+  psychic: 'bg-[#F95587]',
+  bug: 'bg-[#A6B91A]',
+  rock: 'bg-[#B6A136]',
+  ghost: 'bg-[#735797]',
+  dragon: 'bg-[#6F35FC]',
+  steel: 'bg-[#B7B7CE]',
+  fairy: 'bg-[#D685AD]',
+  dark: 'bg-[#705746]',
+};

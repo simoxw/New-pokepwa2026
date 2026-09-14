@@ -1,0 +1,42 @@
+# PokePWA: Project Structure
+
+## Folder Structure
+- `/src`: Source code
+  - `/components`: UI Components
+    - `/battle`: Battle-specific components
+      - `BattleHUD.tsx`: Health bars and status indicators
+      - `BattleControls.tsx`: Move selection and actions
+      - `BattleBag.tsx`: In-battle item selection interface
+    - `BattleScreen.tsx`: Main battle orchestration
+    - `MoveLearningOverlay.tsx`: UI for managing move replacement
+    - `EvolutionOverlay.tsx`: UI for the evolution process
+    - `Hub.tsx`: Main village interface
+    - `QuestLog.tsx`: UI per il tracciamento e riscatto delle missioni
+    - `Inventory.tsx`: Gestione zaino e uso strumenti
+    - `Team.tsx`: Gestione della squadra attiva
+    - `Box.tsx`: Sistema di deposito Pokémon (PC)
+    - `Pokedex.tsx`: Enciclopedia dei Pokémon
+    - `Shop.tsx`: Negozio per l'acquisto di strumenti
+    - `Trade.tsx`: Sistema di scambio Pokémon
+    - `BadgeCase.tsx`: Collezione delle medaglie
+    - `Settings.tsx`: Impostazioni di gioco
+    - `LocalBattle.tsx`: Sistema di lotte rapide
+    - `PlayerProfile.tsx`: Dati del giocatore
+    - `ZoneExplorer.tsx`: Esplorazione mappe e incontri
+  - `/contexts`: React Contexts for global state
+    - `GameContext.tsx`: Core game state & persistence
+  - `/lib`: Utility e servizi core
+    - `battle/`: Libreria per il sistema di lotta (Regole Ufficiali)
+      - `battleMath.ts`: Calcolo danni (STAB, Critici, Efficacia)
+      - `statusEffects.ts`: Gestione stati (Paralisi, Sonno, ecc.)
+      - `abilities.ts`: Logica delle abilità passive
+      - `items.ts`: Logica degli strumenti in battaglia
+      - `typeChart.ts`: Tabella delle debolezze e resistenze
+    - `pokeapi.ts`: Wrapper PokeAPI con cache e traduzione
+    - `leveling.ts`: Logica XP, EV e aumento di livello
+  - `/data`: Dati di gioco statici
+    - `trainers.ts`: Definizione e generazione degli allenatori
+- `/public`: Static assets (icons, manifest)
+- `index.html`: Main entry point
+- `package.json`: Project dependencies and scripts
+- `vite.config.ts`: Vite build configuration

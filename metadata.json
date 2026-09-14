@@ -1,0 +1,6 @@
+{
+  "name": "PokePWA",
+  "description": "Un gioco in stile Pokémon comico e scherzoso in formato PWA, con battaglie a turni, catture e dialoghi divertenti.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
