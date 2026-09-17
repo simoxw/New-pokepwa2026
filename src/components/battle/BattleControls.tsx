@@ -11,9 +11,21 @@ interface BattleControlsProps {
   onSwitch: () => void;
   disabled?: boolean;
   enemyTypes?: string[];
+  encryptedMoveIndex?: number | null;
+  onEncryptedMoveClick?: () => void;
 }
 
-export const BattleControls: React.FC<BattleControlsProps> = ({ moves, onMove, onBag, onEscape, onSwitch, disabled, enemyTypes }) => {
+export const BattleControls: React.FC<BattleControlsProps> = ({ 
+  moves, 
+  onMove, 
+  onBag, 
+  onEscape, 
+  onSwitch, 
+  disabled, 
+  enemyTypes,
+  encryptedMoveIndex,
+  onEncryptedMoveClick
+}) => {
   // Check if all moves have 0 PP
   const allPpDepleted = moves.length > 0 && moves.every(m => typeof m.pp === 'number' ? m.pp <= 0 : false);
 
@@ -32,14 +44,14 @@ export const BattleControls: React.FC<BattleControlsProps> = ({ moves, onMove, o
     }
     if (effectiveness < 1 && effectiveness > 0) {
       return (
-        <span className="bg-yellow-600 text-[8px] px-1.5 rounded-full text-white mt-0.5 border border-white/30 font-bold">
+        <span className="bg-amber-500 text-[8px] px-1.5 rounded-full text-white mt-0.5 border border-white/30 font-bold">
           Poco efficace
         </span>
       );
     }
     if (effectiveness === 0) {
       return (
-        <span className="bg-gray-800 text-[8px] px-1.5 rounded-full text-white mt-0.5 border border-white/30 font-bold">
+        <span className="bg-purple-700 text-[8px] px-1.5 rounded-full text-white mt-0.5 border border-white/30 font-bold">
           Nessun effetto
         </span>
       );
@@ -70,10 +82,31 @@ export const BattleControls: React.FC<BattleControlsProps> = ({ moves, onMove, o
       ) : (
         <div className="grid grid-cols-2 gap-2">
           {moves.map((move, index) => {
+            const isEncrypted = encryptedMoveIndex === index;
             const currentPp = typeof move.pp === 'number' ? move.pp : (move.maxPp ?? 35);
             const maxPp = move.maxPp ?? 35;
             const isOutOfPp = currentPp <= 0;
-            const isMoveDisabled = disabled || isOutOfPp;
+            const isMoveDisabled = disabled || (isOutOfPp && !isEncrypted);
+
+            if (isEncrypted) {
+              return (
+                <button
+                  key={`${move.name}-${index}`}
+                  disabled={disabled}
+                  onClick={onEncryptedMoveClick}
+                  className="rounded-xl font-black text-xs uppercase active:scale-95 transition-all border-2 border-red-500 bg-red-950 text-red-300 shadow-sm flex flex-col items-center justify-center py-2 px-1 animate-pulse cursor-pointer"
+                  title="Mossa crittografata da Ransomware! Clicca per decrittare!"
+                >
+                  <div className="flex items-center gap-1">
+                    <span>🔒</span>
+                    <span className="text-[11px] text-red-200">BLOCCATA (RSA)</span>
+                  </div>
+                  <span className="text-[8px] text-red-400 font-bold mt-0.5">
+                    Clicca per sbloccare
+                  </span>
+                </button>
+              );
+            }
 
             return (
               <button

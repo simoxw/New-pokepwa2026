@@ -436,6 +436,13 @@ export const ZONES: Zone[] = [
       { pokemonId: 785, rarity: 0.1, minLevel: 70, maxLevel: 70 }, // Tapu Koko
     ],
   },
+  {
+    id: 'datacenter-lega',
+    name: 'Datacenter della Lega',
+    description: 'La roccaforte dei Superquattro dei Crash di Sistema e del Campione. (Richiede 10 Medaglie)',
+    background: 'bg-slate-900',
+    spawnTable: [],
+  },
 ];
 
 export const CHARACTERS = {

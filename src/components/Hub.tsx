@@ -29,6 +29,12 @@ export const Hub: React.FC = () => {
   ];
 
   const goToZone = (zoneId: string) => {
+    if (zoneId === 'datacenter-lega') {
+      openLeague();
+      setShowMap(false);
+      return;
+    }
+
     if (!isAreaUnlocked(zoneId, state.player.badges)) {
       setDialogue("Quella zona è chiusa! Sconfiggi i Capipalestra per ottenere le medaglie necessarie. Non farmi ripetere!");
       return;
@@ -37,6 +43,14 @@ export const Hub: React.FC = () => {
       ...prev,
       player: { ...prev.player, location: zoneId }
     }));
+  };
+
+  const openLeague = () => {
+    if (state.player.badges.length < 10) {
+      setDialogue(`Accesso Negato al Datacenter della Lega! Hai ${state.player.badges.length}/10 Medaglie. Devi prima battere tutti i 10 Capipalestra (fino ad Admin Root all'Isola del Server) per ottenere i permessi di Root!`);
+      return;
+    }
+    (window as any).onNavigate('league');
   };
 
   const healTeam = async () => {
@@ -240,6 +254,12 @@ export const Hub: React.FC = () => {
           label="Missioni" 
           onClick={() => (window as any).onNavigate('quests')}
           color="border-orange-500"
+        />
+        <ActionButton 
+          icon={<span className="text-xl">👑</span>} 
+          label={state.player.badges.length >= 10 ? "Lega Pokémon" : "Lega (10 Med.)"} 
+          onClick={openLeague}
+          color="border-purple-600"
         />
         <ActionButton 
           icon={<span className="text-xl">⚙️</span>} 

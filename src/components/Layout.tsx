@@ -2,10 +2,11 @@ import React from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useGame } from '../contexts/GameContext';
 import { ZONES } from '../constants/game';
+import { PWAInstallButton } from './PWAInstallButton';
 
 interface LayoutProps {
   children: React.ReactNode;
-  onNavigate: (screen: 'game' | 'pokedex' | 'inventory' | 'team' | 'box' | 'trade' | 'local-battle' | 'settings' | 'profile' | 'quests') => void;
+  onNavigate: (screen: 'game' | 'pokedex' | 'inventory' | 'team' | 'box' | 'trade' | 'local-battle' | 'settings' | 'badgecase' | 'shop' | 'profile' | 'quests' | 'sfidofono' | 'league') => void;
 }
 
 export const Layout: React.FC<LayoutProps> = ({ children, onNavigate }) => {
@@ -20,15 +21,19 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate }) => {
   return (
     <div className={`fixed inset-0 flex flex-col overflow-hidden selection:bg-blue-200 ${currentZone?.background || 'bg-white'} transition-colors duration-1000`}>
       {/* Top Bar */}
-      <header className="h-14 border-b border-black/10 flex items-center justify-between px-4 bg-white/80 backdrop-blur-sm z-10">
-        <h1 className="font-bold text-lg text-blue-600">PokePWA</h1>
-        <div className="flex items-center gap-3">
-          <span className="text-xs font-medium px-2 py-1 bg-yellow-100 text-yellow-800 rounded-full">
+      <header className="h-14 border-b border-black/10 flex items-center justify-between px-3 sm:px-4 bg-white/85 backdrop-blur-sm z-10 gap-2">
+        <div className="flex items-center gap-2 sm:gap-3 min-w-0">
+          <h1 className="font-black text-lg text-blue-600 tracking-tight shrink-0">PokePWA</h1>
+          <PWAInstallButton />
+        </div>
+        <div className="flex items-center gap-2 sm:gap-3 shrink-0">
+          <span className="text-xs font-bold px-2.5 py-1 bg-yellow-100 text-yellow-800 rounded-full border border-yellow-200 shadow-xs">
             ${state.player.money}
           </span>
           <button 
             onClick={() => onNavigate('profile')}
-            className={`w-8 h-8 rounded-full ${state.player.spriteColor || 'bg-blue-500'} flex items-center justify-center text-white text-xs font-bold shadow-sm active:scale-90 transition-all`}
+            className={`w-8 h-8 rounded-full ${state.player.spriteColor || 'bg-blue-500'} flex items-center justify-center text-white text-xs font-black shadow-sm active:scale-90 transition-all cursor-pointer border border-white/40`}
+            title="Profilo Allenatore"
           >
             {state.player.name[0]}
           </button>

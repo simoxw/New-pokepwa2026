@@ -128,6 +128,51 @@ export const TRAINERS_DATA = {
     winQuote: 'Permesso negato. Reboot in corso...',
     moneyReward: 4000,
     teamIds: [{ id: 137, level: 55 }, { id: 479, level: 58 }, { id: 642, level: 60 }] // Porygon, Rotom, Thundurus
+  },
+  'superquattro-bsod': {
+    name: 'Superquattro BSOD',
+    type: 'Superquattro',
+    sprite: 'https://play.pokemonshowdown.com/sprites/trainers/morty.png',
+    quote: 'CRITICAL_PROCESS_DIED: Il tuo team ha causato un kernel panic non gestito nei registri di sistema. Riavvio forzato in corso...',
+    winQuote: 'Dump di memoria completato. Il driver nvlddmkm.sys ha smesso di rispondere...',
+    moneyReward: 8000,
+    teamIds: [{ id: 94, level: 64 }, { id: 442, level: 65 }, { id: 609, level: 65 }, { id: 197, level: 66 }] // Gengar, Spiritomb, Chandelure, Umbreon
+  },
+  'superquattro-ai': {
+    name: 'Superquattro AI Allucinata',
+    type: 'Superquattro',
+    sprite: 'https://play.pokemonshowdown.com/sprites/trainers/colress.png',
+    quote: 'In base al prompt fornito, ho generato una vittoria al 99.8%. I miei Pokémon hanno sette dita e sparano pixel quantistici!',
+    winQuote: 'Errore 429: Quota di token esaurita per il modello. Riprova tra 60 secondi.',
+    moneyReward: 10000,
+    teamIds: [{ id: 579, level: 66 }, { id: 282, level: 67 }, { id: 468, level: 67 }, { id: 65, level: 68 }] // Reuniclus, Gardevoir, Togekiss, Alakazam
+  },
+  'superquattro-ransomware': {
+    name: 'Superquattro Ransomware',
+    type: 'Superquattro',
+    sprite: 'https://play.pokemonshowdown.com/sprites/trainers/burglar.png',
+    quote: 'Tutti i tuoi Pokémon e salvataggi sono stati crittografati con chiave RSA-4096! Paga il riscatto in Bitcoin o subisci il wipe!',
+    winQuote: 'Decrittazione forzata completata... La mia chiave privata è finita su Pastebin!',
+    moneyReward: 12000,
+    teamIds: [{ id: 625, level: 68 }, { id: 452, level: 68 }, { id: 110, level: 69 }, { id: 376, level: 70 }] // Bisharp, Drapion, Weezing, Metagross
+  },
+  'superquattro-social': {
+    name: 'Superquattro Algoritmo Social',
+    type: 'Superquattro',
+    sprite: 'https://play.pokemonshowdown.com/sprites/trainers/guitarist.png',
+    quote: 'QUESTA SFIDA È IN LIVE STREAMING CON 500K SPETTATORI! Spamma emote, metti mi piace e guarda questo attacco virale!',
+    winQuote: 'Unfollow di massa e dislike... Sono ufficialmente finito nello shadowban!',
+    moneyReward: 15000,
+    teamIds: [{ id: 466, level: 70 }, { id: 701, level: 70 }, { id: 135, level: 71 }, { id: 448, level: 72 }] // Electivire, Hawlucha, Jolteon, Lucario
+  },
+  'campione-pm': {
+    name: 'Campione: Project Manager',
+    type: 'Campione del Sistema',
+    sprite: 'https://play.pokemonshowdown.com/sprites/trainers/giovanni.png',
+    quote: 'ASAP! Il rilascio in produzione è fissato per le 18:00 di venerdì! Nessun bug è ammesso: se perdi, lavoriamo tutto il weekend!',
+    winQuote: 'Sprint retroattiva approvata... Il debito tecnico è mostruoso, ma ti nomino ufficialmente Lead Architect e Campione di PokePWA!',
+    moneyReward: 30000,
+    teamIds: [{ id: 248, level: 73 }, { id: 445, level: 74 }, { id: 130, level: 74 }, { id: 637, level: 74 }, { id: 149, level: 75 }, { id: 150, level: 76 }] // Tyranitar, Garchomp, Gyarados, Volcarona, Dragonite, Mewtwo
   }
 };
 

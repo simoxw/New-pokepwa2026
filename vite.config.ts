@@ -16,6 +16,9 @@ export default defineConfig(() => {
           enabled: true,
         },
         manifest: {
+          id: './',
+          start_url: './',
+          scope: './',
           name: 'PokePWA',
           short_name: 'PokePWA',
           description: 'Un gioco in stile Pokémon comico e scherzoso in formato PWA.',
@@ -27,12 +30,20 @@ export default defineConfig(() => {
             {
               src: 'pwa-192x192.png',
               sizes: '192x192',
-              type: 'image/png'
+              type: 'image/png',
+              purpose: 'any'
             },
             {
               src: 'pwa-512x512.png',
               sizes: '512x512',
-              type: 'image/png'
+              type: 'image/png',
+              purpose: 'any'
+            },
+            {
+              src: 'pwa-512x512.png',
+              sizes: '512x512',
+              type: 'image/png',
+              purpose: 'maskable'
             }
           ]
         }

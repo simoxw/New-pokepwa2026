@@ -87,6 +87,11 @@ export function isAreaUnlocked(areaId: string, playerBadges: string[]): boolean 
   // Areas that are always unlocked
   if (['villaggio', 'bosco'].includes(areaId)) return true;
 
+  // The League Datacenter requires all 10 gym badges
+  if (areaId === 'datacenter-lega') {
+    return playerBadges.length >= 10;
+  }
+
   // Find badges that unlock this area
   const unlockingBadge = BADGES.find(b => b.unlockedArea === areaId);
   if (!unlockingBadge) return true; // If no badge unlocks it, assume it's open (or managed elsewhere)

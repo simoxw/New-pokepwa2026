@@ -108,9 +108,20 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     if (initialEnemy.isShiny) {
       initialLogs.unshift(`✨ Un Pokémon cromatico è apparso! ✨`);
     }
+    if (trainer?.id === 'superquattro-ransomware') {
+      initialLogs.unshift(`🔒 ALERT! Superquattro Ransomware ha cifrato la tua prima mossa! Cliccala per inserire il codice di sblocco.`);
+    }
     return initialLogs;
   });
   const [isAnimating, setIsAnimating] = useState(false);
+
+  // Ransomware Superquattro Mini-Game
+  const [encryptedMoveIndex, setEncryptedMoveIndex] = useState<number | null>(() => {
+    return trainer?.id === 'superquattro-ransomware' ? 0 : null;
+  });
+  const [showRansomModal, setShowRansomModal] = useState<boolean>(false);
+  const [ransomCode] = useState<string>(() => Math.floor(1000 + Math.random() * 9000).toString());
+  const [ransomInput, setRansomInput] = useState<string>('');
 
   // Escape attempts
   const [escapeAttempts, setEscapeAttempts] = useState(0);
@@ -1370,8 +1381,66 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
           onSwitch={() => setShowSwitch(true)}
           disabled={isAnimating}
           enemyTypes={enemy.types}
+          encryptedMoveIndex={encryptedMoveIndex}
+          onEncryptedMoveClick={() => setShowRansomModal(true)}
         />
       </div>
+
+      {/* Ransomware Decrypt Modal */}
+      {showRansomModal && (
+        <div className="fixed inset-0 z-[100] bg-black/85 backdrop-blur-sm flex items-center justify-center p-4">
+          <div className="w-full max-w-sm bg-red-950 border-2 border-red-500 rounded-3xl p-6 shadow-2xl text-white">
+            <div className="flex items-center gap-2 mb-3 text-red-400">
+              <span className="text-2xl">🔒</span>
+              <h3 className="text-lg font-black uppercase tracking-wider">Ransomware Payload</h3>
+            </div>
+            <p className="text-xs text-red-200 mb-4 leading-relaxed">
+              Superquattro Ransomware ha cifrato la tua mossa con chiave RSA-4096! Completa il mini-obiettivo per ripristinare il file eseguibile:
+            </p>
+
+            <div className="bg-black/60 rounded-xl p-3 border border-red-500/40 mb-4 text-center">
+              <span className="text-[10px] text-gray-400 uppercase tracking-wider block mb-1">Codice di Decrittazione</span>
+              <span className="text-2xl font-mono font-black text-amber-400 tracking-widest">{ransomCode}</span>
+            </div>
+
+            <div className="space-y-3">
+              <input 
+                type="text"
+                value={ransomInput}
+                onChange={(e) => setRansomInput(e.target.value)}
+                placeholder="Digita il codice qui..."
+                className="w-full bg-black/70 border-2 border-red-500/50 rounded-xl px-4 py-2.5 text-center font-mono text-lg text-white placeholder:text-gray-500 focus:outline-none focus:border-red-400"
+              />
+
+              <button
+                onClick={() => {
+                  if (ransomInput.trim() === ransomCode) {
+                    setEncryptedMoveIndex(null);
+                    setShowRansomModal(false);
+                    setLogs(prev => [`🔓 DECRITTAZIONE RIUSCITA! La mossa è di nuovo utilizzabile!`, ...prev]);
+                  } else {
+                    alert('Codice errato! Riprova o paga 1 PokéDollaro per sbloccarla.');
+                  }
+                }}
+                className="w-full bg-red-600 hover:bg-red-500 active:scale-95 text-white font-black py-2.5 rounded-xl uppercase text-xs tracking-wider transition-all cursor-pointer shadow-lg shadow-red-600/30"
+              >
+                Inietta Chiave di Decrittazione
+              </button>
+
+              <button
+                onClick={() => {
+                  setEncryptedMoveIndex(null);
+                  setShowRansomModal(false);
+                  setLogs(prev => [`🔓 RISCATTO PAGATO! Mossa sbloccata d'urgenza.`, ...prev]);
+                }}
+                className="w-full bg-white/10 hover:bg-white/20 text-gray-300 font-bold py-2 rounded-xl text-xs uppercase transition-all cursor-pointer"
+              >
+                Bypassa Firewall (Paga 1 PokéDollaro)
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Bag Overlay */}
       {showBag && (
@@ -1436,17 +1505,69 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       )}
 
       {/* Battle Event Logs */}
-      <div className="absolute top-4 left-4 right-4 pointer-events-none">
-        {logs.map((log, i) => (
-          <motion.div
-            key={`${log}-${i}`}
-            initial={{ opacity: 0, y: -10 }}
-            animate={{ opacity: 1 - i * 0.2, y: 0 }}
-            className="bg-black/75 text-white text-[10px] sm:text-xs px-3 py-1 rounded-full mb-1 w-fit backdrop-blur-sm font-bold shadow-md"
-          >
-            {log}
-          </motion.div>
-        ))}
+      <div className="absolute top-4 left-4 right-4 pointer-events-none flex flex-col items-start">
+        {logs.map((log, i) => {
+          const lower = log.toLowerCase();
+          const isSuper = lower.includes('superefficace') || lower.includes('super efficace');
+          const isNotVery = lower.includes('non è molto efficace') || lower.includes('poco efficace');
+          const isNoEffect = lower.includes('non ha effetto') || lower.includes('non ha effetti') || lower.includes('non ha avuto effetto') || lower.includes('nessun effetto');
+
+          let badgeStyle = 'bg-black/75 border border-white/10 text-white shadow-md';
+          if (isSuper) {
+            badgeStyle = 'bg-emerald-950/90 border border-emerald-500/60 shadow-lg shadow-emerald-950/50';
+          } else if (isNotVery) {
+            badgeStyle = 'bg-amber-950/90 border border-amber-500/60 shadow-lg shadow-amber-950/50';
+          } else if (isNoEffect) {
+            badgeStyle = 'bg-purple-950/90 border border-purple-500/60 shadow-lg shadow-purple-950/50';
+          } else if (lower.includes('brutto colpo')) {
+            badgeStyle = 'bg-rose-950/90 border border-rose-500/50 shadow-rose-950/50 text-rose-300';
+          } else if (lower.includes('cromatico') || lower.includes('✨')) {
+            badgeStyle = 'bg-yellow-950/90 border border-yellow-400/50 shadow-yellow-950/50 text-yellow-300';
+          }
+
+          return (
+            <motion.div
+              key={`${log}-${i}`}
+              initial={{ opacity: 0, y: -10 }}
+              animate={{ opacity: 1 - i * 0.2, y: 0 }}
+              className={`text-[10px] sm:text-xs px-3 py-1 rounded-full mb-1 w-fit backdrop-blur-sm font-bold transition-all ${badgeStyle}`}
+            >
+              {isSuper ? (
+                <span>
+                  {log.split(/(superefficace|super efficace)/i).map((part, idx) =>
+                    /(superefficace|super efficace)/i.test(part) ? (
+                      <span key={idx} className="text-emerald-400 font-black">{part}</span>
+                    ) : (
+                      <span key={idx} className="text-emerald-200">{part}</span>
+                    )
+                  )}
+                </span>
+              ) : isNotVery ? (
+                <span>
+                  {log.split(/(non è molto efficace|poco efficace)/i).map((part, idx) =>
+                    /(non è molto efficace|poco efficace)/i.test(part) ? (
+                      <span key={idx} className="text-amber-400 font-black">{part}</span>
+                    ) : (
+                      <span key={idx} className="text-amber-200">{part}</span>
+                    )
+                  )}
+                </span>
+              ) : isNoEffect ? (
+                <span>
+                  {log.split(/(non ha effetto|non ha effetti|non ha avuto effetto|nessun effetto)/i).map((part, idx) =>
+                    /(non ha effetto|non ha effetti|non ha avuto effetto|nessun effetto)/i.test(part) ? (
+                      <span key={idx} className="text-purple-400 font-black">{part}</span>
+                    ) : (
+                      <span key={idx} className="text-purple-200">{part}</span>
+                    )
+                  )}
+                </span>
+              ) : (
+                log
+              )}
+            </motion.div>
+          );
+        })}
       </div>
     </div>
   );

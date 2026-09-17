@@ -2,7 +2,6 @@ import { GameProvider, useGame } from './contexts/GameContext';
 import { Layout } from './components/Layout';
 import { Hub } from './components/Hub';
 import { ZoneExplorer } from './components/ZoneExplorer';
-import { PWAInstallButton } from './components/PWAInstallButton';
 import { DialogueOverlay } from './components/DialogueOverlay';
 import { BattleScreen } from './components/BattleScreen';
 import { CatchOverlay } from './components/CatchOverlay';
@@ -27,6 +26,7 @@ import { fullyHealPokemon } from './lib/pokemonHeal';
 
 import { Sfidofono } from './components/Sfidofono';
 import { StarterSelection } from './components/StarterSelection';
+import { LeagueHub } from './components/LeagueHub';
 
 function GameContent() {
   const { state, setState } = useGame();
@@ -63,7 +63,7 @@ function GameContent() {
   const [activeTrainer, setActiveTrainer] = useState<Trainer | undefined>();
   const [showEvolution, setShowEvolution] = useState<Pokemon | null>(null);
   const [showMoveLearning, setShowMoveLearning] = useState<{ pokemon: Pokemon, move: Move } | null>(null);
-  const [currentScreen, setCurrentScreen] = useState<'game' | 'pokedex' | 'inventory' | 'team' | 'box' | 'trade' | 'local-battle' | 'settings' | 'badgecase' | 'shop' | 'profile' | 'quests' | 'sfidofono'>('game');
+  const [currentScreen, setCurrentScreen] = useState<'game' | 'pokedex' | 'inventory' | 'team' | 'box' | 'trade' | 'local-battle' | 'settings' | 'badgecase' | 'shop' | 'profile' | 'quests' | 'sfidofono' | 'league'>('game');
 
   useEffect(() => {
     if (state.player.team.length === 0) {
@@ -77,6 +77,8 @@ function GameContent() {
     moveCandidate?: { pokemon: Pokemon, move: Move },
     ballUsed?: Item
   ) => {
+    const isLeagueBattle = activeTrainer?.id?.startsWith('superquattro-') || activeTrainer?.id === 'campione-pm';
+
     if (result === 'catch' && ballUsed && activeBattle) {
       // Save caught pokemon
       setState(prev => {
@@ -132,11 +134,15 @@ function GameContent() {
       }));
       setActiveBattle(null);
       setActiveTrainer(undefined);
+      setCurrentScreen('game');
       if (evoCandidate) setShowEvolution(evoCandidate);
       if (moveCandidate) setShowMoveLearning(moveCandidate);
     } else {
       setActiveBattle(null);
       setActiveTrainer(undefined);
+      if (isLeagueBattle) {
+        setCurrentScreen('league');
+      }
       if (evoCandidate) {
         setShowEvolution(evoCandidate);
       }
@@ -144,7 +150,7 @@ function GameContent() {
         setShowMoveLearning(moveCandidate);
       }
     }
-  }, [activeBattle, setState]);
+  }, [activeBattle, activeTrainer, setState]);
 
   const handleEncounter = (pokemon: Pokemon, trainer?: Trainer) => {
     setActiveBattle(pokemon);
@@ -179,10 +185,6 @@ function GameContent() {
 
   return (
     <Layout onNavigate={setCurrentScreen}>
-      <div className="absolute top-16 right-4 z-[20]">
-        <PWAInstallButton />
-      </div>
-      
       {currentScreen === 'game' && (
         state.player.location === 'villaggio' ? (
           <Hub />
@@ -223,6 +225,17 @@ function GameContent() {
             setActiveTrainer(trainer);
             setActiveBattle(trainer.team[0]);
             setCurrentScreen('game');
+          }}
+        />
+      )}
+      {currentScreen === 'league' && (
+        <LeagueHub 
+          key="league-screen"
+          onBack={() => setCurrentScreen('game')} 
+          onOpenInventory={() => setCurrentScreen('inventory')}
+          onStartBattle={(trainer) => {
+            setActiveTrainer(trainer);
+            setActiveBattle(trainer.team[0]);
           }}
         />
       )}

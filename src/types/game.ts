@@ -177,6 +177,7 @@ export interface GameState {
     badges: string[];
     quests: Quest[];
     defeatedTrainers: string[];
+    leagueVictories?: number;
   };
 }
 
