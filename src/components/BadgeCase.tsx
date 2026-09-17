@@ -50,6 +50,7 @@ export const BadgeCase: React.FC<BadgeCaseProps> = ({ onBack }) => {
                 <img 
                   src={badge.image} 
                   alt={badge.name} 
+                  referrerPolicy="no-referrer"
                   className={`w-full h-full object-contain relative z-10 ${isOwned ? 'drop-shadow-[0_0_10px_rgba(255,255,255,0.5)]' : 'opacity-20'}`}
                 />
               </div>

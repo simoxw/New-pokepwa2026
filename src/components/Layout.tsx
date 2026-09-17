@@ -17,17 +17,8 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate }) => {
     (window as any).onNavigate = onNavigate;
   }, [onNavigate]);
 
-  const hour = new Date().getHours();
-  const isNight = hour >= 20 || hour < 7;
-  const isEvening = hour >= 18 && hour < 20;
-
   return (
     <div className={`fixed inset-0 flex flex-col overflow-hidden selection:bg-blue-200 ${currentZone?.background || 'bg-white'} transition-colors duration-1000`}>
-      {/* Day/Night Overlay */}
-      <div className={`fixed inset-0 pointer-events-none z-[1000] mix-blend-multiply transition-opacity duration-1000 ${
-        isNight ? 'bg-[#1a1a3a] opacity-40' : isEvening ? 'bg-[#f4a460] opacity-20' : 'opacity-0'
-      }`} />
-      
       {/* Top Bar */}
       <header className="h-14 border-b border-black/10 flex items-center justify-between px-4 bg-white/80 backdrop-blur-sm z-10">
         <h1 className="font-bold text-lg text-blue-600">PokePWA</h1>

@@ -30,7 +30,6 @@ export const QuestLog: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 count: newInventory[itemIndex].count + rewardItem.count 
               };
             } else {
-              // Fallback for missing item definitions, in a real app we'd have a registry
               newInventory.push({ 
                 id: rewardItem.id, 
                 name: rewardItem.id.replace(/-/g, ' '), 
@@ -53,6 +52,18 @@ export const QuestLog: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         }
       };
     });
+  };
+
+  const activateQuest = (questId: string) => {
+    setState(prev => ({
+      ...prev,
+      player: {
+        ...prev.player,
+        quests: prev.player.quests.map(q => 
+          q.id === questId ? { ...q, status: 'active' as const } : q
+        )
+      }
+    }));
   };
 
   const activeQuests = state.player.quests.filter(q => q.status === 'active' || q.status === 'completed');
@@ -93,7 +104,7 @@ export const QuestLog: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               <Circle className="w-3 h-3 text-blue-500" /> Nuove Disponibili
             </h3>
             {availableQuests.map(quest => (
-              <QuestCard key={quest.id} quest={quest} />
+              <QuestCard key={quest.id} quest={quest} onActivate={() => activateQuest(quest.id)} />
             ))}
           </section>
         )}
@@ -117,9 +128,10 @@ export const QuestLog: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 interface QuestCardProps {
   quest: Quest;
   onClaim?: () => void;
+  onActivate?: () => void;
 }
 
-const QuestCard: React.FC<QuestCardProps> = ({ quest, onClaim }) => {
+const QuestCard: React.FC<QuestCardProps> = ({ quest, onClaim, onActivate }) => {
   const isCompleted = quest.status === 'completed';
   const isClaimed = quest.status === 'claimed';
   const isAvailable = quest.status === 'available';
@@ -181,7 +193,15 @@ const QuestCard: React.FC<QuestCardProps> = ({ quest, onClaim }) => {
             <CheckCircle2 className="w-5 h-5" />
           </span>
         )}
-        {isAvailable && (
+        {isAvailable && onActivate && (
+          <button 
+            onClick={onActivate}
+            className="bg-blue-500 text-white px-4 py-2 rounded-xl font-black uppercase text-[10px] shadow-lg shadow-blue-200 active:scale-95 transition-all"
+          >
+            Attiva
+          </button>
+        )}
+        {isAvailable && !onActivate && (
           <span className="text-[8px] font-black uppercase text-blue-400 italic">Da attivare</span>
         )}
       </div>

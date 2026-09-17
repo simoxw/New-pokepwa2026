@@ -384,6 +384,36 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     if (abilityEffect?.msg) addLog(abilityEffect.msg);
     const damageMult = abilityEffect?.type === 'damage_mult' ? abilityEffect.value || 1 : 1;
 
+    // Multi-hit handling
+    if (move.multiTurn?.type === 'multi-hit') {
+      const hits = Math.random() < 0.375 ? 2 : Math.random() < 0.75 ? 3 : Math.random() < 0.875 ? 4 : 5;
+      let actualHits = 0;
+      let totalDamage = 0;
+      let effectiveness = 1;
+
+      for (let i = 0; i < hits; i++) {
+        if (curTargetHp <= 0) break;
+        const res = calculateDamage(
+          { ...user, status: userStatus.status },
+          { ...target, status: targetStatus.status },
+          move,
+          { attackerStages: userStages, targetStages }
+        );
+        const hitDmg = Math.max(1, Math.floor(res.damage * damageMult));
+        curTargetHp = Math.max(0, curTargetHp - hitDmg);
+        totalDamage += hitDmg;
+        actualHits++;
+        effectiveness = res.effectiveness;
+      }
+
+      setTargetHp(curTargetHp);
+      if (effectiveness > 1) addLog("È superefficace!");
+      if (effectiveness < 1 && effectiveness > 0) addLog("Non è molto efficace...");
+      addLog(`${user.name} infligge un totale di ${totalDamage} danni colpendo ${actualHits} volte!`);
+      
+      return { nextUserHp: curUserHp, nextTargetHp: curTargetHp, targetFainted: curTargetHp <= 0, userFainted: false };
+    }
+
     const result = calculateDamage(
       { ...user, status: userStatus.status },
       { ...target, status: targetStatus.status },
@@ -591,12 +621,17 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
         if (badge && !badges.includes(badge.id)) {
           badges.push(badge.id);
         }
+        const defeatedTrainers = [...(prev.player.defeatedTrainers || [])];
+        if (trainer.id && !defeatedTrainers.includes(trainer.id)) {
+          defeatedTrainers.push(trainer.id);
+        }
         return {
           ...prev,
           player: {
             ...prev.player,
             money: prev.player.money + moneyReward,
-            badges
+            badges,
+            defeatedTrainers
           }
         };
       });
@@ -777,21 +812,64 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     handleWin, handlePlayerFaint, handleStatusEndTurn, addLog
   ]);
 
+  // Competitive AI for move selection
+  const selectEnemyMove = useCallback(() => {
+    const validMoves = enemyMoves.filter(m => (m.pp ?? m.maxPp ?? 35) > 0);
+    if (validMoves.length === 0) return STRUGGLE_MOVE;
+
+    // Score moves
+    const scoredMoves = validMoves.map(move => {
+      let score = 50; // Base score
+
+      // Type effectiveness
+      const eff = calculateDamage(
+        { ...enemy, status: enemyStatus.status },
+        { ...playerActive, status: playerStatus.status },
+        move,
+        { attackerStages: enemyStages, targetStages: playerStages }
+      ).effectiveness;
+      
+      score += (eff - 1) * 40;
+
+      // Status moves
+      if (move.category === 'status') {
+        if (move.statusEffect && playerStatus.status) score -= 40; // Already has status
+        if (move.healing && enemyHp / enemy.maxHp > 0.7) score -= 30; // High HP, don't heal
+        if (move.stat_changes && move.stat_changes.some(s => s.change > 0)) {
+          // Buffing moves
+          if (enemyHp / enemy.maxHp < 0.3) score -= 20; // Low HP, better attack
+        }
+      }
+
+      // Priority moves if player is low HP
+      if (move.priority && playerHp / playerActive.maxHp < 0.2) score += 20;
+
+      // Random factor
+      score += Math.random() * 10;
+
+      return { move, score };
+    });
+
+    // Select move with highest score
+    return scoredMoves.sort((a, b) => b.score - a.score)[0].move;
+  }, [enemy, enemyMoves, enemyHp, enemyStatus, playerActive, playerHp, playerStatus, playerStages, enemyStages]);
+
   // Main turn execution: Dynamic Turn Order based on Priority & Effective Speed
   const handleMove = useCallback(async (selectedMove: Move) => {
     if (isAnimating) return;
+
+    // Check if player is locked into a move
+    const actualPlayerMove = playerVolatile.lockedMove || selectedMove;
+
     setIsAnimating(true);
 
     // If player move has 0 PP and is not Struggle, fallback to Struggle
-    const activePlayerMove = (typeof selectedMove.pp === 'number' && selectedMove.pp <= 0 && selectedMove.name !== STRUGGLE_MOVE.name)
+    const activePlayerMove = (typeof actualPlayerMove.pp === 'number' && actualPlayerMove.pp <= 0 && actualPlayerMove.name !== STRUGGLE_MOVE.name)
       ? STRUGGLE_MOVE
-      : selectedMove;
+      : actualPlayerMove;
 
     // Pick enemy move
-    const validEnemyMoves = enemyMoves.filter(m => (m.pp ?? m.maxPp ?? 35) > 0);
-    const enemyMove = validEnemyMoves.length > 0
-      ? validEnemyMoves[Math.floor(Math.random() * validEnemyMoves.length)]
-      : STRUGGLE_MOVE;
+    const enemyMove = enemyVolatile.lockedMove || selectEnemyMove();
 
     // Calculate effective speeds
     const effPlayerSpeed = getEffectiveSpeed(playerActive.stats.speed, playerStages.speed ?? 0, playerStatus.status);
@@ -852,6 +930,14 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
         return { nextPlayerHp: cPlayerHp, nextEnemyHp: cEnemyHp, stopped: false };
       }
 
+      // 1a. Recharge Check
+      if (attackerVolatile.recharging) {
+        addLog(`${attacker.name} deve ricaricarsi!`);
+        setAttackerVolatile(prev => ({ ...prev, recharging: false, lockedMove: undefined }));
+        await new Promise(r => setTimeout(r, 700));
+        return { nextPlayerHp: cPlayerHp, nextEnemyHp: cEnemyHp, stopped: false };
+      }
+
       // 2. Primary Status Check (Sleep, Frozen, Paralysis)
       const moveCheck = canMove({ ...attacker, status: attackerStatus.status, statusDuration: attackerStatus.duration });
       if (moveCheck.newStatus !== attackerStatus.status || moveCheck.newDuration !== attackerStatus.duration) {
@@ -892,14 +978,33 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
         }
       }
 
-      // 4. Deduct PP
-      if (attackerIsPlayer) {
-        deductPlayerPp(move.name);
-      } else {
-        deductEnemyPp(move.name);
+      // 4. Deduct PP (only if not currently executing a locked move)
+      if (!attackerVolatile.lockedMove) {
+        if (attackerIsPlayer) {
+          deductPlayerPp(move.name);
+        } else {
+          deductEnemyPp(move.name);
+        }
       }
 
-      // 5. Execute Move Action
+      // 5. Multi-turn Charge Check
+      if (move.multiTurn?.type === 'charge' && !attackerVolatile.charging) {
+        addLog(`${attacker.name} ${move.multiTurn.chargeMessage || 'sta caricando!'}`);
+        setAttackerVolatile(prev => ({ 
+          ...prev, 
+          charging: true, 
+          lockedMove: move 
+        }));
+        await new Promise(r => setTimeout(r, 700));
+        return { nextPlayerHp: cPlayerHp, nextEnemyHp: cEnemyHp, stopped: false };
+      }
+
+      // If we were charging, clear it as we are now attacking
+      if (attackerVolatile.charging) {
+        setAttackerVolatile(prev => ({ ...prev, charging: false, lockedMove: undefined }));
+      }
+
+      // 6. Execute Move Action
       const actionRes = executeMoveAction(
         move,
         attacker,
@@ -923,6 +1028,11 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
         attackerIsPlayer,
         isFirst
       );
+
+      // 7. Handle Recharge
+      if (move.multiTurn?.type === 'recharge' && !actionRes.targetFainted) {
+        setAttackerVolatile(prev => ({ ...prev, recharging: true, lockedMove: move }));
+      }
 
       await new Promise(r => setTimeout(r, 800));
 

@@ -83,6 +83,51 @@ export const TRAINERS_DATA = {
     winQuote: 'System Shutdown...',
     moneyReward: 2500,
     teamIds: [{ id: 94, level: 50 }, { id: 609, level: 52 }, { id: 197, level: 55 }] // Gengar, Chandelure, Umbreon
+  },
+  'recluta-eclipse-1': {
+    name: 'Recluta Eclipse',
+    type: 'Team Eclipse',
+    sprite: 'https://play.pokemonshowdown.com/sprites/trainers/grunt-gen1.png',
+    quote: 'Il Team Eclipse oscurerà questo mondo!',
+    winQuote: 'L\'eclissi è solo rimandata...',
+    moneyReward: 500,
+    teamIds: [{ id: 228, level: 15 }, { id: 41, level: 16 }] // Houndour, Zubat
+  },
+  'recluta-eclipse-2': {
+    name: 'Recluta Eclipse',
+    type: 'Team Eclipse',
+    sprite: 'https://play.pokemonshowdown.com/sprites/trainers/grunt-gen1.png',
+    quote: 'Non passerai di qui! Ordini del capo.',
+    winQuote: 'Spostati pure...',
+    moneyReward: 600,
+    teamIds: [{ id: 52, level: 18 }, { id: 109, level: 18 }] // Meowth, Koffing
+  },
+  'tenente-eclipse-ombra': {
+    name: 'Tenente Ombra',
+    type: 'Team Eclipse',
+    sprite: 'https://play.pokemonshowdown.com/sprites/trainers/shadowtriad.png',
+    quote: 'Sei solo un intralcio per i nostri piani.',
+    winQuote: 'Incredibile... come hai potuto?',
+    moneyReward: 1500,
+    teamIds: [{ id: 302, level: 28 }, { id: 442, level: 30 }, { id: 215, level: 32 }] // Sableye, Spiritomb, Sneasel
+  },
+  'entomologo-ezio': {
+    name: 'Entomologo Ezio',
+    type: 'Capopalestra',
+    sprite: 'https://play.pokemonshowdown.com/sprites/trainers/bugcatcher.png',
+    quote: 'Hai mai osservato la perfezione di un esoscheletro?',
+    winQuote: 'Il mio sciame è stato schiacciato...',
+    moneyReward: 3000,
+    teamIds: [{ id: 123, level: 40 }, { id: 214, level: 42 }, { id: 637, level: 45 }] // Scyther, Heracross, Volcarona
+  },
+  'admin-root': {
+    name: 'Admin Root',
+    type: 'Capopalestra',
+    sprite: 'https://play.pokemonshowdown.com/sprites/trainers/scientist-gen4.png',
+    quote: 'Sudo su; rm -rf /player/team',
+    winQuote: 'Permesso negato. Reboot in corso...',
+    moneyReward: 4000,
+    teamIds: [{ id: 137, level: 55 }, { id: 479, level: 58 }, { id: 642, level: 60 }] // Porygon, Rotom, Thundurus
   }
 };
 

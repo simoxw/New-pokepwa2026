@@ -34,7 +34,8 @@ export async function evolvePokemon(pokemon: Pokemon): Promise<Pokemon> {
     experience: pokemon.experience,
     nextLevelExp: pokemon.nextLevelExp,
     caughtAt: pokemon.caughtAt,
-    caughtLocation: pokemon.caughtLocation
+    caughtLocation: pokemon.caughtLocation,
+    moves: pokemon.moves // Preserve moves from previous evolution phase
   };
 
   // Recalculate stats based on new base stats but same IVs/EVs

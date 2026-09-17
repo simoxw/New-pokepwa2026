@@ -9,17 +9,27 @@ export interface GameEvent {
   sprite?: string;
   item?: Partial<Item>;
   money?: number;
+  trainerId?: string;
 }
 
 export const ZONE_EVENTS: Record<string, GameEvent[]> = {
   'bosco': [
+    {
+      id: 'eclipse-scout',
+      type: 'battle',
+      triggerChance: 0.05,
+      message: 'Cosa ci fai qui? Questo bosco nasconde segreti che non ti riguardano!',
+      speaker: 'Recluta Eclipse',
+      sprite: 'https://play.pokemonshowdown.com/sprites/trainers/grunt-gen1.png',
+      trainerId: 'recluta-eclipse-1'
+    },
     {
       id: 'event-bosco-1',
       type: 'dialogue',
       triggerChance: 0.1,
       message: 'Hai visto il mio Caterpie? È scappato perché voleva farsi un selfie con un Weedle selvatico!',
       speaker: 'Pupo Marco',
-      sprite: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/trainers/10.png'
+      sprite: 'https://play.pokemonshowdown.com/sprites/trainers/youngster.png'
     },
     {
       id: 'event-bosco-2',
@@ -34,6 +44,7 @@ export const ZONE_EVENTS: Record<string, GameEvent[]> = {
       triggerChance: 0.08,
       message: 'Si dice che nelle notti di luna piena, uno spirito rosa voli tra le chiome degli alberi...',
       speaker: 'Anziano saggio',
+      sprite: 'https://play.pokemonshowdown.com/sprites/trainers/elder.png'
     }
   ],
   'prateria': [
@@ -43,7 +54,7 @@ export const ZONE_EVENTS: Record<string, GameEvent[]> = {
       triggerChance: 0.1,
       message: 'Attento al lag! Ieri sono rimasto bloccato in un frame per tre ore.',
       speaker: 'Corridore Fabio',
-      sprite: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/trainers/15.png'
+      sprite: 'https://play.pokemonshowdown.com/sprites/trainers/cyclist.png'
     },
     {
       id: 'event-prateria-2',
@@ -66,7 +77,7 @@ export const ZONE_EVENTS: Record<string, GameEvent[]> = {
       triggerChance: 0.15,
       message: 'Fa caldo qui, vero? È tutta colpa del flame dei commenti!',
       speaker: 'Montanaro Rocco',
-      sprite: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/trainers/20.png'
+      sprite: 'https://play.pokemonshowdown.com/sprites/trainers/hiker.png'
     },
     {
       id: 'event-vulcano-2',
@@ -74,6 +85,7 @@ export const ZONE_EVENTS: Record<string, GameEvent[]> = {
       triggerChance: 0.07,
       message: 'Dicono che il leggendario Entei sia stato avvistato vicino a quella colata lavica...',
       speaker: 'Cercatore di Hype',
+      sprite: 'https://play.pokemonshowdown.com/sprites/trainers/pokefan.png'
     }
   ],
   'spiaggia': [
@@ -90,16 +102,26 @@ export const ZONE_EVENTS: Record<string, GameEvent[]> = {
       triggerChance: 0.1,
       message: 'I Pokémon d\'acqua qui sono molto felici, l\'acqua è sempre fresca!',
       speaker: 'Bagnina Sara',
-      sprite: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/trainers/30.png'
+      sprite: 'https://play.pokemonshowdown.com/sprites/trainers/swimmerf.png'
     }
   ],
   'grotta': [
+    {
+      id: 'eclipse-blockade',
+      type: 'battle',
+      triggerChance: 0.1,
+      message: 'Nessuno passa da qui senza il permesso del Tenente!',
+      speaker: 'Recluta Eclipse',
+      sprite: 'https://play.pokemonshowdown.com/sprites/trainers/grunt-gen1.png',
+      trainerId: 'recluta-eclipse-2'
+    },
     {
       id: 'event-grotta-1',
       type: 'dialogue',
       triggerChance: 0.12,
       message: 'Il buio qui dentro è così profondo che sembra di essere in un file .json mal formato.',
       speaker: 'Speleologo Glitch',
+      sprite: 'https://play.pokemonshowdown.com/sprites/trainers/hiker-gen1.png'
     },
     {
       id: 'event-grotta-2',
@@ -111,11 +133,21 @@ export const ZONE_EVENTS: Record<string, GameEvent[]> = {
   ],
   'cimitero': [
     {
+      id: 'eclipse-lieutenant',
+      type: 'battle',
+      triggerChance: 0.05,
+      message: 'Il potere delle ombre appartiene al Team Eclipse. Scompari!',
+      speaker: 'Tenente Ombra',
+      sprite: 'https://play.pokemonshowdown.com/sprites/trainers/shadowtriad.png',
+      trainerId: 'tenente-eclipse-ombra'
+    },
+    {
       id: 'event-cimitero-1',
       type: 'dialogue',
       triggerChance: 0.1,
       message: 'Sento le voci dei Pokémon che non sono stati catturati... "Perché hai usato una Poké Ball normale?!" sussurrano.',
       speaker: 'Medium Pixel',
+      sprite: 'https://play.pokemonshowdown.com/sprites/trainers/medium.png'
     },
     {
       id: 'event-cimitero-2',
@@ -131,6 +163,7 @@ export const ZONE_EVENTS: Record<string, GameEvent[]> = {
       triggerChance: 0.1,
       message: 'Stiamo cercando di caricare un Pokémon leggendario, ma la barra è ferma al 99% da tre giorni.',
       speaker: 'Scienziato Stuck',
+      sprite: 'https://play.pokemonshowdown.com/sprites/trainers/scientist-gen4dp.png'
     },
     {
       id: 'event-laboratorio-2',
@@ -147,6 +180,7 @@ export const ZONE_EVENTS: Record<string, GameEvent[]> = {
       triggerChance: 0.1,
       message: 'Più sali, più la risoluzione cala. Guarda quelle nuvole a 8-bit!',
       speaker: 'Scalatore Low-Res',
+      sprite: 'https://play.pokemonshowdown.com/sprites/trainers/mountainman.png'
     },
     {
       id: 'event-montagna-2',
@@ -163,6 +197,7 @@ export const ZONE_EVENTS: Record<string, GameEvent[]> = {
       triggerChance: 0.1,
       message: 'Qui riposano le versioni beta del gioco mai pubblicate.',
       speaker: 'Archeologo Beta',
+      sprite: 'https://play.pokemonshowdown.com/sprites/trainers/ruinmaniac.png'
     },
     {
       id: 'event-rovina-2',

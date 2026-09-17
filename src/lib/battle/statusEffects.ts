@@ -1,10 +1,15 @@
-import { Pokemon } from '../../types/game';
+import { Pokemon, Move } from '../../types/game';
 
 export type StatusCondition = 'paralyzed' | 'poisoned' | 'sleep' | 'frozen' | 'burned';
 
 export interface VolatileStatus {
   confusionTurns?: number;
   isFlinched?: boolean;
+  lockedMove?: Move;
+  lockedTurns?: number;
+  charging?: boolean;
+  recharging?: boolean;
+  trapTurns?: number;
 }
 
 export function checkConfusion(pokemon: Pokemon, confusionTurns: number = 0): {

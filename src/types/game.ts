@@ -121,6 +121,12 @@ export interface Move {
   effectChance?: number;
   target?: string;
   description?: string;
+  multiTurn?: {
+    type: 'charge' | 'recharge' | 'multi-hit' | 'trap' | 'locked-turns';
+    turns?: number;
+    message?: string;
+    chargeMessage?: string;
+  };
 }
 
 export interface Trainer {
@@ -170,6 +176,7 @@ export interface GameState {
     location: string;
     badges: string[];
     quests: Quest[];
+    defeatedTrainers: string[];
   };
 }
 
@@ -200,10 +207,12 @@ export const INITIAL_STATE: GameState = {
       { id: 'caramella-rara', name: 'Caramella Rara', description: 'Alza di un livello un Pokémon.', count: 0, type: 'other' },
       { id: 'revitalizzante', name: 'Revitalizzante', description: 'Rianima un Pokémon esausto con metà PS.', count: 0, type: 'healing', effectValue: 0.5 },
       { id: 'revitalizzante-max', name: 'Revitalizzante Max', description: 'Rianima un Pokémon esausto con tutti i PS.', count: 0, type: 'healing', effectValue: 1 },
+      { id: 'pepita', name: 'Pepita', description: 'Una pepita d\'oro puro. Può essere venduta a caro prezzo.', count: 0, type: 'other' },
     ],
     money: 1000,
     location: 'villaggio',
     badges: [],
+    defeatedTrainers: [],
     quests: [
       {
         id: 'first-steps',
@@ -237,6 +246,105 @@ export const INITIAL_STATE: GameState = {
         status: 'available',
         category: 'collection',
         giver: 'Speleologo Glitch'
+      },
+      {
+        id: 'eclipse-hunter',
+        title: 'Cacciatore di Eclissi',
+        description: 'Il Team Eclipse sta diventando troppo audace. Dobbiamo ridimensionarli.',
+        objective: 'Sconfiggi 5 Reclute del Team Eclipse.',
+        rewardText: '5000 PokéDollari e 3 Iper Pozioni',
+        reward: { money: 5000, items: [{ id: 'iper-pozione', count: 3 }] },
+        status: 'available',
+        category: 'battle',
+        giver: 'Agente Jenny'
+      },
+      {
+        id: 'legend-collector',
+        title: 'Collezionista di Leggende',
+        description: 'Le leggende non sono solo favole. Sono dati rari nel sistema.',
+        objective: 'Cattura almeno 3 Pokémon Leggendari.',
+        rewardText: 'Diploma di Maestro e 10.000 PokéDollari',
+        reward: { money: 10000 },
+        status: 'available',
+        category: 'collection',
+        giver: 'Prof. Scordarello'
+      },
+      {
+        id: 'evolution-expert',
+        title: 'Esperto di Evoluzioni',
+        description: 'Vedere un Pokémon cambiare forma è la gioia di ogni scienziato.',
+        objective: 'Fai evolvere 10 Pokémon.',
+        rewardText: '5 Caramelle Rare',
+        reward: { items: [{ id: 'caramella-rara', count: 5 }] },
+        status: 'available',
+        category: 'collection',
+        giver: 'Scienziato Stuck'
+      },
+      {
+        id: 'money-maker',
+        title: 'Capitalismo Digitale',
+        description: 'Il mondo gira intorno ai soldi, anche quello dei Pokémon.',
+        objective: 'Accumula 50.000 PokéDollari.',
+        rewardText: '10 Pepite (Vendibili per molti soldi!)',
+        reward: { items: [{ id: 'pepita', count: 10 }] },
+        status: 'available',
+        category: 'social',
+        giver: 'Mercante Errante'
+      },
+      {
+        id: 'move-master',
+        title: 'Maestro delle Mosse',
+        description: 'Le mosse giuste possono ribaltare qualsiasi battaglia.',
+        objective: 'Insegna 5 nuove mosse ai tuoi Pokémon tramite l\'Aumento di Livello.',
+        rewardText: '3 MT Casuali (Dati di sistema)',
+        reward: { money: 1000 },
+        status: 'available',
+        category: 'battle',
+        giver: 'Cerca-Mosse'
+      },
+      {
+        id: 'area-conqueror',
+        title: 'Conquistatore di Aree',
+        description: 'Ogni zona ha il suo segreto. Scoprili tutti.',
+        objective: 'Sblocca e visita tutte le aree disponibili nel gioco.',
+        rewardText: '20.000 PokéDollari',
+        reward: { money: 20000 },
+        status: 'available',
+        category: 'exploration',
+        giver: 'Esploratore Ignoto'
+      },
+      {
+        id: 'badge-collector-pro',
+        title: 'Collezionista Pro',
+        description: 'Le medaglie sono il simbolo della tua forza.',
+        objective: 'Ottieni tutte le 10 medaglie dei Capipalestra.',
+        rewardText: 'Accesso alla Lega dei Glitch e 50.000 PokéDollari',
+        reward: { money: 50000 },
+        status: 'available',
+        category: 'battle',
+        giver: 'Lega Pokémon'
+      },
+      {
+        id: 'rare-spawn-hunter',
+        title: 'Cacciatore di Rari',
+        description: 'Ci sono Pokémon che appaiono solo una volta ogni mille cicli di clock.',
+        objective: 'Cattura un Pokémon con rarità inferiore all\'1%.',
+        rewardText: '5 Master Ball',
+        reward: { items: [{ id: 'master-ball', count: 5 }] },
+        status: 'available',
+        category: 'collection',
+        giver: 'Prof. Scordarello'
+      },
+      {
+        id: 'trainer-slayer',
+        title: 'Sterminatore di Allenatori',
+        description: 'Nessuno può resistere alla tua squadra.',
+        objective: 'Sconfiggi 50 allenatori (inclusi i rematch).',
+        rewardText: 'Statua d\'Oro e 100.000 PokéDollari',
+        reward: { money: 100000 },
+        status: 'available',
+        category: 'battle',
+        giver: 'Sfidofono'
       }
     ],
   },

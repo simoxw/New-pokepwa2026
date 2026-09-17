@@ -397,6 +397,45 @@ export const ZONES: Zone[] = [
       { pokemonId: 484, rarity: 0.1, minLevel: 70, maxLevel: 70 }, // Palkia (Legendario!)
     ],
   },
+  {
+    id: 'palude',
+    name: 'Palude del Bug',
+    description: 'Un acquitrino pieno di Pokémon Coleottero e Veleno.',
+    background: 'bg-green-900',
+    spawnTable: [
+      { pokemonId: 10, rarity: 15, minLevel: 25, maxLevel: 30 }, // Caterpie
+      { pokemonId: 13, rarity: 15, minLevel: 25, maxLevel: 30 }, // Weedle
+      { pokemonId: 46, rarity: 10, minLevel: 28, maxLevel: 35 }, // Paras
+      { pokemonId: 48, rarity: 10, minLevel: 30, maxLevel: 38 }, // Venonat
+      { pokemonId: 123, rarity: 5, minLevel: 35, maxLevel: 45 },  // Scyther
+      { pokemonId: 214, rarity: 5, minLevel: 35, maxLevel: 45 },  // Heracross
+      { pokemonId: 543, rarity: 8, minLevel: 25, maxLevel: 32 },  // Venipede
+      { pokemonId: 540, rarity: 8, minLevel: 25, maxLevel: 32 },  // Sewaddle
+      { pokemonId: 595, rarity: 5, minLevel: 30, maxLevel: 38 },  // Joltik
+      { pokemonId: 632, rarity: 5, minLevel: 35, maxLevel: 42 },  // Durant
+      { pokemonId: 637, rarity: 2, minLevel: 45, maxLevel: 55 },  // Volcarona
+      { pokemonId: 344, rarity: 0.1, minLevel: 60, maxLevel: 60 }, // Celebi (Raro)
+    ],
+  },
+  {
+    id: 'isola-server',
+    name: 'Isola del Server',
+    description: 'Il cuore pulsante del mondo digitale. Alta tensione!',
+    background: 'bg-zinc-800',
+    spawnTable: [
+      { pokemonId: 81, rarity: 15, minLevel: 40, maxLevel: 50 },  // Magnemite
+      { pokemonId: 100, rarity: 15, minLevel: 40, maxLevel: 50 }, // Voltorb
+      { pokemonId: 125, rarity: 8, minLevel: 45, maxLevel: 55 },  // Electabuzz
+      { pokemonId: 135, rarity: 5, minLevel: 45, maxLevel: 55 },  // Jolteon
+      { pokemonId: 137, rarity: 10, minLevel: 40, maxLevel: 50 }, // Porygon
+      { pokemonId: 145, rarity: 2, minLevel: 60, maxLevel: 60 },  // Zapdos
+      { pokemonId: 466, rarity: 3, minLevel: 50, maxLevel: 60 },  // Electivire
+      { pokemonId: 479, rarity: 5, minLevel: 45, maxLevel: 55 },  // Rotom
+      { pokemonId: 602, rarity: 8, minLevel: 35, maxLevel: 45 },  // Tynamo
+      { pokemonId: 642, rarity: 0.1, minLevel: 70, maxLevel: 70 }, // Thundurus
+      { pokemonId: 785, rarity: 0.1, minLevel: 70, maxLevel: 70 }, // Tapu Koko
+    ],
+  },
 ];
 
 export const CHARACTERS = {

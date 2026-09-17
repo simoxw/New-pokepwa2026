@@ -25,16 +25,45 @@ import { fetchPokemonData } from './lib/pokeapi';
 import { Pokemon, Move, Trainer, Item } from './types/game';
 import { fullyHealPokemon } from './lib/pokemonHeal';
 
+import { Sfidofono } from './components/Sfidofono';
 import { StarterSelection } from './components/StarterSelection';
 
 function GameContent() {
   const { state, setState } = useGame();
+  // Quest Progress Checker
+  useEffect(() => {
+    const caughtCount = Object.values(state.player.pokedex).filter(s => s === 'caught').length;
+    const badgeCount = state.player.badges.length;
+    const money = state.player.money;
+
+    setState(prev => {
+      let changed = false;
+      const newQuests = prev.player.quests.map(q => {
+        if (q.status !== 'active') return q;
+
+        let completed = false;
+        if (q.id === 'first-steps' && prev.player.location !== 'villaggio') completed = true;
+        if (q.id === 'money-maker' && money >= 50000) completed = true;
+        if (q.id === 'badge-collector-pro' && badgeCount >= 10) completed = true;
+        if (q.id === 'area-conqueror' && badgeCount >= 8) completed = true; // Visiting all areas implies many badges
+        
+        if (completed) {
+          changed = true;
+          return { ...q, status: 'completed' as const };
+        }
+        return q;
+      });
+
+      if (!changed) return prev;
+      return { ...prev, player: { ...prev.player, quests: newQuests } };
+    });
+  }, [state.player.location, state.player.money, state.player.badges.length, state.player.pokedex]);
   const [showStarterSelect, setShowStarterSelect] = useState(false);
   const [activeBattle, setActiveBattle] = useState<Pokemon | null>(null);
   const [activeTrainer, setActiveTrainer] = useState<Trainer | undefined>();
   const [showEvolution, setShowEvolution] = useState<Pokemon | null>(null);
   const [showMoveLearning, setShowMoveLearning] = useState<{ pokemon: Pokemon, move: Move } | null>(null);
-  const [currentScreen, setCurrentScreen] = useState<'game' | 'pokedex' | 'inventory' | 'team' | 'box' | 'trade' | 'local-battle' | 'settings' | 'badgecase' | 'shop' | 'profile' | 'quests'>('game');
+  const [currentScreen, setCurrentScreen] = useState<'game' | 'pokedex' | 'inventory' | 'team' | 'box' | 'trade' | 'local-battle' | 'settings' | 'badgecase' | 'shop' | 'profile' | 'quests' | 'sfidofono'>('game');
 
   useEffect(() => {
     if (state.player.team.length === 0) {
@@ -57,14 +86,23 @@ function GameContent() {
         let newQuests = [...prev.player.quests];
         if (activeBattle.name.toLowerCase() === 'magikarp') {
           newQuests = newQuests.map(q => 
-            q.id === 'magikarp-fan' && q.status === 'available' ? { ...q, status: 'completed' as const } : q
+            q.id === 'magikarp-fan' && q.status === 'active' ? { ...q, status: 'completed' as const } : q
           );
         }
         
         // Quest Check: Shiny Hunter
         if (activeBattle.isShiny) {
           newQuests = newQuests.map(q => 
-            q.id === 'shiny-hunter' && q.status === 'available' ? { ...q, status: 'completed' as const } : q
+            q.id === 'shiny-hunter' && q.status === 'active' ? { ...q, status: 'completed' as const } : q
+          );
+        }
+
+        // Quest Check: Rare Spawn Hunter
+        const spawnTable = prev.player.location !== 'villaggio' ? (prev as any).ZONES?.find((z: any) => z.id === prev.player.location)?.spawnTable : [];
+        const spawnInfo = spawnTable?.find((s: any) => s.pokemonId === activeBattle.id);
+        if (spawnInfo && spawnInfo.rarity < 1) {
+          newQuests = newQuests.map(q => 
+            q.id === 'rare-spawn-hunter' && q.status === 'active' ? { ...q, status: 'completed' as const } : q
           );
         }
 
@@ -177,6 +215,17 @@ function GameContent() {
       {currentScreen === 'shop' && <Shop key="shop-screen" onBack={() => setCurrentScreen('game')} />}
       {currentScreen === 'profile' && <PlayerProfile key="profile-screen" onBack={() => setCurrentScreen('game')} />}
       {currentScreen === 'quests' && <QuestLog key="quests-screen" onBack={() => setCurrentScreen('game')} />}
+      {currentScreen === 'sfidofono' && (
+        <Sfidofono 
+          key="sfidofono-screen"
+          onBack={() => setCurrentScreen('game')} 
+          onStartBattle={(trainer) => {
+            setActiveTrainer(trainer);
+            setActiveBattle(trainer.team[0]);
+            setCurrentScreen('game');
+          }}
+        />
+      )}
 
       {activeBattle && (
         <BattleScreen 

@@ -49,6 +49,12 @@ export const ZoneExplorer: React.FC<ZoneExplorerProps> = ({ onEncounter }) => {
         // Update Quest Progress if applicable
         const firstStepsQuest = state.player.quests.find(q => q.id === 'first-steps' && q.status === 'active');
         
+        if (triggeredEvent.type === 'battle' && triggeredEvent.trainerId) {
+          const trainer = await getTrainer(triggeredEvent.trainerId as any);
+          setTrainerEncounter(trainer);
+          return;
+        }
+
         if (triggeredEvent.type === 'item' && triggeredEvent.item) {
           setState(prev => {
             const newState = {

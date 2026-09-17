@@ -8,11 +8,12 @@ export const SPRITES = {
     FISHERMAN: "https://play.pokemonshowdown.com/sprites/trainers/fisherman.png",
     COOLTRAINER: "https://play.pokemonshowdown.com/sprites/trainers/cooltrainer.png",
     HIKER: "https://play.pokemonshowdown.com/sprites/trainers/hiker.png",
-    HEX_MANIAC: "https://play.pokemonshowdown.com/sprites/trainers/hexmaniac.png",
+    HEX_MANIAC: "https://play.pokemonshowdown.com/sprites/trainers/hexmaniac-gen6.png",
     FIRE_BREATHER: "https://play.pokemonshowdown.com/sprites/trainers/firebreather.png",
     CAMPER: "https://play.pokemonshowdown.com/sprites/trainers/camper.png",
     PICNICKER: "https://play.pokemonshowdown.com/sprites/trainers/picnicker.png",
     BLACKBELT: "https://play.pokemonshowdown.com/sprites/trainers/blackbelt.png",
-    BEAUTY: "https://play.pokemonshowdown.com/sprites/trainers/beauty.png"
+    BEAUTY: "https://play.pokemonshowdown.com/sprites/trainers/beauty.png",
+    BUG_CATCHER: "https://play.pokemonshowdown.com/sprites/trainers/bugcatcher.png"
   }
 };

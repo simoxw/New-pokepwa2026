@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { useGame } from '../contexts/GameContext';
 import { CHARACTERS, ZONES } from '../constants/game';
-import { MapPin, MessageCircle, Play, Heart, Award, Lock, ScrollText } from 'lucide-react';
+import { MapPin, MessageCircle, Play, Heart, Award, Lock, ScrollText, Phone } from 'lucide-react';
 import { isAreaUnlocked } from '../lib/badges';
 
 import { fullyHealPokemon } from '../lib/pokemonHeal';
@@ -21,7 +21,11 @@ export const Hub: React.FC = () => {
     "Se trovi un Pokémon cromatico, catturalo! O lascialo scappare, tanto io non guadagno nulla comunque.",
     "Nel Vulcano fa un caldo pazzesco. Ottimo per cuocere le uova, pessimo per la mia pressione.",
     "La Grotta del Debug è un labirinto. Molti sono entrati, pochi ne sono usciti senza un errore di sistema.",
-    "Cerca di completare il Pokédex. Non che serva a molto, ma almeno avrai qualcosa da fare invece di fissarmi."
+    "Cerca di completare il Pokédex. Non che serva a molto, ma almeno avrai qualcosa da fare invece di fissarmi.",
+    "Ho sentito che il Team Eclipse sta tramando qualcosa... Ma finché non mi staccano l'ADSL, non mi interessa.",
+    "Tuo padre era un grande allenatore. Oppure era un postino, non ricordo bene, i miei file sono un po' frammentati.",
+    "I Pokémon multi-colpo sono utili contro i Sostituti. Peccato che non abbiamo ancora implementato 'Sostituto'.",
+    "Se un Pokémon deve ricaricarsi, è vulnerabile. È come quando il mio PC decide di fare gli aggiornamenti di Windows."
   ];
 
   const goToZone = (zoneId: string) => {
@@ -65,50 +69,71 @@ export const Hub: React.FC = () => {
     const totalEvs = (Object.values(active.evs) as number[]).reduce((a, b) => a + b, 0);
     
     let potential = "scandaloso";
-    if (totalIvs > 150) potential = "leggendario";
-    else if (totalIvs > 120) potential = "eccellente";
-    else if (totalIvs > 90) potential = "buono";
-    else if (totalIvs > 60) potential = "mediocre";
+    let color = "text-red-500";
+    if (totalIvs > 160) { potential = "ECCELSO (DIVINO)"; color = "text-purple-600"; }
+    else if (totalIvs > 140) { potential = "LEGGENDARIO"; color = "text-orange-500"; }
+    else if (totalIvs > 120) { potential = "ECCELLENTE"; color = "text-emerald-500"; }
+    else if (totalIvs > 90) { potential = "BUONO"; color = "text-blue-500"; }
+    else if (totalIvs > 60) { potential = "MEDIOCRE"; color = "text-yellow-600"; }
 
     const randomMessage = PROF_MESSAGES[Math.floor(Math.random() * PROF_MESSAGES.length)];
-    setDialogue(`Vediamo il tuo ${active.name}... Il suo potenziale è ${potential}. Ha accumulato ${totalEvs} EV. ${randomMessage}`);
+    setDialogue(`Analisi del tuo ${active.name}: il potenziale genetico è ${potential}. IV totali: ${totalIvs}/186. EV accumulate: ${totalEvs}. ${randomMessage}`);
   };
 
   const claimPokedexReward = () => {
     const pokedexValues = Object.values(state.player.pokedex) as ('seen' | 'caught')[];
     const caughtCount = pokedexValues.filter(s => s === 'caught').length;
     
-    if (caughtCount >= 20 && !state.player.badges.includes('reward-20')) {
-      setState(prev => ({
-        ...prev,
-        player: {
-          ...prev.player,
-          money: prev.player.money + 5000,
-          badges: [...prev.player.badges, 'reward-20']
-        }
-      }));
-      setDialogue(`Ottimo! Hai catturato ${caughtCount} specie. Ecco 5000 PokéDollari per il tuo disturbo.`);
-    } else if (caughtCount >= 10 && !state.player.badges.includes('reward-10')) {
+    const rewards = [
+      { threshold: 100, id: 'reward-100', msg: "INCREDIBILE! Hai completato quasi tutto! Ecco 50.000 PokéDollari e il Diploma di Eccellenza.", money: 50000 },
+      { threshold: 75, id: 'reward-75', msg: "75 specie! Sei un vero esperto. Prendi questi 20.000 PokéDollari.", money: 20000 },
+      { threshold: 50, id: 'reward-50', msg: "Metà strada! 50 specie catturate. Ti affido questa Master Ball e 10.000 PokéDollari.", money: 10000, items: [{ id: 'master-ball', count: 1 }] },
+      { threshold: 40, id: 'reward-40', msg: "40 specie? Non male. Ecco 3 Caramelle Rare per i tuoi sforzi.", items: [{ id: 'caramella-rara', count: 3 }] },
+      { threshold: 30, id: 'reward-30', msg: "30 specie catturate. Ecco 10 Ultra Ball per continuare la ricerca.", items: [{ id: 'ultra-ball', count: 10 }] },
+      { threshold: 20, id: 'reward-20', msg: "20 specie. Ecco 5.000 PokéDollari per il tuo disturbo.", money: 5000 },
+      { threshold: 10, id: 'reward-10', msg: "10 specie catturate. Iniziamo a ragionare. Ecco 5 Ultra Ball.", items: [{ id: 'ultra-ball', count: 5 }] },
+    ];
+
+    const availableReward = rewards.find(r => caughtCount >= r.threshold && !state.player.badges.includes(r.id));
+
+    if (availableReward) {
       setState(prev => {
-        const newInventory = [...prev.player.inventory];
-        const ultraBall = newInventory.find(i => i.id === 'ultra-ball');
-        if (ultraBall) {
-          ultraBall.count += 5;
-        } else {
-          newInventory.push({ id: 'ultra-ball', name: 'Ultra Ball', description: 'Una ball molto potente.', count: 5, type: 'capture' } as any);
+        let newInventory = [...prev.player.inventory];
+        let newMoney = prev.player.money + (availableReward.money || 0);
+
+        if (availableReward.items) {
+          availableReward.items.forEach(rewardItem => {
+            const itemInInv = newInventory.find(i => i.id === rewardItem.id);
+            if (itemInInv) {
+              itemInInv.count += rewardItem.count;
+            } else {
+              // Should find existing item template or create one
+              // For simplicity, we assume common items exist or we add them
+              const names: Record<string, string> = { 'master-ball': 'Master Ball', 'caramella-rara': 'Caramella Rara', 'ultra-ball': 'Ultra Ball' };
+              newInventory.push({ 
+                id: rewardItem.id, 
+                name: names[rewardItem.id] || rewardItem.id, 
+                description: 'Premio del Professore.', 
+                count: rewardItem.count, 
+                type: rewardItem.id.includes('ball') ? 'capture' : 'other' 
+              } as any);
+            }
+          });
         }
+
         return {
           ...prev,
           player: {
             ...prev.player,
+            money: newMoney,
             inventory: newInventory,
-            badges: [...prev.player.badges, 'reward-10']
+            badges: [...prev.player.badges, availableReward.id]
           }
         };
       });
-      setDialogue(`Notevole! Hai catturato ${caughtCount} specie. Prendi queste 5 Ultra Ball.`);
+      setDialogue(availableReward.msg);
     } else {
-      setDialogue(`Hai catturato ${caughtCount} specie. Torna quando ne avrai almeno 10 (o se ne hai già presi, aspetta che mi ricordi di te).`);
+      setDialogue(`Hai catturato ${caughtCount} specie. ${caughtCount < 10 ? 'Torna quando ne avrai almeno 10.' : 'Al momento non ho nuovi premi per te, continua così!'}`);
     }
   };
 
@@ -163,10 +188,16 @@ export const Hub: React.FC = () => {
           color="border-emerald-500"
         />
         <ActionButton 
-          icon={<Award className="text-yellow-500" />} 
-          label="Medaglie" 
-          onClick={() => (window as any).onNavigate('badgecase')}
-          color="border-yellow-500"
+          icon={<span className="text-xl">📦</span>} 
+          label="Box" 
+          onClick={() => (window as any).onNavigate('box')}
+          color="border-cyan-400"
+        />
+        <ActionButton 
+          icon={<Phone className="text-blue-400" />} 
+          label="Sfidofono" 
+          onClick={() => (window as any).onNavigate('sfidofono')}
+          color="border-blue-400"
         />
         <ActionButton 
           icon={<span className="text-xl">📓</span>} 
@@ -193,10 +224,10 @@ export const Hub: React.FC = () => {
           color="border-red-400"
         />
         <ActionButton 
-          icon={<span className="text-xl">📦</span>} 
-          label="Box" 
-          onClick={() => (window as any).onNavigate('box')}
-          color="border-cyan-400"
+          icon={<Award className="text-yellow-500" />} 
+          label="Medaglie" 
+          onClick={() => (window as any).onNavigate('badgecase')}
+          color="border-yellow-500"
         />
         <ActionButton 
           icon={<span className="text-xl">🎒</span>} 
