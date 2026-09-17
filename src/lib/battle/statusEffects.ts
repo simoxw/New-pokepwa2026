@@ -69,31 +69,89 @@ export function checkFlinch(pokemon: Pokemon, isFlinched?: boolean): { canAct: b
   return { canAct: true };
 }
 
-export function canMove(pokemon: Pokemon): { canMove: boolean; msg?: string; newStatus?: StatusCondition; newDuration?: number } {
+export function canMove(pokemon: Pokemon): { 
+  canMove: boolean; 
+  msg?: string; 
+  newStatus?: StatusCondition; 
+  newDuration?: number;
+  statusChanged?: boolean;
+} {
   if (!pokemon.status) return { canMove: true };
 
   switch (pokemon.status) {
     case 'paralyzed':
       if (Math.random() < 0.25) {
-        return { canMove: false, msg: `${pokemon.name} è paralizzato! Non riesce a muoversi!` };
+        return { 
+          canMove: false, 
+          msg: `${pokemon.name} è paralizzato! Non riesce a muoversi!`,
+          newStatus: 'paralyzed',
+          newDuration: pokemon.statusDuration
+        };
       }
-      break;
-    case 'sleep':
+      return { 
+        canMove: true, 
+        newStatus: 'paralyzed', 
+        newDuration: pokemon.statusDuration 
+      };
+
+    case 'sleep': {
       const duration = pokemon.statusDuration || 0;
       if (duration <= 0) {
-        return { canMove: true, msg: `${pokemon.name} si è svegliato!`, newStatus: undefined, newDuration: 0 };
+        return { 
+          canMove: true, 
+          msg: `${pokemon.name} si è svegliato!`, 
+          newStatus: undefined, 
+          newDuration: 0,
+          statusChanged: true
+        };
       }
-      return { canMove: false, msg: `${pokemon.name} sta dormendo profondamente...`, newDuration: duration - 1 };
+      return { 
+        canMove: false, 
+        msg: `${pokemon.name} sta dormendo profondamente...`, 
+        newStatus: 'sleep',
+        newDuration: duration - 1,
+        statusChanged: true
+      };
+    }
+
     case 'frozen':
       if (Math.random() < 0.20) {
-        return { canMove: true, msg: `${pokemon.name} si è liberato dal ghiaccio!`, newStatus: undefined, newDuration: 0 };
+        return { 
+          canMove: true, 
+          msg: `${pokemon.name} si è liberato dal ghiaccio!`, 
+          newStatus: undefined, 
+          newDuration: 0,
+          statusChanged: true
+        };
       }
-      return { canMove: false, msg: `${pokemon.name} è congelato!` };
-    default:
-      break;
-  }
+      return { 
+        canMove: false, 
+        msg: `${pokemon.name} è congelato!`,
+        newStatus: 'frozen',
+        newDuration: pokemon.statusDuration
+      };
 
-  return { canMove: true };
+    case 'poisoned':
+      return { 
+        canMove: true, 
+        newStatus: 'poisoned', 
+        newDuration: pokemon.statusDuration 
+      };
+
+    case 'burned':
+      return { 
+        canMove: true, 
+        newStatus: 'burned', 
+        newDuration: pokemon.statusDuration 
+      };
+
+    default:
+      return { 
+        canMove: true, 
+        newStatus: pokemon.status, 
+        newDuration: pokemon.statusDuration 
+      };
+  }
 }
 
 export function getStatusEffect(pokemon: Pokemon): { damage?: number; msg?: string } {

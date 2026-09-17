@@ -45,6 +45,22 @@ describe('Status Effects', () => {
       expect(result.canMove).toBe(true);
       expect(result.newStatus).toBeUndefined();
     });
+
+    it('should maintain poisoned status across turns without wiping it', () => {
+      const p = mockPokemon({ status: 'poisoned' });
+      const result = canMove(p);
+      expect(result.canMove).toBe(true);
+      expect(result.newStatus).toBe('poisoned');
+      expect(result.statusChanged).toBeFalsy();
+    });
+
+    it('should maintain burned status across turns without wiping it', () => {
+      const p = mockPokemon({ status: 'burned' });
+      const result = canMove(p);
+      expect(result.canMove).toBe(true);
+      expect(result.newStatus).toBe('burned');
+      expect(result.statusChanged).toBeFalsy();
+    });
   });
 
   describe('getStatusEffect', () => {

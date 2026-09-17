@@ -122,3 +122,12 @@ Questo documento descrive le principali funzioni, algoritmi e metodi esportati n
   Esegue l'algoritmo di moltiplicazione incrociata delle debolezze per doppi tipi (es. tipo Fuoco/Volante riceve danno 4x da Roccia, 0.25x da Erba, 0x da Terra).
 - **`playPokemonCry(cryUrl)`**:  
   Inizializza e riproduce l'audio nativo HTML5 del verso del Pokémon.
+
+### `BattleControls.tsx` & `BattleScreen.tsx`
+- **Long-Press Move Inspection (600ms)**:  
+  Tenendo premuto il pulsante di una mossa per almeno 600ms si apre la scheda dettagliata della mossa (categoria Fisica/Speciale/Stato, potenza, precisione, priorità, moltiplicatore di efficacia sul nemico e descrizioni/effetti secondari). Non appena il pulsante viene rilasciato, l'overlay scompare senza eseguire la mossa. Il rilascio prima di 600ms invece attiva la mossa.
+- **Tipografia Ottimizzata Mosse**:  
+  Il nome della mossa è reso in corpo più compatto (`text-[11px] sm:text-xs`) per evitare troncamenti antiestetici, lasciando inalterati tutti gli altri indicatori (PP, Tipo, Potenza, Precisione).
+- **Ciclo Persistenza Status (Avvelenamento e Scottatura)**:  
+  Corretto il controllo di stato turn-by-turn in `canMove` e `executeMoveAction`, assicurando che l'avvelenamento e la scottatura rimangano attivi per tutta la durata dello scontro infliggendo danno alla fine di ogni turno (rispettivamente 1/8 e 1/16 dei PS max), e che non vengano rimossi prematuramente.
+

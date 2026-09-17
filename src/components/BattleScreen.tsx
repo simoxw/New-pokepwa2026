@@ -255,11 +255,20 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     setTargetHp: React.Dispatch<React.SetStateAction<number>>,
     isPlayer: boolean,
     isFirstInTurn: boolean
-  ): { nextUserHp: number; nextTargetHp: number; targetFainted: boolean; userFainted: boolean } => {
+  ): { 
+    nextUserHp: number; 
+    nextTargetHp: number; 
+    targetFainted: boolean; 
+    userFainted: boolean;
+    nextUserStatus?: { status?: StatusCondition, duration?: number };
+    nextTargetStatus?: { status?: StatusCondition, duration?: number };
+  } => {
     addLog(`${user.name} usa ${move.name}!`);
 
     let curUserHp = userHp;
     let curTargetHp = targetHp;
+    let nextUserStatusObj = { ...userStatus };
+    let nextTargetStatusObj = { ...targetStatus };
 
     // 1. Accuracy Check
     if (move.accuracy && move.accuracy < 100) {
@@ -268,7 +277,14 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       const finalAccuracy = Math.min(100, Math.floor(move.accuracy * accMultiplier));
       if (Math.random() * 100 >= finalAccuracy) {
         addLog(`Ma il colpo di ${user.name} fallisce!`);
-        return { nextUserHp: curUserHp, nextTargetHp: curTargetHp, targetFainted: false, userFainted: false };
+        return { 
+          nextUserHp: curUserHp, 
+          nextTargetHp: curTargetHp, 
+          targetFainted: false, 
+          userFainted: false,
+          nextUserStatus: nextUserStatusObj,
+          nextTargetStatus: nextTargetStatusObj
+        };
       }
     }
 
@@ -336,6 +352,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       const procChance = chance ?? (move.category === 'status' ? 100 : 100);
       if (Math.random() * 100 < procChance) {
         const duration = status === 'sleep' ? Math.floor(Math.random() * 3) + 2 : undefined;
+        nextTargetStatusObj = { status, duration };
         setTargetStatus({ status, duration });
         const STATUS_MESSAGES: Record<StatusCondition, string> = {
           paralyzed: `${target.name} è rimasto paralizzato! Potrebbe non riuscire a muoversi!`,
@@ -359,6 +376,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
 
       // Special case: Rest (Riposo) cures status and induces 2 turns of sleep
       if (move.name.toLowerCase().includes('riposo') || move.name.toLowerCase().includes('rest')) {
+        nextUserStatusObj = { status: 'sleep', duration: 2 };
         setUserStatus({ status: 'sleep', duration: 2 });
         addLog(`${user.name} cade in un sonno profondo e guarisce da ogni problema di stato!`);
       }
@@ -507,7 +525,9 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       nextUserHp: curUserHp,
       nextTargetHp: curTargetHp,
       targetFainted: curTargetHp <= 0,
-      userFainted: curUserHp <= 0
+      userFainted: curUserHp <= 0,
+      nextUserStatus: nextUserStatusObj,
+      nextTargetStatus: nextTargetStatusObj
     };
   }, [addLog]);
 
@@ -745,7 +765,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
 
     // 2. Primary Status check
     const moveCheck = canMove({ ...enemy, status: enemyStatus.status, statusDuration: enemyStatus.duration });
-    if (moveCheck.newStatus !== enemyStatus.status || moveCheck.newDuration !== enemyStatus.duration) {
+    if (moveCheck.statusChanged) {
       setEnemyStatus({ status: moveCheck.newStatus, duration: moveCheck.newDuration });
     }
     if (!moveCheck.canMove) {
@@ -813,8 +833,23 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       return;
     }
 
-    // End-of-turn status damage
-    await handleStatusEndTurn(enemy, res.nextUserHp, setEnemyHp, enemyStatus.status);
+    // End-of-turn status damage (Poison / Burn) for both player and enemy
+    const livePlayerStatus = res.nextTargetStatus || playerStatus;
+    const liveEnemyStatus = res.nextUserStatus || enemyStatus;
+
+    let nextPlayerHp = res.nextTargetHp;
+    nextPlayerHp = await handleStatusEndTurn(playerActive, nextPlayerHp, setPlayerHp, livePlayerStatus.status);
+    if (nextPlayerHp <= 0) {
+      await handlePlayerFaint();
+      return;
+    }
+
+    let nextEnemyHp = res.nextUserHp;
+    nextEnemyHp = await handleStatusEndTurn(enemy, nextEnemyHp, setEnemyHp, liveEnemyStatus.status);
+    if (nextEnemyHp <= 0) {
+      await handleWin(nextPlayerHp);
+      return;
+    }
 
     setIsAnimating(false);
   }, [
@@ -910,7 +945,13 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       isFirst: boolean,
       cPlayerHp: number,
       cEnemyHp: number
-    ): Promise<{ nextPlayerHp: number; nextEnemyHp: number; stopped: boolean }> => {
+    ): Promise<{ 
+      nextPlayerHp: number; 
+      nextEnemyHp: number; 
+      stopped: boolean;
+      nextUserStatus?: { status?: StatusCondition, duration?: number };
+      nextTargetStatus?: { status?: StatusCondition, duration?: number };
+    }> => {
       const attacker = attackerIsPlayer ? playerActive : enemy;
       const move = attackerIsPlayer ? activePlayerMove : enemyMove;
       const attackerVolatile = attackerIsPlayer ? playerVolatile : enemyVolatile;
@@ -951,7 +992,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
 
       // 2. Primary Status Check (Sleep, Frozen, Paralysis)
       const moveCheck = canMove({ ...attacker, status: attackerStatus.status, statusDuration: attackerStatus.duration });
-      if (moveCheck.newStatus !== attackerStatus.status || moveCheck.newDuration !== attackerStatus.duration) {
+      if (moveCheck.statusChanged) {
         setAttackerStatus({ status: moveCheck.newStatus, duration: moveCheck.newDuration });
       }
       if (!moveCheck.canMove) {
@@ -1068,16 +1109,31 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
         return { nextPlayerHp: finalPlayerHp, nextEnemyHp: finalEnemyHp, stopped: true };
       }
 
-      return { nextPlayerHp: finalPlayerHp, nextEnemyHp: finalEnemyHp, stopped: false };
+      return { 
+        nextPlayerHp: finalPlayerHp, 
+        nextEnemyHp: finalEnemyHp, 
+        stopped: false,
+        nextUserStatus: actionRes.nextUserStatus,
+        nextTargetStatus: actionRes.nextTargetStatus
+      };
     };
 
     // --- EXECUTION PHASE 1: FIRST COMBATANT ---
     let curPlayerHp = playerHp;
     let curEnemyHp = enemyHp;
+    let livePlayerStatus = { ...playerStatus };
+    let liveEnemyStatus = { ...enemyStatus };
 
     const firstResult = await runCombatantAttack(playerFirst, true, curPlayerHp, curEnemyHp);
     curPlayerHp = firstResult.nextPlayerHp;
     curEnemyHp = firstResult.nextEnemyHp;
+    if (playerFirst) {
+      if (firstResult.nextUserStatus) livePlayerStatus = firstResult.nextUserStatus;
+      if (firstResult.nextTargetStatus) liveEnemyStatus = firstResult.nextTargetStatus;
+    } else {
+      if (firstResult.nextUserStatus) liveEnemyStatus = firstResult.nextUserStatus;
+      if (firstResult.nextTargetStatus) livePlayerStatus = firstResult.nextTargetStatus;
+    }
 
     if (firstResult.stopped) {
       return;
@@ -1089,6 +1145,13 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     const secondResult = await runCombatantAttack(!playerFirst, false, curPlayerHp, curEnemyHp);
     curPlayerHp = secondResult.nextPlayerHp;
     curEnemyHp = secondResult.nextEnemyHp;
+    if (!playerFirst) {
+      if (secondResult.nextUserStatus) livePlayerStatus = secondResult.nextUserStatus;
+      if (secondResult.nextTargetStatus) liveEnemyStatus = secondResult.nextTargetStatus;
+    } else {
+      if (secondResult.nextUserStatus) liveEnemyStatus = secondResult.nextUserStatus;
+      if (secondResult.nextTargetStatus) livePlayerStatus = secondResult.nextTargetStatus;
+    }
 
     if (secondResult.stopped) {
       return;
@@ -1100,14 +1163,14 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     setEnemyVolatile(prev => ({ ...prev, isFlinched: false }));
 
     // Player status damage (Poison / Burn)
-    curPlayerHp = await handleStatusEndTurn(playerActive, curPlayerHp, setPlayerHp, playerStatus.status);
+    curPlayerHp = await handleStatusEndTurn(playerActive, curPlayerHp, setPlayerHp, livePlayerStatus.status);
     if (curPlayerHp <= 0) {
       await handlePlayerFaint();
       return;
     }
 
     // Enemy status damage (Poison / Burn)
-    curEnemyHp = await handleStatusEndTurn(enemy, curEnemyHp, setEnemyHp, enemyStatus.status);
+    curEnemyHp = await handleStatusEndTurn(enemy, curEnemyHp, setEnemyHp, liveEnemyStatus.status);
     if (curEnemyHp <= 0) {
       await handleWin(curPlayerHp);
       return;

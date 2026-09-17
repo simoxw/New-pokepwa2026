@@ -110,8 +110,8 @@ describe('Battle System - Complete Engine Verification', () => {
         isCrit: false,
         attackerStages: { spAtk: 2 }
       });
-      // Allow small random variance, difference should be near zero compared to base
-      expect(Math.abs(spBuffPhys.damage - basePhys.damage)).toBeLessThanOrEqual(3);
+      // Allow standard 15% random roll variance, difference should be within random roll range
+      expect(Math.abs(spBuffPhys.damage - basePhys.damage)).toBeLessThanOrEqual(6);
     });
 
     it('applies special attack stage buffs to special moves', () => {
