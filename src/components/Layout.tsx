@@ -6,7 +6,7 @@ import { PWAInstallButton } from './PWAInstallButton';
 
 interface LayoutProps {
   children: React.ReactNode;
-  onNavigate: (screen: 'game' | 'pokedex' | 'inventory' | 'team' | 'box' | 'trade' | 'local-battle' | 'settings' | 'badgecase' | 'shop' | 'profile' | 'quests' | 'sfidofono' | 'league') => void;
+  onNavigate: (screen: 'game' | 'pokedex' | 'inventory' | 'team' | 'box' | 'trade' | 'local-battle' | 'settings' | 'badgecase' | 'shop' | 'profile' | 'quests' | 'sfidofono' | 'league' | 'tower') => void;
 }
 
 export const Layout: React.FC<LayoutProps> = ({ children, onNavigate }) => {
@@ -32,10 +32,23 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate }) => {
           </span>
           <button 
             onClick={() => onNavigate('profile')}
-            className={`w-8 h-8 rounded-full ${state.player.spriteColor || 'bg-blue-500'} flex items-center justify-center text-white text-xs font-black shadow-sm active:scale-90 transition-all cursor-pointer border border-white/40`}
-            title="Profilo Allenatore"
+            className={`w-9 h-9 rounded-full ${state.player.spriteColor || 'bg-blue-500'} flex items-center justify-center text-white text-xs font-black shadow-sm active:scale-90 transition-all cursor-pointer border border-white/40 relative overflow-visible`}
+            title={`Profilo: ${state.player.name} (${state.player.title || 'Allenatore'})`}
           >
-            {state.player.name[0]}
+            {state.player.avatarUrl ? (
+              <img 
+                src={state.player.avatarUrl} 
+                alt="Avatar" 
+                className="w-full h-full object-contain rounded-full p-0.5" 
+              />
+            ) : (
+              state.player.name[0]
+            )}
+            {state.player.hatEmoji && (
+              <span className="absolute -top-1.5 -right-1 text-xs filter drop-shadow">
+                {state.player.hatEmoji}
+              </span>
+            )}
           </button>
         </div>
       </header>

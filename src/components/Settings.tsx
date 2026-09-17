@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useGame } from '../contexts/GameContext';
-import { ChevronLeft, Save, Trash2, RotateCcw, FileJson, Zap, User } from 'lucide-react';
+import { ChevronLeft, Save, Trash2, RotateCcw, FileJson, Zap, User, RefreshCw, Smartphone, CheckCircle } from 'lucide-react';
 import { exportGameState, validateGameState } from '../lib/utils';
 import { INITIAL_STATE, Pokemon } from '../types/game';
 import { BADGES } from '../lib/badges';
@@ -11,6 +11,41 @@ export const Settings: React.FC<{ onBack: () => void, onProfile: () => void }> =
 
   const [showConfirm, setShowConfirm] = React.useState(false);
   const [showCheats, setShowCheats] = React.useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
+  const [updateMsg, setUpdateMsg] = useState<string | null>(null);
+
+  const handleForcePwaUpdate = async () => {
+    setIsUpdating(true);
+    setUpdateMsg('Controllo Service Worker e svuotamento cache...');
+
+    try {
+      if ('serviceWorker' in navigator) {
+        const registrations = await navigator.serviceWorker.getRegistrations();
+        for (const registration of registrations) {
+          await registration.update();
+          if (registration.waiting) {
+            registration.waiting.postMessage({ type: 'SKIP_WAITING' });
+          }
+        }
+      }
+
+      if ('caches' in window) {
+        const cacheNames = await caches.keys();
+        for (const name of cacheNames) {
+          await caches.delete(name);
+        }
+      }
+
+      setUpdateMsg('Cache svuotata! Ricaricamento in corso...');
+      setTimeout(() => {
+        window.location.reload();
+      }, 1000);
+    } catch (err) {
+      console.error('PWA update error:', err);
+      setUpdateMsg('Errore durante l\'aggiornamento, prova a riavviare la pagina.');
+      setIsUpdating(false);
+    }
+  };
 
   const applyCheat = (type: string) => {
     setState(prev => {
@@ -150,6 +185,42 @@ export const Settings: React.FC<{ onBack: () => void, onProfile: () => void }> =
               <span className="text-[10px] font-black uppercase text-emerald-700">Importa JSON</span>
               <input type="file" accept=".json" className="hidden" onChange={handleImport} />
             </label>
+          </div>
+        </div>
+
+        <hr />
+
+        {/* PWA Updates & Cache Section */}
+        <div className="space-y-3">
+          <h3 className="font-black text-xs uppercase text-gray-400 tracking-widest flex items-center gap-2">
+            <Smartphone className="w-3 h-3 text-blue-500" /> Aggiornamenti PWA & Cache
+          </h3>
+          
+          <div className="bg-slate-50 border-2 border-slate-200/80 rounded-2xl p-4 space-y-3">
+            <div className="space-y-1">
+              <p className="text-xs font-bold text-gray-700">
+                Come funzionano gli aggiornamenti su telefono:
+              </p>
+              <p className="text-[11px] text-gray-500 leading-relaxed">
+                Dopo ogni push su GitHub, il browser del telefono rileva la nuova versione. Se vedi ancora file vecchi a causa della cache ostinata, premi qui sotto per forzare il refresh immediato senza perdere la partita!
+              </p>
+            </div>
+
+            {updateMsg && (
+              <div className="p-2.5 bg-blue-50 border border-blue-200 rounded-xl text-blue-700 text-xs font-mono font-bold flex items-center gap-2">
+                <RefreshCw className={`w-3.5 h-3.5 ${isUpdating ? 'animate-spin' : ''}`} />
+                <span>{updateMsg}</span>
+              </div>
+            )}
+
+            <button
+              onClick={handleForcePwaUpdate}
+              disabled={isUpdating}
+              className="w-full bg-blue-600 hover:bg-blue-700 active:scale-98 text-white font-black uppercase text-xs py-3.5 px-4 rounded-xl shadow-md transition-all flex items-center justify-center gap-2 cursor-pointer"
+            >
+              <RefreshCw className={`w-4 h-4 ${isUpdating ? 'animate-spin' : ''}`} />
+              <span>{isUpdating ? 'Aggiornamento in corso...' : 'Forza Aggiornamento & Svuota Cache'}</span>
+            </button>
           </div>
         </div>
 

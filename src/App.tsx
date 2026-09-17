@@ -27,6 +27,7 @@ import { fullyHealPokemon } from './lib/pokemonHeal';
 import { Sfidofono } from './components/Sfidofono';
 import { StarterSelection } from './components/StarterSelection';
 import { LeagueHub } from './components/LeagueHub';
+import { BattleTower } from './components/BattleTower';
 
 function GameContent() {
   const { state, setState } = useGame();
@@ -63,7 +64,8 @@ function GameContent() {
   const [activeTrainer, setActiveTrainer] = useState<Trainer | undefined>();
   const [showEvolution, setShowEvolution] = useState<Pokemon | null>(null);
   const [showMoveLearning, setShowMoveLearning] = useState<{ pokemon: Pokemon, move: Move } | null>(null);
-  const [currentScreen, setCurrentScreen] = useState<'game' | 'pokedex' | 'inventory' | 'team' | 'box' | 'trade' | 'local-battle' | 'settings' | 'badgecase' | 'shop' | 'profile' | 'quests' | 'sfidofono' | 'league'>('game');
+  const [currentScreen, setCurrentScreen] = useState<'game' | 'pokedex' | 'inventory' | 'team' | 'box' | 'trade' | 'local-battle' | 'settings' | 'badgecase' | 'shop' | 'profile' | 'quests' | 'sfidofono' | 'league' | 'tower'>('game');
+  const [lastTowerBattleResult, setLastTowerBattleResult] = useState<'win' | 'lose' | null>(null);
 
   useEffect(() => {
     if (state.player.team.length === 0) {
@@ -78,6 +80,7 @@ function GameContent() {
     ballUsed?: Item
   ) => {
     const isLeagueBattle = activeTrainer?.id?.startsWith('superquattro-') || activeTrainer?.id === 'campione-pm';
+    const isTowerBattle = activeTrainer?.id?.startsWith('tower-bot-');
 
     if (result === 'catch' && ballUsed && activeBattle) {
       // Save caught pokemon
@@ -124,17 +127,24 @@ function GameContent() {
       if (evoCandidate) setShowEvolution(evoCandidate);
       if (moveCandidate) setShowMoveLearning(moveCandidate);
     } else if (result === 'lose') {
-      setState(prev => ({
-        ...prev,
-        player: {
-          ...prev.player,
-          location: 'villaggio',
-          team: prev.player.team.map(p => fullyHealPokemon(p))
-        }
-      }));
-      setActiveBattle(null);
-      setActiveTrainer(undefined);
-      setCurrentScreen('game');
+      if (isTowerBattle) {
+        setLastTowerBattleResult('lose');
+        setCurrentScreen('tower');
+        setActiveBattle(null);
+        setActiveTrainer(undefined);
+      } else {
+        setState(prev => ({
+          ...prev,
+          player: {
+            ...prev.player,
+            location: 'villaggio',
+            team: prev.player.team.map(p => fullyHealPokemon(p))
+          }
+        }));
+        setActiveBattle(null);
+        setActiveTrainer(undefined);
+        setCurrentScreen('game');
+      }
       if (evoCandidate) setShowEvolution(evoCandidate);
       if (moveCandidate) setShowMoveLearning(moveCandidate);
     } else {
@@ -142,6 +152,9 @@ function GameContent() {
       setActiveTrainer(undefined);
       if (isLeagueBattle) {
         setCurrentScreen('league');
+      } else if (isTowerBattle) {
+        setLastTowerBattleResult('win');
+        setCurrentScreen('tower');
       }
       if (evoCandidate) {
         setShowEvolution(evoCandidate);
@@ -233,6 +246,18 @@ function GameContent() {
           key="league-screen"
           onBack={() => setCurrentScreen('game')} 
           onOpenInventory={() => setCurrentScreen('inventory')}
+          onStartBattle={(trainer) => {
+            setActiveTrainer(trainer);
+            setActiveBattle(trainer.team[0]);
+          }}
+        />
+      )}
+      {currentScreen === 'tower' && (
+        <BattleTower 
+          key="tower-screen"
+          onBack={() => setCurrentScreen('game')} 
+          lastBattleResult={lastTowerBattleResult}
+          onClearBattleResult={() => setLastTowerBattleResult(null)}
           onStartBattle={(trainer) => {
             setActiveTrainer(trainer);
             setActiveBattle(trainer.team[0]);

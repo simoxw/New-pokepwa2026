@@ -15,6 +15,11 @@ export default defineConfig(() => {
         devOptions: {
           enabled: true,
         },
+        workbox: {
+          skipWaiting: true,
+          clientsClaim: true,
+          cleanupOutdatedCaches: true,
+        },
         manifest: {
           id: './',
           start_url: './',

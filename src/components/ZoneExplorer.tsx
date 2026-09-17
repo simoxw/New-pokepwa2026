@@ -5,9 +5,11 @@ import { ZONES } from '../constants/game';
 import { fetchPokemonData } from '../lib/pokeapi';
 import { getTrainer, TRAINERS_DATA } from '../data/trainers';
 import { Pokemon, Trainer, Item } from '../types/game';
-import { ChevronLeft, Footprints, Sword, Gift, MessageCircle, Heart } from 'lucide-react';
+import { ChevronLeft, Footprints, Sword, Gift, MessageCircle, Heart, Moon } from 'lucide-react';
 import { isAreaUnlocked } from '../lib/badges';
 import { ZONE_EVENTS, GameEvent } from '../data/events';
+import { useDayNight } from '../hooks/useDayNight';
+import { NIGHT_EXCLUSIVE_POKEMON } from '../lib/dayNight';
 
 interface ZoneExplorerProps {
   onEncounter: (pokemon: Pokemon, trainer?: Trainer) => void;
@@ -15,6 +17,7 @@ interface ZoneExplorerProps {
 
 export const ZoneExplorer: React.FC<ZoneExplorerProps> = ({ onEncounter }) => {
   const { state, setState } = useGame();
+  const { isNight, isSunset, formattedTime } = useDayNight();
   const zone = ZONES.find(z => z.id === state.player.location)!;
   
   // Security check: if somehow user enters a locked zone, kick them out
@@ -25,12 +28,14 @@ export const ZoneExplorer: React.FC<ZoneExplorerProps> = ({ onEncounter }) => {
   }, [state.player.location, state.player.badges, setState]);
   const [isExploring, setIsExploring] = useState(false);
   const [encounter, setEncounter] = useState<Pokemon | null>(null);
+  const [isNocturnal, setIsNocturnal] = useState(false);
   const [trainerEncounter, setTrainerEncounter] = useState<Trainer | null>(null);
   const [activeEvent, setActiveEvent] = useState<GameEvent | null>(null);
 
   const explore = async () => {
     setIsExploring(true);
     setEncounter(null);
+    setIsNocturnal(false);
     setTrainerEncounter(null);
     setActiveEvent(null);
 
@@ -127,6 +132,16 @@ export const ZoneExplorer: React.FC<ZoneExplorerProps> = ({ onEncounter }) => {
          return;
       }
 
+      // Check for nocturnal exclusive pokemon during Night or Sunset (35% chance)
+      if ((isNight || isSunset) && Math.random() < 0.35) {
+        const nightPoke = NIGHT_EXCLUSIVE_POKEMON[Math.floor(Math.random() * NIGHT_EXCLUSIVE_POKEMON.length)];
+        const level = Math.floor(Math.random() * (nightPoke.maxLevel - nightPoke.minLevel + 1)) + nightPoke.minLevel;
+        const pokemon = await fetchPokemonData(nightPoke.id, level);
+        setIsNocturnal(true);
+        setEncounter(pokemon);
+        return;
+      }
+
       // Random encounter logic
       const roll = Math.random() * 100;
       let currentProb = 0;
@@ -166,18 +181,41 @@ export const ZoneExplorer: React.FC<ZoneExplorerProps> = ({ onEncounter }) => {
   };
 
   return (
-    <div className="h-full flex flex-col">
+    <div className={`h-full flex flex-col transition-colors duration-500 ${
+      isNight 
+        ? 'bg-slate-950 text-white' 
+        : isSunset 
+          ? 'bg-gradient-to-b from-amber-950/40 via-slate-900 to-slate-950 text-white' 
+          : 'bg-white text-gray-900'
+    }`}>
       {/* ... header ... */}
-      <div className="p-4 flex items-center gap-4">
-        <button 
-          onClick={() => setState(prev => ({ ...prev, player: { ...prev.player, location: 'villaggio' } }))}
-          className="p-2 bg-white/50 rounded-full"
-        >
-          <ChevronLeft />
-        </button>
-        <div>
-          <h2 className="font-bold">{zone.name}</h2>
-          <p className="text-xs opacity-70">{zone.description}</p>
+      <div className={`p-4 flex items-center justify-between border-b ${
+        isNight || isSunset ? 'border-white/10 bg-slate-900/60' : 'border-gray-100 bg-white/60'
+      } backdrop-blur-md`}>
+        <div className="flex items-center gap-4">
+          <button 
+            onClick={() => setState(prev => ({ ...prev, player: { ...prev.player, location: 'villaggio' } }))}
+            className={`p-2 rounded-full cursor-pointer transition-all active:scale-95 ${
+              isNight || isSunset ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
+            }`}
+          >
+            <ChevronLeft />
+          </button>
+          <div>
+            <h2 className="font-bold">{zone.name}</h2>
+            <p className="text-xs opacity-70">{zone.description}</p>
+          </div>
+        </div>
+
+        <div className={`flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-mono font-bold ${
+          isNight 
+            ? 'bg-purple-950 border border-purple-500/40 text-purple-300' 
+            : isSunset 
+              ? 'bg-amber-950 border border-amber-500/40 text-amber-300' 
+              : 'bg-blue-50 border border-blue-200 text-blue-600'
+        }`}>
+          {isNight ? '🌙' : isSunset ? '🌇' : '☀️'}
+          <span>{formattedTime}</span>
         </div>
       </div>
 
@@ -274,6 +312,12 @@ export const ZoneExplorer: React.FC<ZoneExplorerProps> = ({ onEncounter }) => {
                   <img src={encounter.sprites.artwork} alt={encounter.name} className="w-48 h-48 relative z-10" />
                 </div>
                 <div className="text-center">
+                  {isNocturnal && (
+                    <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-purple-900/80 border border-purple-400 text-purple-200 text-xs font-black uppercase tracking-wider mb-1 animate-pulse">
+                      <Moon className="w-3.5 h-3.5 text-purple-300" />
+                      <span>Creatura della Notte</span>
+                    </div>
+                  )}
                   <h3 className="font-black text-2xl uppercase italic">Un {encounter.name} selvatico!</h3>
                   <p className="text-sm font-bold text-gray-500">Livello {encounter.level}</p>
                 </div>

@@ -32,19 +32,29 @@ export const ZONES: Zone[] = [
       { pokemonId: 13, rarity: 10, minLevel: 2, maxLevel: 5 }, // Weedle
       { pokemonId: 11, rarity: 5, minLevel: 4, maxLevel: 6 },  // Metapod
       { pokemonId: 14, rarity: 5, minLevel: 4, maxLevel: 6 },  // Kakuna
+      { pokemonId: 56, rarity: 4, minLevel: 6, maxLevel: 10 }, // Mankey
       { pokemonId: 165, rarity: 8, minLevel: 2, maxLevel: 5 }, // Ledyba
       { pokemonId: 167, rarity: 8, minLevel: 2, maxLevel: 5 }, // Spinarak
+      { pokemonId: 191, rarity: 6, minLevel: 4, maxLevel: 8 }, // Sunkern
+      { pokemonId: 193, rarity: 4, minLevel: 8, maxLevel: 14 }, // Yanma
       { pokemonId: 265, rarity: 8, minLevel: 3, maxLevel: 5 }, // Wurmple
+      { pokemonId: 283, rarity: 5, minLevel: 4, maxLevel: 8 }, // Surskit
       { pokemonId: 285, rarity: 6, minLevel: 5, maxLevel: 8 },  // Shroomish
       { pokemonId: 1, rarity: 3, minLevel: 5, maxLevel: 7 },   // Bulbasaur
       { pokemonId: 152, rarity: 3, minLevel: 5, maxLevel: 7 }, // Chikorita
       { pokemonId: 252, rarity: 3, minLevel: 5, maxLevel: 7 }, // Treecko
       { pokemonId: 387, rarity: 3, minLevel: 5, maxLevel: 7 }, // Turtwig
+      { pokemonId: 495, rarity: 3, minLevel: 5, maxLevel: 7 }, // Snivy
+      { pokemonId: 650, rarity: 3, minLevel: 5, maxLevel: 7 }, // Chespin
+      { pokemonId: 722, rarity: 3, minLevel: 5, maxLevel: 7 }, // Rowlet
+      { pokemonId: 810, rarity: 3, minLevel: 5, maxLevel: 7 }, // Grookey
+      { pokemonId: 906, rarity: 3, minLevel: 5, maxLevel: 7 }, // Sprigatito
       { pokemonId: 43, rarity: 5, minLevel: 4, maxLevel: 8 },  // Oddish
       { pokemonId: 69, rarity: 5, minLevel: 4, maxLevel: 8 },  // Bellsprout
       { pokemonId: 46, rarity: 4, minLevel: 6, maxLevel: 10 }, // Paras
       { pokemonId: 48, rarity: 4, minLevel: 8, maxLevel: 12 }, // Venonat
       { pokemonId: 102, rarity: 4, minLevel: 10, maxLevel: 15 }, // Exeggcute
+      { pokemonId: 114, rarity: 3, minLevel: 12, maxLevel: 18 }, // Tangela
       { pokemonId: 123, rarity: 2, minLevel: 15, maxLevel: 20 }, // Scyther
       { pokemonId: 127, rarity: 2, minLevel: 15, maxLevel: 20 }, // Pinsir
       { pokemonId: 163, rarity: 6, minLevel: 3, maxLevel: 7 },  // Hoothoot
@@ -53,24 +63,50 @@ export const ZONES: Zone[] = [
       { pokemonId: 287, rarity: 4, minLevel: 5, maxLevel: 10 }, // Slakoth
       { pokemonId: 290, rarity: 3, minLevel: 6, maxLevel: 12 }, // Nincada
       { pokemonId: 273, rarity: 5, minLevel: 4, maxLevel: 9 },  // Seedot
+      { pokemonId: 313, rarity: 4, minLevel: 8, maxLevel: 14 }, // Volbeat
+      { pokemonId: 314, rarity: 4, minLevel: 8, maxLevel: 14 }, // Illumise
       { pokemonId: 315, rarity: 3, minLevel: 12, maxLevel: 18 }, // Roselia
+      { pokemonId: 352, rarity: 3, minLevel: 15, maxLevel: 22 }, // Kecleon
+      { pokemonId: 357, rarity: 2, minLevel: 18, maxLevel: 25 }, // Tropius
+      { pokemonId: 401, rarity: 5, minLevel: 4, maxLevel: 8 },  // Kricketot
+      { pokemonId: 406, rarity: 5, minLevel: 4, maxLevel: 8 },  // Budew
       { pokemonId: 412, rarity: 5, minLevel: 5, maxLevel: 10 }, // Burmy
       { pokemonId: 415, rarity: 4, minLevel: 8, maxLevel: 12 }, // Combee
       { pokemonId: 420, rarity: 4, minLevel: 10, maxLevel: 15 }, // Cherubi
+      { pokemonId: 455, rarity: 2, minLevel: 18, maxLevel: 24 }, // Carnivine
+      { pokemonId: 511, rarity: 4, minLevel: 8, maxLevel: 14 },  // Pansage
       { pokemonId: 540, rarity: 5, minLevel: 6, maxLevel: 11 }, // Sewaddle
       { pokemonId: 543, rarity: 4, minLevel: 8, maxLevel: 14 }, // Venipede
       { pokemonId: 546, rarity: 4, minLevel: 10, maxLevel: 15 }, // Cottonee
       { pokemonId: 548, rarity: 4, minLevel: 10, maxLevel: 15 }, // Petilil
+      { pokemonId: 588, rarity: 3, minLevel: 12, maxLevel: 18 }, // Karrablast
       { pokemonId: 590, rarity: 3, minLevel: 12, maxLevel: 20 }, // Foongus
       { pokemonId: 595, rarity: 3, minLevel: 15, maxLevel: 22 }, // Joltik
+      { pokemonId: 597, rarity: 3, minLevel: 14, maxLevel: 20 }, // Ferroseed
+      { pokemonId: 616, rarity: 3, minLevel: 12, maxLevel: 18 }, // Shelmet
       { pokemonId: 664, rarity: 5, minLevel: 4, maxLevel: 8 },  // Scatterbug
+      { pokemonId: 669, rarity: 4, minLevel: 6, maxLevel: 12 }, // Flabébé
+      { pokemonId: 672, rarity: 4, minLevel: 10, maxLevel: 16 }, // Skiddo
+      { pokemonId: 674, rarity: 3, minLevel: 12, maxLevel: 18 }, // Pancham
       { pokemonId: 708, rarity: 3, minLevel: 18, maxLevel: 25 }, // Phantump
       { pokemonId: 710, rarity: 3, minLevel: 18, maxLevel: 25 }, // Pumpkaboo
       { pokemonId: 736, rarity: 5, minLevel: 5, maxLevel: 10 }, // Grubbin
+      { pokemonId: 742, rarity: 4, minLevel: 6, maxLevel: 12 }, // Cutiefly
       { pokemonId: 753, rarity: 4, minLevel: 12, maxLevel: 18 }, // Fomantis
+      { pokemonId: 755, rarity: 4, minLevel: 10, maxLevel: 16 }, // Morelull
+      { pokemonId: 761, rarity: 4, minLevel: 8, maxLevel: 14 }, // Bounsweet
+      { pokemonId: 765, rarity: 2, minLevel: 15, maxLevel: 22 }, // Oranguru
+      { pokemonId: 766, rarity: 2, minLevel: 15, maxLevel: 22 }, // Passimian
       { pokemonId: 824, rarity: 5, minLevel: 4, maxLevel: 9 },  // Blipbug
+      { pokemonId: 827, rarity: 4, minLevel: 6, maxLevel: 12 }, // Nickit
       { pokemonId: 829, rarity: 4, minLevel: 8, maxLevel: 14 }, // Gossifleur
       { pokemonId: 840, rarity: 3, minLevel: 15, maxLevel: 20 }, // Applin
+      { pokemonId: 859, rarity: 3, minLevel: 14, maxLevel: 20 }, // Impidimp
+      { pokemonId: 917, rarity: 5, minLevel: 4, maxLevel: 8 },  // Tarountula
+      { pokemonId: 919, rarity: 4, minLevel: 5, maxLevel: 10 }, // Nymble
+      { pokemonId: 928, rarity: 4, minLevel: 6, maxLevel: 12 }, // Smoliv
+      { pokemonId: 944, rarity: 3, minLevel: 12, maxLevel: 18 }, // Shroodle
+      { pokemonId: 946, rarity: 3, minLevel: 12, maxLevel: 18 }, // Capsakid
       { pokemonId: 251, rarity: 0.5, minLevel: 30, maxLevel: 30 }, // Celebi (Molto raro!)
       { pokemonId: 151, rarity: 0.5, minLevel: 30, maxLevel: 30 }, // Mew (Molto raro!)
       { pokemonId: 492, rarity: 0.5, minLevel: 30, maxLevel: 30 }, // Shaymin (Molto raro!)
@@ -141,6 +177,55 @@ export const ZONES: Zone[] = [
       { pokemonId: 441, rarity: 1, minLevel: 15, maxLevel: 25 }, // Chatot
       { pokemonId: 531, rarity: 2, minLevel: 12, maxLevel: 20 }, // Audino
       { pokemonId: 115, rarity: 1, minLevel: 20, maxLevel: 30 }, // Kangaskhan
+      { pokemonId: 52, rarity: 5, minLevel: 6, maxLevel: 11 },   // Meowth
+      { pokemonId: 54, rarity: 4, minLevel: 8, maxLevel: 13 },   // Psyduck
+      { pokemonId: 83, rarity: 3, minLevel: 10, maxLevel: 16 },  // Farfetch'd
+      { pokemonId: 96, rarity: 4, minLevel: 10, maxLevel: 15 },  // Drowzee
+      { pokemonId: 108, rarity: 3, minLevel: 12, maxLevel: 18 }, // Lickitung
+      { pokemonId: 172, rarity: 3, minLevel: 4, maxLevel: 8 },   // Pichu
+      { pokemonId: 173, rarity: 3, minLevel: 4, maxLevel: 8 },   // Cleffa
+      { pokemonId: 174, rarity: 3, minLevel: 4, maxLevel: 8 },   // Igglybuff
+      { pokemonId: 175, rarity: 2, minLevel: 5, maxLevel: 10 },  // Togepi
+      { pokemonId: 206, rarity: 4, minLevel: 8, maxLevel: 14 },  // Dunsparce
+      { pokemonId: 234, rarity: 3, minLevel: 14, maxLevel: 20 }, // Stantler
+      { pokemonId: 235, rarity: 2, minLevel: 12, maxLevel: 18 }, // Smeargle
+      { pokemonId: 236, rarity: 3, minLevel: 10, maxLevel: 15 }, // Tyrogue
+      { pokemonId: 311, rarity: 4, minLevel: 8, maxLevel: 14 },  // Plusle
+      { pokemonId: 312, rarity: 4, minLevel: 8, maxLevel: 14 },  // Minun
+      { pokemonId: 316, rarity: 4, minLevel: 8, maxLevel: 13 },  // Gulpin
+      { pokemonId: 325, rarity: 4, minLevel: 10, maxLevel: 16 }, // Spoink
+      { pokemonId: 327, rarity: 3, minLevel: 10, maxLevel: 16 }, // Spinda
+      { pokemonId: 333, rarity: 3, minLevel: 12, maxLevel: 18 }, // Swablu
+      { pokemonId: 351, rarity: 2, minLevel: 15, maxLevel: 22 }, // Castform
+      { pokemonId: 358, rarity: 2, minLevel: 15, maxLevel: 22 }, // Chimecho
+      { pokemonId: 431, rarity: 4, minLevel: 10, maxLevel: 15 }, // Glameow
+      { pokemonId: 433, rarity: 3, minLevel: 8, maxLevel: 14 },  // Chingling
+      { pokemonId: 438, rarity: 3, minLevel: 8, maxLevel: 14 },  // Bonsly
+      { pokemonId: 439, rarity: 3, minLevel: 8, maxLevel: 14 },  // Mime Jr.
+      { pokemonId: 440, rarity: 2, minLevel: 8, maxLevel: 14 },  // Happiny
+      { pokemonId: 446, rarity: 1, minLevel: 12, maxLevel: 20 }, // Munchlax
+      { pokemonId: 517, rarity: 3, minLevel: 10, maxLevel: 16 }, // Munna
+      { pokemonId: 626, rarity: 2, minLevel: 18, maxLevel: 25 }, // Bouffalant
+      { pokemonId: 627, rarity: 3, minLevel: 15, maxLevel: 22 }, // Rufflet
+      { pokemonId: 629, rarity: 3, minLevel: 15, maxLevel: 22 }, // Vullaby
+      { pokemonId: 676, rarity: 3, minLevel: 12, maxLevel: 18 }, // Furfrou
+      { pokemonId: 677, rarity: 4, minLevel: 10, maxLevel: 16 }, // Espurr
+      { pokemonId: 682, rarity: 3, minLevel: 12, maxLevel: 18 }, // Spritzee
+      { pokemonId: 684, rarity: 3, minLevel: 12, maxLevel: 18 }, // Swirlix
+      { pokemonId: 702, rarity: 3, minLevel: 12, maxLevel: 18 }, // Dedenne
+      { pokemonId: 749, rarity: 4, minLevel: 10, maxLevel: 16 }, // Mudbray
+      { pokemonId: 764, rarity: 2, minLevel: 14, maxLevel: 20 }, // Comfey
+      { pokemonId: 775, rarity: 2, minLevel: 15, maxLevel: 22 }, // Komala
+      { pokemonId: 870, rarity: 2, minLevel: 18, maxLevel: 25 }, // Falinks
+      { pokemonId: 876, rarity: 2, minLevel: 16, maxLevel: 22 }, // Indeedee
+      { pokemonId: 877, rarity: 3, minLevel: 14, maxLevel: 20 }, // Morpeko
+      { pokemonId: 915, rarity: 5, minLevel: 4, maxLevel: 9 },   // Lechonk
+      { pokemonId: 921, rarity: 4, minLevel: 5, maxLevel: 10 },  // Pawmi
+      { pokemonId: 924, rarity: 3, minLevel: 8, maxLevel: 14 },  // Tandemaus
+      { pokemonId: 926, rarity: 3, minLevel: 8, maxLevel: 14 },  // Fidough
+      { pokemonId: 931, rarity: 3, minLevel: 10, maxLevel: 16 }, // Squawkabilly
+      { pokemonId: 942, rarity: 3, minLevel: 10, maxLevel: 16 }, // Maschiff
+      { pokemonId: 967, rarity: 2, minLevel: 18, maxLevel: 26 }, // Cyclizar
     ],
   },
   {
@@ -156,19 +241,26 @@ export const ZONES: Zone[] = [
       { pokemonId: 126, rarity: 4, minLevel: 18, maxLevel: 25 },  // Magmar
       { pokemonId: 633, rarity: 3, minLevel: 20, maxLevel: 25 },  // Deino
       { pokemonId: 4, rarity: 6, minLevel: 15, maxLevel: 20 },  // Charmander
+      { pokemonId: 155, rarity: 4, minLevel: 15, maxLevel: 20 }, // Cyndaquil
+      { pokemonId: 255, rarity: 4, minLevel: 15, maxLevel: 20 }, // Torchic
+      { pokemonId: 390, rarity: 4, minLevel: 15, maxLevel: 20 }, // Chimchar
+      { pokemonId: 498, rarity: 4, minLevel: 15, maxLevel: 20 }, // Tepig
+      { pokemonId: 653, rarity: 4, minLevel: 15, maxLevel: 20 }, // Fennekin
+      { pokemonId: 725, rarity: 4, minLevel: 15, maxLevel: 20 }, // Litten
+      { pokemonId: 813, rarity: 4, minLevel: 15, maxLevel: 20 }, // Scorbunny
+      { pokemonId: 909, rarity: 4, minLevel: 15, maxLevel: 20 }, // Fuecoco
+      { pokemonId: 935, rarity: 3, minLevel: 16, maxLevel: 24 }, // Charcadet
       { pokemonId: 77, rarity: 8, minLevel: 14, maxLevel: 19 },  // Ponyta
       { pokemonId: 228, rarity: 5, minLevel: 18, maxLevel: 24 },  // Houndour
       { pokemonId: 240, rarity: 4, minLevel: 10, maxLevel: 15 },  // Magby
       { pokemonId: 324, rarity: 6, minLevel: 15, maxLevel: 22 },  // Torkoal
-      { pokemonId: 390, rarity: 4, minLevel: 12, maxLevel: 18 },  // Chimchar
       { pokemonId: 513, rarity: 6, minLevel: 14, maxLevel: 20 },  // Pansear
       { pokemonId: 554, rarity: 5, minLevel: 16, maxLevel: 24 },  // Darumaka
       { pokemonId: 607, rarity: 5, minLevel: 18, maxLevel: 26 },  // Litwick
       { pokemonId: 631, rarity: 3, minLevel: 22, maxLevel: 30 },  // Heatmor
       { pokemonId: 636, rarity: 2, minLevel: 25, maxLevel: 35 },  // Larvesta
-      { pokemonId: 653, rarity: 4, minLevel: 15, maxLevel: 20 },  // Fennekin
       { pokemonId: 757, rarity: 4, minLevel: 18, maxLevel: 24 },  // Salandit
-      { pokemonId: 813, rarity: 4, minLevel: 15, maxLevel: 20 },  // Scorbunny
+      { pokemonId: 776, rarity: 2, minLevel: 24, maxLevel: 32 },  // Turtonator
       { pokemonId: 838, rarity: 5, minLevel: 16, maxLevel: 22 },  // Sizzlipede
       { pokemonId: 837, rarity: 5, minLevel: 14, maxLevel: 20 },  // Rolycoly
       { pokemonId: 146, rarity: 0.5, minLevel: 50, maxLevel: 50 }, // Moltres (Raro!)
@@ -227,6 +319,21 @@ export const ZONES: Zone[] = [
       { pokemonId: 771, rarity: 4, minLevel: 12, maxLevel: 18 }, // Pyukumuku
       { pokemonId: 816, rarity: 5, minLevel: 10, maxLevel: 15 }, // Sobble
       { pokemonId: 846, rarity: 4, minLevel: 15, maxLevel: 22 }, // Arrokuda
+      { pokemonId: 138, rarity: 3, minLevel: 18, maxLevel: 25 }, // Omanyte
+      { pokemonId: 140, rarity: 3, minLevel: 18, maxLevel: 25 }, // Kabuto
+      { pokemonId: 147, rarity: 2, minLevel: 15, maxLevel: 24 }, // Dratini
+      { pokemonId: 278, rarity: 5, minLevel: 8, maxLevel: 14 },  // Wingull
+      { pokemonId: 458, rarity: 3, minLevel: 14, maxLevel: 20 }, // Mantyke
+      { pokemonId: 767, rarity: 4, minLevel: 12, maxLevel: 18 }, // Wimpod
+      { pokemonId: 769, rarity: 4, minLevel: 14, maxLevel: 20 }, // Sandygast
+      { pokemonId: 833, rarity: 4, minLevel: 10, maxLevel: 16 }, // Chewtle
+      { pokemonId: 852, rarity: 3, minLevel: 16, maxLevel: 24 }, // Clobbopus
+      { pokemonId: 912, rarity: 4, minLevel: 10, maxLevel: 15 }, // Quaxly
+      { pokemonId: 960, rarity: 4, minLevel: 10, maxLevel: 16 }, // Wiglett
+      { pokemonId: 963, rarity: 3, minLevel: 14, maxLevel: 20 }, // Finizen
+      { pokemonId: 976, rarity: 3, minLevel: 18, maxLevel: 26 }, // Veluza
+      { pokemonId: 977, rarity: 2, minLevel: 22, maxLevel: 30 }, // Dondozo
+      { pokemonId: 978, rarity: 3, minLevel: 18, maxLevel: 26 }, // Tatsugiri
       { pokemonId: 144, rarity: 0.5, minLevel: 50, maxLevel: 50 }, // Articuno (Raro!)
       { pokemonId: 245, rarity: 0.5, minLevel: 50, maxLevel: 50 }, // Suicune (Raro!)
       { pokemonId: 249, rarity: 0.2, minLevel: 60, maxLevel: 60 }, // Lugia (Legendario!)
@@ -251,7 +358,9 @@ export const ZONES: Zone[] = [
       { pokemonId: 142, rarity: 2, minLevel: 30, maxLevel: 40 }, // Aerodactyl
       { pokemonId: 206, rarity: 5, minLevel: 15, maxLevel: 22 }, // Dunsparce
       { pokemonId: 207, rarity: 4, minLevel: 18, maxLevel: 25 }, // Gligar
+      { pokemonId: 213, rarity: 3, minLevel: 14, maxLevel: 20 }, // Shuckle
       { pokemonId: 216, rarity: 5, minLevel: 15, maxLevel: 22 }, // Teddiursa
+      { pokemonId: 231, rarity: 4, minLevel: 12, maxLevel: 18 }, // Phanpy
       { pokemonId: 246, rarity: 2, minLevel: 20, maxLevel: 30 }, // Larvitar
       { pokemonId: 293, rarity: 7, minLevel: 10, maxLevel: 16 }, // Whismur
       { pokemonId: 296, rarity: 6, minLevel: 14, maxLevel: 20 }, // Makuhita
@@ -259,10 +368,14 @@ export const ZONES: Zone[] = [
       { pokemonId: 303, rarity: 4, minLevel: 15, maxLevel: 22 }, // Mawile
       { pokemonId: 307, rarity: 5, minLevel: 14, maxLevel: 20 }, // Meditite
       { pokemonId: 299, rarity: 5, minLevel: 12, maxLevel: 18 }, // Nosepass
+      { pokemonId: 328, rarity: 4, minLevel: 15, maxLevel: 22 }, // Trapinch
+      { pokemonId: 331, rarity: 4, minLevel: 14, maxLevel: 20 }, // Cacnea
       { pokemonId: 337, rarity: 4, minLevel: 18, maxLevel: 25 }, // Lunatone
       { pokemonId: 338, rarity: 4, minLevel: 18, maxLevel: 25 }, // Solrock
+      { pokemonId: 343, rarity: 4, minLevel: 15, maxLevel: 22 }, // Baltoy
       { pokemonId: 345, rarity: 3, minLevel: 20, maxLevel: 30 }, // Lileep
       { pokemonId: 347, rarity: 3, minLevel: 20, maxLevel: 30 }, // Anorith
+      { pokemonId: 371, rarity: 2, minLevel: 20, maxLevel: 30 }, // Bagon
       { pokemonId: 408, rarity: 3, minLevel: 20, maxLevel: 30 }, // Cranidos
       { pokemonId: 410, rarity: 3, minLevel: 20, maxLevel: 30 }, // Shieldon
       { pokemonId: 443, rarity: 2, minLevel: 22, maxLevel: 32 }, // Gible
@@ -271,16 +384,29 @@ export const ZONES: Zone[] = [
       { pokemonId: 529, rarity: 5, minLevel: 15, maxLevel: 22 }, // Drilbur
       { pokemonId: 532, rarity: 5, minLevel: 16, maxLevel: 24 }, // Timburr
       { pokemonId: 527, rarity: 6, minLevel: 12, maxLevel: 18 }, // Woobat
+      { pokemonId: 551, rarity: 4, minLevel: 14, maxLevel: 20 }, // Sandile
       { pokemonId: 557, rarity: 5, minLevel: 15, maxLevel: 22 }, // Dwebble
+      { pokemonId: 559, rarity: 4, minLevel: 16, maxLevel: 22 }, // Scraggy
       { pokemonId: 562, rarity: 4, minLevel: 18, maxLevel: 26 }, // Yamask
       { pokemonId: 566, rarity: 3, minLevel: 20, maxLevel: 30 }, // Archen
       { pokemonId: 610, rarity: 3, minLevel: 25, maxLevel: 35 }, // Axew
       { pokemonId: 621, rarity: 3, minLevel: 28, maxLevel: 38 }, // Druddigon
+      { pokemonId: 686, rarity: 4, minLevel: 15, maxLevel: 22 }, // Inkay
       { pokemonId: 696, rarity: 3, minLevel: 20, maxLevel: 30 }, // Tyrunt
       { pokemonId: 698, rarity: 3, minLevel: 20, maxLevel: 30 }, // Amaura
       { pokemonId: 703, rarity: 4, minLevel: 15, maxLevel: 25 }, // Carbink
+      { pokemonId: 704, rarity: 3, minLevel: 18, maxLevel: 26 }, // Goomy
       { pokemonId: 714, rarity: 4, minLevel: 20, maxLevel: 30 }, // Noibat
+      { pokemonId: 774, rarity: 3, minLevel: 18, maxLevel: 25 }, // Minior
       { pokemonId: 782, rarity: 2, minLevel: 30, maxLevel: 40 }, // Jangmo-o
+      { pokemonId: 843, rarity: 4, minLevel: 14, maxLevel: 20 }, // Silicobra
+      { pokemonId: 874, rarity: 3, minLevel: 20, maxLevel: 28 }, // Stonjourner
+      { pokemonId: 878, rarity: 3, minLevel: 18, maxLevel: 25 }, // Cufant
+      { pokemonId: 932, rarity: 4, minLevel: 12, maxLevel: 18 }, // Nacli
+      { pokemonId: 950, rarity: 3, minLevel: 16, maxLevel: 22 }, // Klawf
+      { pokemonId: 968, rarity: 3, minLevel: 18, maxLevel: 25 }, // Orthworm
+      { pokemonId: 969, rarity: 3, minLevel: 20, maxLevel: 28 }, // Glimmet
+      { pokemonId: 996, rarity: 2, minLevel: 25, maxLevel: 35 }, // Frigibax
       { pokemonId: 377, rarity: 0.1, minLevel: 50, maxLevel: 50 }, // Regirock (Legendario!)
     ],
   },
@@ -299,19 +425,35 @@ export const ZONES: Zone[] = [
       { pokemonId: 607, rarity: 6, minLevel: 20, maxLevel: 28 },  // Litwick
       { pokemonId: 93, rarity: 5, minLevel: 25, maxLevel: 35 },   // Haunter
       { pokemonId: 198, rarity: 8, minLevel: 15, maxLevel: 22 },  // Murkrow
+      { pokemonId: 228, rarity: 6, minLevel: 16, maxLevel: 22 },  // Houndour
+      { pokemonId: 261, rarity: 6, minLevel: 14, maxLevel: 20 },  // Poochyena
       { pokemonId: 302, rarity: 6, minLevel: 18, maxLevel: 25 },  // Sableye
       { pokemonId: 354, rarity: 4, minLevel: 30, maxLevel: 40 },  // Banette
+      { pokemonId: 359, rarity: 3, minLevel: 22, maxLevel: 30 },  // Absol
       { pokemonId: 425, rarity: 8, minLevel: 15, maxLevel: 22 },  // Drifloon
       { pokemonId: 429, rarity: 2, minLevel: 35, maxLevel: 45 },  // Mismagius
+      { pokemonId: 434, rarity: 6, minLevel: 16, maxLevel: 22 },  // Stunky
+      { pokemonId: 451, rarity: 5, minLevel: 18, maxLevel: 25 },  // Skorupi
       { pokemonId: 562, rarity: 6, minLevel: 20, maxLevel: 28 },  // Yamask
+      { pokemonId: 570, rarity: 4, minLevel: 18, maxLevel: 26 },  // Zorua
+      { pokemonId: 577, rarity: 5, minLevel: 16, maxLevel: 22 },  // Gothita
+      { pokemonId: 579, rarity: 5, minLevel: 16, maxLevel: 22 },  // Solosis
       { pokemonId: 592, rarity: 6, minLevel: 20, maxLevel: 28 },  // Frillish
+      { pokemonId: 605, rarity: 4, minLevel: 18, maxLevel: 25 },  // Elgyem
       { pokemonId: 622, rarity: 5, minLevel: 25, maxLevel: 35 },  // Golett
+      { pokemonId: 624, rarity: 4, minLevel: 22, maxLevel: 30 },  // Pawniard
+      { pokemonId: 679, rarity: 4, minLevel: 20, maxLevel: 28 },  // Honedge
       { pokemonId: 708, rarity: 5, minLevel: 20, maxLevel: 30 },  // Phantump
       { pokemonId: 710, rarity: 5, minLevel: 20, maxLevel: 30 },  // Pumpkaboo
       { pokemonId: 778, rarity: 3, minLevel: 25, maxLevel: 35 },  // Mimikyu
       { pokemonId: 781, rarity: 2, minLevel: 30, maxLevel: 45 },  // Dhelmise
       { pokemonId: 854, rarity: 4, minLevel: 20, maxLevel: 30 },  // Sinistea
+      { pokemonId: 856, rarity: 4, minLevel: 18, maxLevel: 26 },  // Hatenna
+      { pokemonId: 859, rarity: 4, minLevel: 18, maxLevel: 26 },  // Impidimp
       { pokemonId: 885, rarity: 2, minLevel: 35, maxLevel: 45 },  // Dreepy
+      { pokemonId: 948, rarity: 4, minLevel: 16, maxLevel: 22 },  // Rellor
+      { pokemonId: 955, rarity: 4, minLevel: 18, maxLevel: 25 },  // Flittle
+      { pokemonId: 971, rarity: 4, minLevel: 18, maxLevel: 26 },  // Greavard
       { pokemonId: 487, rarity: 0.1, minLevel: 60, maxLevel: 60 }, // Giratina (Legendario!)
     ],
   },
@@ -323,8 +465,11 @@ export const ZONES: Zone[] = [
     spawnTable: [
       { pokemonId: 81, rarity: 15, minLevel: 20, maxLevel: 28 }, // Magnemite
       { pokemonId: 100, rarity: 15, minLevel: 20, maxLevel: 28 }, // Voltorb
+      { pokemonId: 88, rarity: 8, minLevel: 18, maxLevel: 25 },   // Grimer
+      { pokemonId: 109, rarity: 8, minLevel: 18, maxLevel: 25 },  // Koffing
       { pokemonId: 137, rarity: 8, minLevel: 25, maxLevel: 32 },  // Porygon
       { pokemonId: 479, rarity: 8, minLevel: 25, maxLevel: 35 },  // Rotom
+      { pokemonId: 568, rarity: 8, minLevel: 18, maxLevel: 25 },  // Trubbish
       { pokemonId: 632, rarity: 10, minLevel: 22, maxLevel: 30 }, // Durant
       { pokemonId: 599, rarity: 10, minLevel: 20, maxLevel: 28 }, // Klink
       { pokemonId: 82, rarity: 5, minLevel: 30, maxLevel: 40 },   // Magneton
@@ -336,9 +481,15 @@ export const ZONES: Zone[] = [
       { pokemonId: 436, rarity: 6, minLevel: 18, maxLevel: 26 },  // Bronzor
       { pokemonId: 679, rarity: 4, minLevel: 25, maxLevel: 35 },  // Honedge
       { pokemonId: 707, rarity: 4, minLevel: 20, maxLevel: 30 },  // Klefki
+      { pokemonId: 772, rarity: 2, minLevel: 30, maxLevel: 40 },  // Type: Null
       { pokemonId: 777, rarity: 4, minLevel: 20, maxLevel: 30 },  // Togedemaru
       { pokemonId: 808, rarity: 1, minLevel: 15, maxLevel: 25 },  // Meltan
+      { pokemonId: 871, rarity: 4, minLevel: 20, maxLevel: 28 },  // Pincurchin
       { pokemonId: 878, rarity: 4, minLevel: 25, maxLevel: 35 },  // Cufant
+      { pokemonId: 884, rarity: 2, minLevel: 28, maxLevel: 38 },  // Duraludon
+      { pokemonId: 938, rarity: 5, minLevel: 16, maxLevel: 24 },  // Tadbulb
+      { pokemonId: 940, rarity: 5, minLevel: 16, maxLevel: 24 },  // Wattrel
+      { pokemonId: 965, rarity: 4, minLevel: 20, maxLevel: 28 },  // Varoom
       { pokemonId: 649, rarity: 0.1, minLevel: 50, maxLevel: 50 }, // Genesect (Legendario!)
     ],
   },
@@ -363,6 +514,7 @@ export const ZONES: Zone[] = [
       { pokemonId: 712, rarity: 6, minLevel: 28, maxLevel: 38 },  // Bergmite
       { pokemonId: 875, rarity: 3, minLevel: 35, maxLevel: 45 },  // Eiscue
       { pokemonId: 872, rarity: 5, minLevel: 20, maxLevel: 30 },  // Snom
+      { pokemonId: 974, rarity: 4, minLevel: 25, maxLevel: 35 },  // Cetoddle
       { pokemonId: 145, rarity: 0.5, minLevel: 50, maxLevel: 50 }, // Zapdos (Raro!)
       { pokemonId: 243, rarity: 0.5, minLevel: 50, maxLevel: 50 }, // Raikou (Raro!)
       { pokemonId: 250, rarity: 0.2, minLevel: 60, maxLevel: 60 }, // Ho-Oh (Legendario!)
@@ -405,16 +557,21 @@ export const ZONES: Zone[] = [
     spawnTable: [
       { pokemonId: 10, rarity: 15, minLevel: 25, maxLevel: 30 }, // Caterpie
       { pokemonId: 13, rarity: 15, minLevel: 25, maxLevel: 30 }, // Weedle
+      { pokemonId: 23, rarity: 8, minLevel: 25, maxLevel: 32 },  // Ekans
       { pokemonId: 46, rarity: 10, minLevel: 28, maxLevel: 35 }, // Paras
       { pokemonId: 48, rarity: 10, minLevel: 30, maxLevel: 38 }, // Venonat
       { pokemonId: 123, rarity: 5, minLevel: 35, maxLevel: 45 },  // Scyther
       { pokemonId: 214, rarity: 5, minLevel: 35, maxLevel: 45 },  // Heracross
+      { pokemonId: 453, rarity: 6, minLevel: 28, maxLevel: 36 },  // Croagunk
       { pokemonId: 543, rarity: 8, minLevel: 25, maxLevel: 32 },  // Venipede
       { pokemonId: 540, rarity: 8, minLevel: 25, maxLevel: 32 },  // Sewaddle
       { pokemonId: 595, rarity: 5, minLevel: 30, maxLevel: 38 },  // Joltik
+      { pokemonId: 618, rarity: 4, minLevel: 30, maxLevel: 38 },  // Stunfisk
       { pokemonId: 632, rarity: 5, minLevel: 35, maxLevel: 42 },  // Durant
+      { pokemonId: 751, rarity: 4, minLevel: 28, maxLevel: 36 },  // Dewpider
+      { pokemonId: 848, rarity: 4, minLevel: 26, maxLevel: 35 },  // Toxel
       { pokemonId: 637, rarity: 2, minLevel: 45, maxLevel: 55 },  // Volcarona
-      { pokemonId: 344, rarity: 0.1, minLevel: 60, maxLevel: 60 }, // Celebi (Raro)
+      { pokemonId: 344, rarity: 0.1, minLevel: 60, maxLevel: 60 }, // Claydol
     ],
   },
   {
@@ -423,11 +580,21 @@ export const ZONES: Zone[] = [
     description: 'Il cuore pulsante del mondo digitale. Alta tensione!',
     background: 'bg-zinc-800',
     spawnTable: [
+      { pokemonId: 25, rarity: 10, minLevel: 35, maxLevel: 45 },  // Pikachu
       { pokemonId: 81, rarity: 15, minLevel: 40, maxLevel: 50 },  // Magnemite
       { pokemonId: 100, rarity: 15, minLevel: 40, maxLevel: 50 }, // Voltorb
       { pokemonId: 125, rarity: 8, minLevel: 45, maxLevel: 55 },  // Electabuzz
       { pokemonId: 135, rarity: 5, minLevel: 45, maxLevel: 55 },  // Jolteon
       { pokemonId: 137, rarity: 10, minLevel: 40, maxLevel: 50 }, // Porygon
+      { pokemonId: 179, rarity: 6, minLevel: 35, maxLevel: 45 },  // Mareep
+      { pokemonId: 309, rarity: 6, minLevel: 35, maxLevel: 45 },  // Electrike
+      { pokemonId: 522, rarity: 6, minLevel: 38, maxLevel: 48 },  // Blitzle
+      { pokemonId: 587, rarity: 5, minLevel: 38, maxLevel: 48 },  // Emolga
+      { pokemonId: 694, rarity: 5, minLevel: 38, maxLevel: 48 },  // Helioptile
+      { pokemonId: 736, rarity: 5, minLevel: 35, maxLevel: 45 },  // Grubbin
+      { pokemonId: 835, rarity: 5, minLevel: 35, maxLevel: 45 },  // Yamper
+      { pokemonId: 921, rarity: 5, minLevel: 35, maxLevel: 45 },  // Pawmi
+      { pokemonId: 940, rarity: 5, minLevel: 38, maxLevel: 48 },  // Wattrel
       { pokemonId: 145, rarity: 2, minLevel: 60, maxLevel: 60 },  // Zapdos
       { pokemonId: 466, rarity: 3, minLevel: 50, maxLevel: 60 },  // Electivire
       { pokemonId: 479, rarity: 5, minLevel: 45, maxLevel: 55 },  // Rotom

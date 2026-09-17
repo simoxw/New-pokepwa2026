@@ -2,13 +2,15 @@ import React, { useState } from 'react';
 import { motion } from 'motion/react';
 import { useGame } from '../contexts/GameContext';
 import { CHARACTERS, ZONES } from '../constants/game';
-import { MapPin, MessageCircle, Play, Heart, Award, Lock, ScrollText, Phone } from 'lucide-react';
+import { MapPin, MessageCircle, Play, Heart, Award, Lock, ScrollText, Phone, Moon, Sun, Sunset, Sparkles } from 'lucide-react';
 import { isAreaUnlocked } from '../lib/badges';
+import { useDayNight } from '../hooks/useDayNight';
 
 import { fullyHealPokemon } from '../lib/pokemonHeal';
 
 export const Hub: React.FC = () => {
   const { state, setState } = useGame();
+  const { isNight, isSunset, formattedTime, override, toggleOverride } = useDayNight();
   const [showMap, setShowMap] = useState(false);
   const [isHealing, setIsHealing] = useState(false);
   const [dialogue, setDialogue] = useState<string>("Ah, sei ancora qui? Pensavo ti fossi perso nel caricamento. Vai a farti un giro nel Bosco dei Selfie!");
@@ -152,120 +154,206 @@ export const Hub: React.FC = () => {
   };
 
   return (
-    <div className="p-6 h-full flex flex-col gap-6 overflow-y-auto pb-24">
+    <div className={`p-4 sm:p-6 h-full flex flex-col gap-4 sm:gap-6 overflow-y-auto pb-24 transition-colors duration-700 ${
+      isNight 
+        ? 'bg-slate-950 text-white' 
+        : isSunset 
+          ? 'bg-gradient-to-b from-amber-950/20 to-slate-900/10 text-slate-900' 
+          : 'bg-slate-50 text-slate-900'
+    }`}>
+      {/* Real-time Day/Night & Atmosphere Bar */}
+      <div className={`p-3 rounded-2xl border flex items-center justify-between backdrop-blur-md transition-all ${
+        isNight 
+          ? 'bg-slate-900/80 border-purple-500/40 shadow-lg shadow-purple-950/50' 
+          : isSunset 
+            ? 'bg-amber-500/10 border-amber-500/30 text-amber-900' 
+            : 'bg-white/80 border-black/5 shadow-xs'
+      }`}>
+        <div className="flex items-center gap-2.5">
+          <div className={`p-2 rounded-xl text-lg ${
+            isNight ? 'bg-purple-950 text-purple-300 shadow-inner' : isSunset ? 'bg-amber-100 text-amber-600' : 'bg-blue-50 text-blue-500'
+          }`}>
+            {isNight ? <Moon className="w-4 h-4 text-purple-300 animate-pulse" /> : isSunset ? <Sunset className="w-4 h-4 text-amber-500" /> : <Sun className="w-4 h-4 text-amber-500" />}
+          </div>
+          <div>
+            <div className="flex items-center gap-2">
+              <span className="text-xs font-black uppercase tracking-wider">
+                {isNight ? 'Villaggio Setup • Luci al Neon Attive' : isSunset ? 'Villaggio Setup • Ora Dorata' : 'Villaggio Setup • Luce Diurna'}
+              </span>
+              {isNight && (
+                <span className="text-[9px] bg-pink-500/20 text-pink-300 border border-pink-500/40 px-2 py-0.5 rounded-full font-mono font-bold animate-pulse">
+                  NEON 24/7
+                </span>
+              )}
+            </div>
+            <p className="text-[10px] text-gray-400 font-mono">
+              Orario Reale Dispositivo: {formattedTime} {override ? `(Anteprima forzata: ${override})` : '(Sincronizzato)'}
+            </p>
+          </div>
+        </div>
+
+        <button
+          onClick={toggleOverride}
+          className="text-[10px] font-bold px-2.5 py-1.5 rounded-xl border transition-all cursor-pointer bg-white/5 hover:bg-white/10 active:scale-95 text-gray-400 hover:text-white border-white/10"
+          title="Alterna modalità Giorno/Notte/Auto"
+        >
+          {override ? `Reset Auto` : `Simula`}
+        </button>
+      </div>
+
       {/* Professor Section: Now Interactive */}
       <motion.div 
         initial={{ y: 20, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
         onClick={evaluateTeam}
-        className="bg-white rounded-2xl p-4 shadow-lg border-2 border-blue-500 relative mt-6 cursor-pointer active:scale-[0.98] transition-all hover:shadow-xl group"
+        className={`rounded-2xl p-4 shadow-lg border-2 relative mt-4 cursor-pointer active:scale-[0.98] transition-all hover:shadow-xl group ${
+          isNight 
+            ? 'bg-slate-900 border-purple-500/60 shadow-purple-950/40' 
+            : 'bg-white border-blue-500'
+        }`}
       >
-        <div className="absolute -top-10 left-4 w-16 h-16 transition-transform group-hover:scale-110">
+        <div className="absolute -top-10 left-4 w-16 h-16 transition-transform group-hover:scale-110 pointer-events-none">
           <img src={CHARACTERS.PROFESSOR.sprite} alt="Prof" className="w-full h-full object-contain drop-shadow-md" />
         </div>
-        <div className="ml-16">
-          <div className="flex justify-between items-center mb-1">
-            <h3 className="font-black text-blue-600 uppercase italic tracking-tighter text-sm">{CHARACTERS.PROFESSOR.name}</h3>
-            <div className="flex gap-1">
-               <span className="text-[7px] bg-blue-100 text-blue-600 px-2 py-0.5 rounded-full font-black uppercase">Valutatore</span>
-               <span className="text-[7px] bg-emerald-100 text-emerald-600 px-2 py-0.5 rounded-full font-black uppercase">Quest</span>
-            </div>
+
+        {/* Top bar with Name & Badges */}
+        <div className="flex justify-between items-center pl-16 min-h-[32px] mb-2.5">
+          <h3 className={`font-black uppercase italic tracking-tighter text-sm ${
+            isNight ? 'text-purple-300' : 'text-blue-600'
+          }`}>{CHARACTERS.PROFESSOR.name}</h3>
+          <div className="flex gap-1">
+             <span className={`text-[7px] px-2 py-0.5 rounded-full font-black uppercase ${
+               isNight ? 'bg-purple-950 text-purple-300' : 'bg-blue-100 text-blue-600'
+             }`}>Valutatore</span>
+             <span className={`text-[7px] px-2 py-0.5 rounded-full font-black uppercase ${
+               isNight ? 'bg-emerald-950 text-emerald-300' : 'bg-emerald-100 text-emerald-600'
+             }`}>Quest</span>
           </div>
-          <div className="bg-gray-50 p-2.5 rounded-xl border-2 border-dashed border-gray-200">
-            <p className="text-xs text-gray-700 font-bold leading-tight italic">"{dialogue}"</p>
+        </div>
+
+        {/* Full-width dialogue box */}
+        <div className="w-full">
+          <div className={`p-3 rounded-xl border-2 border-dashed ${
+            isNight ? 'bg-black/40 border-white/10' : 'bg-gray-50 border-gray-200'
+          }`}>
+            <p className={`text-xs font-bold leading-relaxed italic ${
+              isNight ? 'text-gray-200' : 'text-gray-700'
+            }`}>"{dialogue}"</p>
           </div>
           <div className="flex items-center gap-2 mt-2">
-            <div className="flex-1 h-0.5 bg-gray-100 rounded-full overflow-hidden">
+            <div className="flex-1 h-0.5 bg-gray-500/20 rounded-full overflow-hidden">
                <motion.div 
                  animate={{ x: ["-100%", "100%"] }}
                  transition={{ repeat: Infinity, duration: 3, ease: "linear" }}
-                 className="w-1/2 h-full bg-blue-400 opacity-30"
+                 className={`w-1/2 h-full ${isNight ? 'bg-purple-400' : 'bg-blue-400'} opacity-30`}
                />
             </div>
-            <p className="text-[6px] text-gray-400 font-black uppercase tracking-[0.2em]">Interagisci</p>
+            <p className="text-[7px] text-gray-400 font-black uppercase tracking-[0.2em]">Tocca per interagire</p>
           </div>
         </div>
       </motion.div>
 
       {/* Main Actions */}
-      <div className="flex-1 grid grid-cols-2 gap-4 content-start">
+      <div className="flex-1 grid grid-cols-2 sm:grid-cols-3 gap-3 sm:gap-4 content-start">
         <ActionButton 
           icon={<Heart className={`${isHealing ? 'animate-pulse text-red-500' : 'text-red-500'}`} />} 
-          label={isHealing ? "Curando..." : "Centro Pokémon"} 
+          label={isHealing ? "Curando..." : isNight ? "Centro Pokémon [24/7]" : "Centro Pokémon"} 
           onClick={healTeam}
           color="border-red-500"
+          isNight={isNight}
+          badge={isNight ? "NEON" : undefined}
         />
         <ActionButton 
           icon={<MapPin className="text-emerald-500" />} 
           label="Esplora Zone" 
           onClick={() => setShowMap(true)}
           color="border-emerald-500"
+          isNight={isNight}
         />
         <ActionButton 
-          icon={<span className="text-xl">📦</span>} 
-          label="Box" 
-          onClick={() => (window as any).onNavigate('box')}
-          color="border-cyan-400"
-        />
-        <ActionButton 
-          icon={<Phone className="text-blue-400" />} 
-          label="Sfidofono" 
-          onClick={() => (window as any).onNavigate('sfidofono')}
-          color="border-blue-400"
-        />
-        <ActionButton 
-          icon={<span className="text-xl">📓</span>} 
-          label="Premi Pokédex" 
-          onClick={claimPokedexReward}
-          color="border-indigo-500"
-        />
-        <ActionButton 
-          icon={<span className="text-xl">🛒</span>} 
-          label="Market" 
-          onClick={() => (window as any).onNavigate('shop')}
-          color="border-purple-500"
-        />
-        <ActionButton 
-          icon={<span className="text-xl">📤</span>} 
-          label="Scambio" 
-          onClick={() => (window as any).onNavigate('trade')}
-          color="border-orange-400"
-        />
-        <ActionButton 
-          icon={<span className="text-xl">⚔️</span>} 
-          label="Lotta Locale" 
-          onClick={() => (window as any).onNavigate('local-battle')}
-          color="border-red-400"
-        />
-        <ActionButton 
-          icon={<Award className="text-yellow-500" />} 
-          label="Medaglie" 
-          onClick={() => (window as any).onNavigate('badgecase')}
-          color="border-yellow-500"
-        />
-        <ActionButton 
-          icon={<span className="text-xl">🎒</span>} 
-          label="Zaino" 
-          onClick={() => (window as any).onNavigate('inventory')}
-          color="border-blue-400"
-        />
-        <ActionButton 
-          icon={<ScrollText className="text-orange-500" />} 
-          label="Missioni" 
-          onClick={() => (window as any).onNavigate('quests')}
-          color="border-orange-500"
+          icon={<span className="text-xl">🗼</span>} 
+          label={(state.player.towerHighFloor || 0) > 0 ? `Torre (P.${state.player.towerHighFloor})` : "Torre Lotta"} 
+          onClick={() => (window as any).onNavigate('tower')}
+          color="border-emerald-400"
+          isNight={isNight}
+          badge="ROGUELIKE"
         />
         <ActionButton 
           icon={<span className="text-xl">👑</span>} 
           label={state.player.badges.length >= 10 ? "Lega Pokémon" : "Lega (10 Med.)"} 
           onClick={openLeague}
           color="border-purple-600"
+          isNight={isNight}
+        />
+        <ActionButton 
+          icon={<span className="text-xl">📦</span>} 
+          label="Box" 
+          onClick={() => (window as any).onNavigate('box')}
+          color="border-cyan-400"
+          isNight={isNight}
+        />
+        <ActionButton 
+          icon={<Phone className="text-blue-400" />} 
+          label="Sfidofono" 
+          onClick={() => (window as any).onNavigate('sfidofono')}
+          color="border-blue-400"
+          isNight={isNight}
+        />
+        <ActionButton 
+          icon={<span className="text-xl">📓</span>} 
+          label="Premi Pokédex" 
+          onClick={claimPokedexReward}
+          color="border-indigo-500"
+          isNight={isNight}
+        />
+        <ActionButton 
+          icon={<span className="text-xl">🛒</span>} 
+          label="Market" 
+          onClick={() => (window as any).onNavigate('shop')}
+          color="border-purple-500"
+          isNight={isNight}
+        />
+        <ActionButton 
+          icon={<span className="text-xl">📤</span>} 
+          label="Scambio" 
+          onClick={() => (window as any).onNavigate('trade')}
+          color="border-orange-400"
+          isNight={isNight}
+        />
+        <ActionButton 
+          icon={<span className="text-xl">⚔️</span>} 
+          label="Lotta Locale" 
+          onClick={() => (window as any).onNavigate('local-battle')}
+          color="border-red-400"
+          isNight={isNight}
+        />
+        <ActionButton 
+          icon={<Award className="text-yellow-500" />} 
+          label="Medaglie" 
+          onClick={() => (window as any).onNavigate('badgecase')}
+          color="border-yellow-500"
+          isNight={isNight}
+        />
+        <ActionButton 
+          icon={<span className="text-xl">🎒</span>} 
+          label="Zaino" 
+          onClick={() => (window as any).onNavigate('inventory')}
+          color="border-blue-400"
+          isNight={isNight}
+        />
+        <ActionButton 
+          icon={<ScrollText className="text-orange-500" />} 
+          label="Missioni" 
+          onClick={() => (window as any).onNavigate('quests')}
+          color="border-orange-500"
+          isNight={isNight}
         />
         <ActionButton 
           icon={<span className="text-xl">⚙️</span>} 
           label="Impostazioni" 
           onClick={() => (window as any).onNavigate('settings')}
           color="border-gray-400"
+          isNight={isNight}
         />
       </div>
 
@@ -311,14 +399,41 @@ export const Hub: React.FC = () => {
   );
 };
 
-const ActionButton = ({ icon, label, onClick, color }: { icon: React.ReactNode, label: string, onClick: () => void, color: string }) => (
+const ActionButton = ({ 
+  icon, 
+  label, 
+  onClick, 
+  color, 
+  isNight, 
+  badge 
+}: { 
+  icon: React.ReactNode, 
+  label: string, 
+  onClick: () => void, 
+  color: string, 
+  isNight?: boolean, 
+  badge?: string 
+}) => (
   <button 
     onClick={onClick}
-    className={`bg-white py-3 px-4 rounded-3xl border-b-6 ${color} shadow-md active:translate-y-0.5 active:border-b-2 transition-all flex flex-col items-center gap-1.5`}
+    className={`py-3 px-3.5 sm:px-4 rounded-3xl border-b-6 ${color} shadow-md active:translate-y-0.5 active:border-b-2 transition-all flex flex-col items-center gap-1.5 cursor-pointer relative overflow-hidden ${
+      isNight 
+        ? 'bg-slate-900 border-white/10 hover:border-white/30 text-white shadow-black/50' 
+        : 'bg-white text-gray-800'
+    }`}
   >
-    <div className="p-2 bg-gray-50 rounded-xl">
+    {badge && (
+      <span className="absolute top-1.5 right-1.5 text-[8px] font-black font-mono px-1.5 py-0.2 rounded-full bg-emerald-500/20 text-emerald-400 border border-emerald-500/40">
+        {badge}
+      </span>
+    )}
+    <div className={`p-2 rounded-xl ${isNight ? 'bg-white/5' : 'bg-gray-50'}`}>
       {icon}
     </div>
-    <span className="font-bold text-[10px] uppercase text-gray-700 leading-tight">{label}</span>
+    <span className={`font-bold text-[10px] uppercase leading-tight text-center ${
+      isNight ? 'text-gray-200' : 'text-gray-700'
+    }`}>
+      {label}
+    </span>
   </button>
 );

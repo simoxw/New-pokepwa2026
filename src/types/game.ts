@@ -178,6 +178,11 @@ export interface GameState {
     quests: Quest[];
     defeatedTrainers: string[];
     leagueVictories?: number;
+    avatarUrl?: string;
+    hatEmoji?: string;
+    title?: string;
+    unlockedTitles?: string[];
+    towerHighFloor?: number;
   };
 }
 
