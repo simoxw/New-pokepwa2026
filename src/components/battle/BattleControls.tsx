@@ -150,9 +150,8 @@ export const BattleControls: React.FC<BattleControlsProps> = ({
     }
     setHoldingMoveName(null);
 
-    // If long-press was triggered, close the inspect sheet and DO NOT execute the move
+    // If long-press was triggered, KEEP the inspect sheet open
     if (isLongPressActiveRef.current) {
-      setInspectingMove(null);
       isLongPressActiveRef.current = false;
       return;
     }
@@ -170,7 +169,6 @@ export const BattleControls: React.FC<BattleControlsProps> = ({
       longPressTimerRef.current = null;
     }
     setHoldingMoveName(null);
-    setInspectingMove(null);
     isLongPressActiveRef.current = false;
   };
 
@@ -212,9 +210,13 @@ export const BattleControls: React.FC<BattleControlsProps> = ({
             animate={{ opacity: 1, scale: 1, y: 0 }}
             exit={{ opacity: 0, scale: 0.95, y: 10 }}
             transition={{ duration: 0.15 }}
-            className="fixed inset-0 z-[150] flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm pointer-events-none"
+            onClick={() => setInspectingMove(null)}
+            className="fixed inset-0 z-[150] flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm cursor-pointer"
           >
-            <div className="bg-white text-slate-900 w-full max-w-sm rounded-[2rem] p-5 shadow-2xl border-4 border-slate-200 pointer-events-auto space-y-3.5">
+            <div 
+              onClick={(e) => e.stopPropagation()}
+              className="bg-white text-slate-900 w-full max-w-sm rounded-[2rem] p-5 shadow-2xl border-4 border-slate-200 pointer-events-auto space-y-3.5 cursor-default relative"
+            >
               {/* Header with Type & Category */}
               <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-3">
                 <div className="min-w-0">
@@ -343,11 +345,15 @@ export const BattleControls: React.FC<BattleControlsProps> = ({
                 )}
               </div>
 
-              {/* Release hint */}
-              <div className="text-center pt-1 border-t border-slate-100">
-                <span className="text-[10px] uppercase font-black tracking-widest text-slate-400 animate-pulse">
-                  👆 Rilascia il dito per chiudere la scheda
-                </span>
+              {/* Close button footer */}
+              <div className="pt-2 border-t border-slate-100">
+                <button
+                  type="button"
+                  onClick={() => setInspectingMove(null)}
+                  className="w-full bg-slate-900 hover:bg-slate-800 text-white py-3 rounded-xl font-black uppercase tracking-wider text-xs shadow-md transition-all cursor-pointer"
+                >
+                  Chiudi Scheda
+                </button>
               </div>
             </div>
           </motion.div>
@@ -380,7 +386,6 @@ export const BattleControls: React.FC<BattleControlsProps> = ({
             const maxPp = move.maxPp ?? 35;
             const isOutOfPp = currentPp <= 0;
             const isMoveDisabled = disabled || (isOutOfPp && !isEncrypted);
-            const isHolding = holdingMoveName === move.name;
 
             if (isEncrypted) {
               return (
@@ -421,12 +426,12 @@ export const BattleControls: React.FC<BattleControlsProps> = ({
                 }`}
               >
                 {/* Visual hold charging indicator */}
-                {isHolding && !isMoveDisabled && (
+                {holdingMoveName === move.name && !isMoveDisabled && (
                   <motion.div
                     initial={{ width: '0%' }}
                     animate={{ width: '100%' }}
                     transition={{ duration: 0.6, ease: 'linear' }}
-                    className="absolute bottom-0 left-0 h-1 bg-white/70 pointer-events-none"
+                    className="absolute bottom-0 left-0 h-1 bg-white/75 pointer-events-none"
                   />
                 )}
 
@@ -435,9 +440,11 @@ export const BattleControls: React.FC<BattleControlsProps> = ({
                   <span className="text-[11px] sm:text-xs font-bold leading-tight truncate text-left">
                     {move.name}
                   </span>
-                  <span className={`text-[9px] font-black px-1 rounded shrink-0 ml-1 ${isOutOfPp ? 'bg-red-800/80 text-red-200' : 'bg-black/30 text-white'}`}>
-                    {currentPp}/{maxPp}
-                  </span>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <span className={`text-[9px] font-black px-1 rounded ${isOutOfPp ? 'bg-red-800/80 text-red-200' : 'bg-black/30 text-white'}`}>
+                      {currentPp}/{maxPp}
+                    </span>
+                  </div>
                 </div>
 
                 <span className="text-[8px] sm:text-[9px] opacity-95 uppercase font-black tracking-tight mt-0.5">

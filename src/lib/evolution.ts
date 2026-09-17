@@ -13,12 +13,14 @@ export function canEvolve(pokemon: Pokemon): boolean {
  * Performs the evolution of a pokemon, preserving its individual data 
  * (IVs, EVs, nickname, caught location) while updating species data.
  */
-export async function evolvePokemon(pokemon: Pokemon): Promise<Pokemon> {
+export async function evolvePokemon(pokemon: Pokemon, targetId?: number): Promise<Pokemon> {
   if (!pokemon.evolutionInfo) return pokemon;
+
+  const nextId = targetId || pokemon.evolutionInfo.nextId;
 
   // Fetch data for the new species
   const evolvedData = await fetchPokemonData(
-    pokemon.evolutionInfo.nextId, 
+    nextId, 
     pokemon.level, 
     pokemon.caughtLocation
   );

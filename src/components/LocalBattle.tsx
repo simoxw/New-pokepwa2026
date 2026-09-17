@@ -30,7 +30,12 @@ export const LocalBattle: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   if (isFighting && opponentTeam) {
     return (
       <BattleScreen 
-        enemy={opponentTeam[0]} // Simplification: battle against the first one
+        enemy={opponentTeam[0]}
+        trainer={{
+          name: 'Amico Sfidante',
+          team: opponentTeam,
+          sprite: opponentTeam[0]?.sprites.front || ''
+        }}
         onEnd={() => {
           setIsFighting(false);
           setOpponentTeam(null);

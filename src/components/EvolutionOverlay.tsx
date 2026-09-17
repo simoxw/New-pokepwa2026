@@ -13,10 +13,14 @@ export const EvolutionOverlay: React.FC<EvolutionOverlayProps> = ({ pokemon, onC
   const [phase, setPhase] = useState<'ask' | 'evolving' | 'complete'>('ask');
   const [evolvedPokemon, setEvolvedPokemon] = useState<Pokemon | null>(null);
 
-  const startEvolution = async () => {
+  const branches = pokemon.evolutionInfo?.branches;
+  const [selectedBranchId, setSelectedBranchId] = useState<number | undefined>(
+    branches && branches.length > 0 ? branches[0].nextId : undefined
+  );
+
+  const startEvolution = async (targetId?: number) => {
     setPhase('evolving');
-    // Actual evolution logic (fetching new data)
-    const result = await evolvePokemon(pokemon);
+    const result = await evolvePokemon(pokemon, targetId || selectedBranchId);
     
     // Artificial delay for animation
     await new Promise(r => setTimeout(r, 4000));
@@ -34,23 +38,45 @@ export const EvolutionOverlay: React.FC<EvolutionOverlayProps> = ({ pokemon, onC
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            className="space-y-6"
+            className="space-y-6 max-w-sm w-full"
           >
-            <h2 className="text-2xl font-black italic uppercase italic">Cosa?!</h2>
-            <div className="w-48 h-48 mx-auto">
+            <h2 className="text-2xl font-black italic uppercase">Cosa?!</h2>
+            <div className="w-44 h-44 mx-auto">
               <img src={pokemon.sprites.artwork} alt={pokemon.name} className="w-full h-full object-contain" />
             </div>
-            <p className="text-xl font-bold italic">Sembra che {pokemon.name} stia per evolversi!</p>
+            <p className="text-lg font-bold italic">Sembra che {pokemon.name} stia per evolversi!</p>
+
+            {branches && branches.length > 1 && (
+              <div className="space-y-2">
+                <span className="text-xs uppercase font-black text-slate-400">Scegli l'evoluzione:</span>
+                <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
+                  {branches.map(branch => (
+                    <button
+                      key={branch.nextId}
+                      onClick={() => setSelectedBranchId(branch.nextId)}
+                      className={`p-3 rounded-xl border-2 font-black uppercase text-xs transition-all ${
+                        selectedBranchId === branch.nextId 
+                          ? 'bg-blue-600 border-white text-white shadow-lg' 
+                          : 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
+                      }`}
+                    >
+                      {branch.name}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="flex gap-4">
               <button 
                 onClick={onCancel}
-                className="flex-1 bg-white/10 hover:bg-white/20 py-4 rounded-2xl font-bold uppercase tracking-widest text-xs"
+                className="flex-1 bg-white/10 hover:bg-white/20 py-4 rounded-2xl font-bold uppercase tracking-widest text-xs cursor-pointer"
               >
                 Ferma B
               </button>
               <button 
-                onClick={startEvolution}
-                className="flex-1 bg-blue-500 hover:bg-blue-600 py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-blue-500/20"
+                onClick={() => startEvolution()}
+                className="flex-1 bg-blue-500 hover:bg-blue-600 py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-blue-500/20 cursor-pointer"
               >
                 Evolvi!
               </button>

@@ -1270,15 +1270,22 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
   ]);
 
   // Item Use in Battle
-  const handleUseItem = useCallback(async (item: Item) => {
+  const handleUseItem = useCallback(async (item: Item, targetIndex: number = 0) => {
     setShowBag(false);
     setIsAnimating(true);
     
-    const result = useItemInBattle(item, playerActive);
-    addLog(`Usi ${item.name}!`);
-    await new Promise(r => setTimeout(r, 800));
+    const isTargetActive = targetIndex === 0;
+    const targetPokemon = isTargetActive
+      ? { ...playerActive, hp: playerHp, status: playerStatus.status, statusDuration: playerStatus.duration }
+      : (state.player.team[targetIndex] || playerActive);
+
+    const result = useItemInBattle(item, targetPokemon);
     
     if (result.success) {
+      if (item.type !== 'capture') {
+        addLog(`Usi ${item.name} su ${targetPokemon.name}!`);
+        await new Promise(r => setTimeout(r, 600));
+      }
       addLog(result.msg);
       
       // Consume item from inventory
@@ -1292,26 +1299,53 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
 
       if (item.type === 'healing') {
         const isRevive = item.id.includes('revitalizzante');
-        let healAmount = item.effectValue || 20;
-        let nextHp = playerHp;
+        let nextHp = targetPokemon.hp;
 
         if (isRevive) {
-          healAmount = Math.floor(playerActive.maxHp * (item.effectValue || 0.5));
-          nextHp = healAmount;
+          const ratio = item.id === 'revitalizzante-max' ? 1 : 0.5;
+          nextHp = Math.floor(targetPokemon.maxHp * ratio);
+        } else if (item.id === 'pozione-max') {
+          nextHp = targetPokemon.maxHp;
         } else {
-          nextHp = Math.min(playerActive.maxHp, playerHp + healAmount);
+          const healAmount = item.effectValue || (item.id === 'iper-pozione' ? 200 : item.id === 'super-pozione' ? 50 : 20);
+          nextHp = Math.min(targetPokemon.maxHp, targetPokemon.hp + healAmount);
         }
 
-        setPlayerHp(nextHp);
-        
-        setState(prev => {
-          const team = [...prev.player.team];
-          team[0] = { ...team[0], hp: nextHp };
-          return { ...prev, player: { ...prev.player, team } };
-        });
+        if (isTargetActive) {
+          setPlayerHp(nextHp);
+          setState(prev => {
+            const team = [...prev.player.team];
+            team[0] = { ...team[0], hp: nextHp };
+            return { ...prev, player: { ...prev.player, team } };
+          });
+        } else {
+          setState(prev => {
+            const team = [...prev.player.team];
+            team[targetIndex] = { ...team[targetIndex], hp: nextHp };
+            return { ...prev, player: { ...prev.player, team } };
+          });
+        }
 
         await new Promise(r => setTimeout(r, 1000));
-        await triggerEnemySingleTurn(nextHp, enemyHp);
+        await triggerEnemySingleTurn(isTargetActive ? nextHp : playerHp, enemyHp);
+      } else if (['antidoto', 'antiparalisi', 'antiscotto', 'sveglia', 'cura-totale', 'full-heal'].includes(item.id)) {
+        if (isTargetActive) {
+          setPlayerStatus({ status: undefined, duration: undefined });
+          setState(prev => {
+            const team = [...prev.player.team];
+            team[0] = { ...team[0], status: undefined, statusDuration: undefined };
+            return { ...prev, player: { ...prev.player, team } };
+          });
+        } else {
+          setState(prev => {
+            const team = [...prev.player.team];
+            team[targetIndex] = { ...team[targetIndex], status: undefined, statusDuration: undefined };
+            return { ...prev, player: { ...prev.player, team } };
+          });
+        }
+
+        await new Promise(r => setTimeout(r, 1000));
+        await triggerEnemySingleTurn(playerHp, enemyHp);
       } else if (item.type === 'capture') {
         if (trainer) {
           addLog("Non puoi rubare i Pokémon degli altri allenatori!");
@@ -1327,7 +1361,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       addLog(result.msg);
       setIsAnimating(false);
     }
-  }, [playerActive, playerHp, enemyHp, addLog, setState, triggerEnemySingleTurn, trainer]);
+  }, [playerActive, playerHp, enemyHp, playerStatus, addLog, setState, triggerEnemySingleTurn, trainer, state.player.team]);
 
   // Capture result
   const handleCatchResult = async (success: boolean) => {

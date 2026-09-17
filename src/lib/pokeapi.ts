@@ -643,29 +643,38 @@ export async function fetchPokemonData(id: number, level: number, location: stri
       try {
         const evolutionChainData = await fetchWithCache(speciesData.evolution_chain.url);
         let current = evolutionChainData?.chain;
-        const findNextEvolution = (node: any): any => {
+        const findEvolutionNode = (node: any): any => {
           if (node?.species?.name === data.name) {
-            return node.evolves_to?.[0];
+            return node;
           }
           if (Array.isArray(node?.evolves_to)) {
             for (const next of node.evolves_to) {
-              const found = findNextEvolution(next);
+              const found = findEvolutionNode(next);
               if (found) return found;
             }
           }
           return null;
         };
 
-        const nextEvoNode = findNextEvolution(current);
-        if (nextEvoNode?.species?.url) {
-          const parts = nextEvoNode.species.url.split('/').filter(Boolean);
-          const nextId = parseInt(parts[parts.length - 1], 10);
-          const minLevel = nextEvoNode.evolution_details?.[0]?.min_level || 16;
-          if (!isNaN(nextId)) {
-            evolutionInfo = {
+        const myEvoNode = findEvolutionNode(current);
+        if (myEvoNode && Array.isArray(myEvoNode.evolves_to) && myEvoNode.evolves_to.length > 0) {
+          const branches = myEvoNode.evolves_to.map((evo: any) => {
+            const parts = evo.species.url.split('/').filter(Boolean);
+            const nextId = parseInt(parts[parts.length - 1], 10);
+            const minLevel = evo.evolution_details?.[0]?.min_level || 16;
+            return {
               nextId,
               level: minLevel,
-              name: nextEvoNode.species.name
+              name: evo.species.name
+            };
+          }).filter((b: any) => !isNaN(b.nextId));
+
+          if (branches.length > 0) {
+            evolutionInfo = {
+              nextId: branches[0].nextId,
+              level: branches[0].level,
+              name: branches[0].name,
+              branches: branches.length > 1 ? branches : undefined
             };
           }
         }

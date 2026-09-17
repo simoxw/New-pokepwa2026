@@ -68,6 +68,7 @@ export interface Pokemon {
     nextId: number;
     level: number;
     name: string;
+    branches?: { nextId: number; name: string; level: number }[];
   };
   learnableMoves?: {
     level: number;
