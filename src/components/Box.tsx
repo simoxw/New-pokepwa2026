@@ -1,114 +1,614 @@
-import React, { useState } from 'react';
+import React, { useState, useMemo } from 'react';
 import { useGame } from '../contexts/GameContext';
-import { ChevronLeft, Search } from 'lucide-react';
+import { 
+  ChevronLeft, Search, X, Sparkles, Zap, Heart, 
+  ArrowUpDown, SlidersHorizontal, RotateCcw, ShieldAlert
+} from 'lucide-react';
 import { Pokemon } from '../types/game';
 import { PokemonDetails } from './PokemonDetails';
+import { ALL_TYPES, GENERATIONS, getTypeVisual } from './pokedex/pokedexConstants';
+
+type SortKey = 'recent' | 'level_desc' | 'level_asc' | 'pokedex' | 'name' | 'stats';
 
 export const Box: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { state, setState } = useGame();
+  
+  // Search & Filter State
   const [search, setSearch] = useState('');
-  const [selectedPokemon, setSelectedPokemon] = useState<{ pokemon: Pokemon, source: 'team' | 'box', index: number } | null>(null);
+  const [selectedType, setSelectedType] = useState<string | null>(null);
+  const [selectedGen, setSelectedGen] = useState<number>(0);
+  const [onlyShiny, setOnlyShiny] = useState<boolean>(false);
+  const [onlyCanEvolve, setOnlyCanEvolve] = useState<boolean>(false);
+  const [onlyInjured, setOnlyInjured] = useState<boolean>(false);
+  const [sortBy, setSortBy] = useState<SortKey>('recent');
+  const [showAdvancedFilters, setShowAdvancedFilters] = useState<boolean>(false);
 
-  const filteredBox = state.player.box.filter(p => 
-    p.name.toLowerCase().includes(search.toLowerCase())
-  );
+  // Selected Pokemon modal
+  const [selectedPokemon, setSelectedPokemon] = useState<{ 
+    pokemon: Pokemon; 
+    source: 'team' | 'box';
+  } | null>(null);
 
-  const withdraw = (index: number) => {
+  // Helper to calculate total stats (BST or current stats)
+  const calculateTotalStats = (p: Pokemon) => {
+    return (p.stats.attack || 0) + 
+           (p.stats.defense || 0) + 
+           (p.stats.spAtk || 0) + 
+           (p.stats.spDef || 0) + 
+           (p.stats.speed || 0) + 
+           (p.maxHp || 0);
+  };
+
+  // Count active filters
+  const activeFiltersCount = (search ? 1 : 0) +
+    (selectedType ? 1 : 0) +
+    (selectedGen > 0 ? 1 : 0) +
+    (onlyShiny ? 1 : 0) +
+    (onlyCanEvolve ? 1 : 0) +
+    (onlyInjured ? 1 : 0) +
+    (sortBy !== 'recent' ? 1 : 0);
+
+  const resetFilters = () => {
+    setSearch('');
+    setSelectedType(null);
+    setSelectedGen(0);
+    setOnlyShiny(false);
+    setOnlyCanEvolve(false);
+    setOnlyInjured(false);
+    setSortBy('recent');
+  };
+
+  // Filtered & Sorted Box
+  const filteredBox = useMemo(() => {
+    let result = [...state.player.box];
+
+    // 1. Text Search (name, nickname, or #id)
+    if (search.trim()) {
+      const q = search.trim().toLowerCase();
+      result = result.filter(p => {
+        const matchName = p.name.toLowerCase().includes(q);
+        const matchNickname = p.nickname?.toLowerCase().includes(q);
+        const matchId = p.id.toString() === q || `#${p.id}`.includes(q);
+        return matchName || matchNickname || matchId;
+      });
+    }
+
+    // 2. Type Filter
+    if (selectedType) {
+      result = result.filter(p => 
+        p.types.some(t => t.toLowerCase() === selectedType.toLowerCase())
+      );
+    }
+
+    // 3. Generation Filter
+    if (selectedGen > 0) {
+      const genObj = GENERATIONS.find(g => g.id === selectedGen);
+      if (genObj) {
+        const [start, end] = genObj.range;
+        result = result.filter(p => p.id >= start && p.id <= end);
+      }
+    }
+
+    // 4. Shiny Only
+    if (onlyShiny) {
+      result = result.filter(p => p.isShiny);
+    }
+
+    // 5. Can Evolve
+    if (onlyCanEvolve) {
+      result = result.filter(p => p.evolutionInfo && p.level >= p.evolutionInfo.level);
+    }
+
+    // 6. Injured / Low HP
+    if (onlyInjured) {
+      result = result.filter(p => p.hp < p.maxHp || p.status);
+    }
+
+    // 7. Sorting
+    result.sort((a, b) => {
+      switch (sortBy) {
+        case 'level_desc':
+          return b.level - a.level;
+        case 'level_asc':
+          return a.level - b.level;
+        case 'pokedex':
+          return a.id - b.id;
+        case 'name':
+          return a.name.localeCompare(b.name);
+        case 'stats':
+          return calculateTotalStats(b) - calculateTotalStats(a);
+        case 'recent':
+        default:
+          return (b.caughtAt || 0) - (a.caughtAt || 0);
+      }
+    });
+
+    return result;
+  }, [state.player.box, search, selectedType, selectedGen, onlyShiny, onlyCanEvolve, onlyInjured, sortBy]);
+
+  // Safe Withdraw using unique instanceId
+  const withdraw = (target: Pokemon) => {
     if (state.player.team.length >= 6) {
       alert("Squadra piena! Sposta prima qualcuno nel Box.");
       return;
     }
-    const pokemon = state.player.box[index];
-    setState(prev => ({
-      ...prev,
-      player: {
-        ...prev.player,
-        box: prev.player.box.filter((_, i) => i !== index),
-        team: [...prev.player.team, pokemon]
-      }
-    }));
+    setState(prev => {
+      const boxIdx = prev.player.box.findIndex(p => 
+        p.instanceId ? p.instanceId === target.instanceId : p.id === target.id && p.level === target.level && p.caughtAt === target.caughtAt
+      );
+      if (boxIdx === -1) return prev;
+      const pokemon = prev.player.box[boxIdx];
+      return {
+        ...prev,
+        player: {
+          ...prev.player,
+          box: prev.player.box.filter((_, i) => i !== boxIdx),
+          team: [...prev.player.team, pokemon]
+        }
+      };
+    });
     setSelectedPokemon(null);
   };
 
-  const deposit = (index: number) => {
+  // Safe Deposit using unique instanceId
+  const deposit = (target: Pokemon) => {
     if (state.player.team.length <= 1) {
       alert("Devi avere almeno un Pokémon in squadra!");
       return;
     }
-    const pokemon = state.player.team[index];
-    setState(prev => ({
-      ...prev,
-      player: {
-        ...prev.player,
-        team: prev.player.team.filter((_, i) => i !== index),
-        box: [...prev.player.box, pokemon]
-      }
-    }));
+    setState(prev => {
+      const teamIdx = prev.player.team.findIndex(p => 
+        p.instanceId ? p.instanceId === target.instanceId : p.id === target.id && p.level === target.level && p.caughtAt === target.caughtAt
+      );
+      if (teamIdx === -1) return prev;
+      const pokemon = prev.player.team[teamIdx];
+      return {
+        ...prev,
+        player: {
+          ...prev.player,
+          team: prev.player.team.filter((_, i) => i !== teamIdx),
+          box: [...prev.player.box, pokemon]
+        }
+      };
+    });
     setSelectedPokemon(null);
   };
 
+  // Shiny counts in box
+  const shinyCountInBox = useMemo(() => {
+    return state.player.box.filter(p => p.isShiny).length;
+  }, [state.player.box]);
+
+  const evolvableCountInBox = useMemo(() => {
+    return state.player.box.filter(p => p.evolutionInfo && p.level >= p.evolutionInfo.level).length;
+  }, [state.player.box]);
+
   return (
-    <div className="h-full bg-white flex flex-col">
-      <div className="p-4 border-b flex flex-col gap-4 bg-white sticky top-0 z-20">
-        <div className="flex items-center gap-4">
-          <button onClick={onBack} className="p-2 hover:bg-gray-100 rounded-full"><ChevronLeft /></button>
-          <h2 className="font-bold text-xl uppercase">Sistema Memoria</h2>
+    <div className="h-full bg-slate-950 text-slate-100 flex flex-col select-none overflow-hidden">
+      
+      {/* TOP BAR */}
+      <header className="px-3.5 py-2.5 bg-slate-900 border-b border-slate-800 flex items-center justify-between gap-3 shrink-0 shadow-md z-10">
+        <div className="flex items-center gap-3">
+          <button 
+            onClick={onBack} 
+            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors"
+            title="Torna all'Hub"
+          >
+            <ChevronLeft className="w-5 h-5" />
+          </button>
+          <div>
+            <div className="flex items-center gap-2">
+              <h1 className="text-base font-black tracking-tight text-white uppercase">
+                Sistema Memoria
+              </h1>
+              <span className="text-[10px] font-bold px-1.5 py-0.5 rounded bg-blue-500/20 text-blue-400 border border-blue-500/30">
+                PC Box
+              </span>
+            </div>
+            <div className="flex items-center gap-3 text-[11px] text-slate-400 font-medium">
+              <span>👥 Squadra: <strong className="text-emerald-400">{state.player.team.length}/6</strong></span>
+              <span>📦 Box: <strong className="text-indigo-400">{state.player.box.length}</strong></span>
+              {shinyCountInBox > 0 && (
+                <span className="text-amber-400 font-bold">✨ {shinyCountInBox} Shiny</span>
+              )}
+            </div>
+          </div>
         </div>
+
+        {/* Action Toggle Filters */}
+        <button
+          onClick={() => setShowAdvancedFilters(prev => !prev)}
+          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-colors ${
+            showAdvancedFilters || activeFiltersCount > 0
+              ? 'bg-indigo-600 text-white border-indigo-400 shadow-sm'
+              : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+          }`}
+          title="Mostra / Nascondi filtri avanzati"
+        >
+          <SlidersHorizontal className="w-4 h-4" />
+          <span className="hidden sm:inline">Filtri</span>
+          {activeFiltersCount > 0 && (
+            <span className="w-4 h-4 rounded-full bg-white text-indigo-700 text-[10px] font-black flex items-center justify-center">
+              {activeFiltersCount}
+            </span>
+          )}
+        </button>
+      </header>
+
+      {/* SEARCH AND QUICK FILTER CONTROLS */}
+      <div className="bg-slate-900/80 border-b border-slate-800 px-3.5 py-2.5 space-y-2 shrink-0">
         
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input 
-            type="text" 
-            placeholder="Cerca nel box..." 
-            className="w-full bg-gray-100 rounded-xl pl-10 pr-4 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 font-bold"
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-          />
+        {/* Search Input Row & Sort Dropdown */}
+        <div className="flex items-center gap-2">
+          <div className="flex-1 relative flex items-center">
+            <Search className="w-4 h-4 text-slate-400 absolute left-3 pointer-events-none" />
+            <input 
+              type="text" 
+              placeholder="Cerca per nome, soprannome o #ID..." 
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="w-full bg-slate-950 border border-slate-800 rounded-xl pl-9 pr-8 py-1.5 text-xs text-slate-100 placeholder-slate-500 focus:outline-none focus:border-indigo-500 transition-all font-medium"
+            />
+            {search && (
+              <button 
+                onClick={() => setSearch('')}
+                className="absolute right-2.5 text-slate-400 hover:text-slate-200"
+              >
+                <X className="w-3.5 h-3.5" />
+              </button>
+            )}
+          </div>
+
+          {/* Quick Sort Selector */}
+          <div className="relative flex items-center">
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as SortKey)}
+              className="appearance-none bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold rounded-xl pl-7 pr-3 py-1.5 focus:outline-none focus:border-indigo-500 cursor-pointer"
+            >
+              <option value="recent">🕒 Recenti</option>
+              <option value="level_desc">⬆️ Livello (Max)</option>
+              <option value="level_asc">⬇️ Livello (Min)</option>
+              <option value="pokedex">🔢 # Pokédex</option>
+              <option value="name">🔤 Nome (A-Z)</option>
+              <option value="stats">🛡️ Statistiche Max</option>
+            </select>
+            <ArrowUpDown className="w-3.5 h-3.5 text-slate-400 absolute left-2 pointer-events-none" />
+          </div>
         </div>
+
+        {/* 1-Tap Quick Filter Pills */}
+        <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-0.5">
+          {/* All */}
+          <button
+            onClick={() => {
+              setSelectedType(null);
+              setOnlyShiny(false);
+              setOnlyCanEvolve(false);
+              setOnlyInjured(false);
+              setSelectedGen(0);
+            }}
+            className={`px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${
+              !selectedType && !onlyShiny && !onlyCanEvolve && !onlyInjured && selectedGen === 0
+                ? 'bg-indigo-600 text-white border-indigo-400 shadow-sm'
+                : 'bg-slate-800/80 text-slate-400 border-slate-700/60 hover:bg-slate-800'
+            }`}
+          >
+            Tutti ({state.player.box.length})
+          </button>
+
+          {/* Shiny Pill */}
+          <button
+            onClick={() => setOnlyShiny(prev => !prev)}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${
+              onlyShiny
+                ? 'bg-amber-500 text-black border-amber-300 shadow-sm font-black'
+                : 'bg-slate-800/80 text-amber-300/80 border-slate-700/60 hover:bg-slate-800'
+            }`}
+          >
+            <Sparkles className="w-3 h-3" />
+            <span>Shiny</span>
+            {shinyCountInBox > 0 && <span className="text-[10px] opacity-80">({shinyCountInBox})</span>}
+          </button>
+
+          {/* Evolvable Pill */}
+          <button
+            onClick={() => setOnlyCanEvolve(prev => !prev)}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${
+              onlyCanEvolve
+                ? 'bg-emerald-600 text-white border-emerald-400 shadow-sm'
+                : 'bg-slate-800/80 text-emerald-400/90 border-slate-700/60 hover:bg-slate-800'
+            }`}
+          >
+            <Zap className="w-3 h-3" />
+            <span>Pronti a Evolvere</span>
+            {evolvableCountInBox > 0 && <span className="text-[10px] opacity-80">({evolvableCountInBox})</span>}
+          </button>
+
+          {/* Injured Pill */}
+          <button
+            onClick={() => setOnlyInjured(prev => !prev)}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${
+              onlyInjured
+                ? 'bg-rose-600 text-white border-rose-400 shadow-sm'
+                : 'bg-slate-800/80 text-rose-400/90 border-slate-700/60 hover:bg-slate-800'
+            }`}
+          >
+            <Heart className="w-3 h-3" />
+            <span>Feriti / KO</span>
+          </button>
+        </div>
+
+        {/* ADVANCED FILTERS PANEL: Element Types & Generations */}
+        {showAdvancedFilters && (
+          <div className="pt-2 border-t border-slate-800 space-y-2.5">
+            {/* Elemental Types Filter */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5 px-1">
+                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                  Filtra per Tipo Elementale:
+                </span>
+                {selectedType && (
+                  <button
+                    onClick={() => setSelectedType(null)}
+                    className="text-[10px] text-indigo-400 hover:text-indigo-300 font-bold"
+                  >
+                    Deseleziona tipo
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
+                {ALL_TYPES.map(typeKey => {
+                  const visual = getTypeVisual(typeKey);
+                  const isSelected = selectedType === typeKey;
+                  return (
+                    <button
+                      key={typeKey}
+                      onClick={() => setSelectedType(isSelected ? null : typeKey)}
+                      className={`flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-bold whitespace-nowrap transition-all border ${
+                        isSelected
+                          ? `${visual.badge} text-white border-white/60 shadow-md scale-105`
+                          : 'bg-slate-800/90 text-slate-300 border-slate-700 hover:border-slate-500'
+                      }`}
+                    >
+                      <span>{visual.icon}</span>
+                      <span>{visual.label}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Generations Filter */}
+            <div>
+              <div className="flex items-center justify-between mb-1.5 px-1">
+                <span className="text-[10px] uppercase font-bold text-slate-400 tracking-wider">
+                  Filtra per Generazione / Regione:
+                </span>
+                {selectedGen > 0 && (
+                  <button
+                    onClick={() => setSelectedGen(0)}
+                    className="text-[10px] text-indigo-400 hover:text-indigo-300 font-bold"
+                  >
+                    Tutte le Gen
+                  </button>
+                )}
+              </div>
+              <div className="flex items-center gap-1.5 overflow-x-auto no-scrollbar pb-1">
+                {GENERATIONS.map(gen => {
+                  const isSelected = selectedGen === gen.id;
+                  return (
+                    <button
+                      key={gen.id}
+                      onClick={() => setSelectedGen(gen.id)}
+                      className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold whitespace-nowrap transition-all border ${
+                        isSelected
+                          ? 'bg-indigo-600 text-white border-indigo-400 shadow-sm'
+                          : 'bg-slate-800 text-slate-400 border-slate-700 hover:text-slate-200'
+                      }`}
+                    >
+                      <span>{gen.flag}</span>
+                      <span>{gen.name}</span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Active Filters Summary & Reset Button */}
+        {activeFiltersCount > 0 && (
+          <div className="flex items-center justify-between pt-1 border-t border-slate-800/60 text-xs">
+            <span className="text-slate-400 text-[11px]">
+              Trovati <strong className="text-white">{filteredBox.length}</strong> su <strong className="text-slate-300">{state.player.box.length}</strong> Pokémon nel Box
+            </span>
+            <button
+              onClick={resetFilters}
+              className="flex items-center gap-1 text-[11px] text-rose-400 hover:text-rose-300 font-bold transition-colors"
+            >
+              <RotateCcw className="w-3 h-3" />
+              <span>Azzera filtri</span>
+            </button>
+          </div>
+        )}
+
       </div>
 
-      <div className="flex-1 overflow-y-auto p-4 space-y-6">
+      {/* MAIN CONTENT AREA */}
+      <div className="flex-1 overflow-y-auto p-3.5 space-y-5">
+        
+        {/* TEAM SECTION (Always easily accessible to swap) */}
         <div>
-          <h3 className="text-xs font-black uppercase text-gray-400 mb-3 tracking-widest">In Squadra ({state.player.team.length}/6)</h3>
-          <div className="grid grid-cols-4 gap-2">
-            {state.player.team.map((p, i) => (
-              <BoxItem key={p.instanceId || `box-team-${i}`} pokemon={p} onClick={() => setSelectedPokemon({ pokemon: p, source: 'team', index: i })} />
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-xs font-black uppercase text-slate-400 tracking-wider flex items-center gap-1.5">
+              <span>In Squadra</span>
+              <span className="text-emerald-400">({state.player.team.length}/6)</span>
+            </h2>
+            <span className="text-[10px] text-slate-500 font-medium">Tocca per depositare nel Box</span>
+          </div>
+
+          <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
+            {state.player.team.map((pokemon) => (
+              <BoxPokemonCard 
+                key={pokemon.instanceId || `team-${pokemon.id}-${pokemon.caughtAt}`}
+                pokemon={pokemon}
+                isTeamMember
+                onClick={() => setSelectedPokemon({ pokemon, source: 'team' })}
+              />
+            ))}
+            {/* Empty team slots placeholders */}
+            {Array.from({ length: Math.max(0, 6 - state.player.team.length) }).map((_, i) => (
+              <div 
+                key={`empty-team-${i}`}
+                className="aspect-square rounded-2xl border-2 border-dashed border-slate-800/70 bg-slate-900/30 flex flex-col items-center justify-center p-2 text-slate-700"
+              >
+                <span className="text-xl opacity-40">+</span>
+                <span className="text-[9px] font-bold uppercase tracking-wider opacity-60">Vuoto</span>
+              </div>
             ))}
           </div>
         </div>
 
+        {/* BOX SECTION */}
         <div>
-          <h3 className="text-xs font-black uppercase text-gray-400 mb-3 tracking-widest">Nel Box ({filteredBox.length})</h3>
+          <div className="flex items-center justify-between mb-2">
+            <h2 className="text-xs font-black uppercase text-slate-400 tracking-wider flex items-center gap-1.5">
+              <span>Nel Box</span>
+              <span className="text-indigo-400">
+                ({filteredBox.length} {filteredBox.length !== state.player.box.length ? `/ ${state.player.box.length}` : ''})
+              </span>
+            </h2>
+            <span className="text-[10px] text-slate-500 font-medium">Tocca per ritirare in Squadra</span>
+          </div>
+
           {filteredBox.length === 0 ? (
-            <div className="text-center py-12 text-gray-300 font-bold italic uppercase text-xs">Nessun Pokémon</div>
+            <div className="bg-slate-900/40 border border-slate-800 rounded-2xl p-8 flex flex-col items-center justify-center text-center">
+              <ShieldAlert className="w-10 h-10 text-slate-600 mb-2" />
+              <p className="text-sm font-bold text-slate-300">
+                {state.player.box.length === 0 
+                  ? "Il tuo Box è vuoto!" 
+                  : "Nessun Pokémon corrisponde ai filtri selezionati."}
+              </p>
+              <p className="text-xs text-slate-500 mt-1 max-w-xs">
+                {state.player.box.length === 0
+                  ? "Cattura nuovi Pokémon durante le tue avventure nell'erba alta per archiviarli qui."
+                  : "Prova a modificare i termini di ricerca o togliere alcuni filtri attivi."}
+              </p>
+              {activeFiltersCount > 0 && (
+                <button
+                  onClick={resetFilters}
+                  className="mt-3 px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition-colors"
+                >
+                  Reimposta Filtri
+                </button>
+              )}
+            </div>
           ) : (
-            <div className="grid grid-cols-4 gap-2">
-              {filteredBox.map((p, i) => (
-                <BoxItem key={p.instanceId || `box-item-${i}`} pokemon={p} onClick={() => setSelectedPokemon({ pokemon: p, source: 'box', index: i })} />
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
+              {filteredBox.map((pokemon) => (
+                <BoxPokemonCard 
+                  key={pokemon.instanceId || `box-${pokemon.id}-${pokemon.caughtAt}`}
+                  pokemon={pokemon}
+                  onClick={() => setSelectedPokemon({ pokemon, source: 'box' })}
+                />
               ))}
             </div>
           )}
         </div>
+
       </div>
 
+      {/* POKEMON DETAILS MODAL (Withdraw / Deposit / Stats) */}
       {selectedPokemon && (
         <PokemonDetails 
           pokemon={selectedPokemon.pokemon}
           onClose={() => setSelectedPokemon(null)}
-          onBox={selectedPokemon.source === 'team' ? () => deposit(selectedPokemon.index) : undefined}
-          onWithdraw={selectedPokemon.source === 'box' ? () => withdraw(selectedPokemon.index) : undefined}
+          onBox={selectedPokemon.source === 'team' ? () => deposit(selectedPokemon.pokemon) : undefined}
+          onWithdraw={selectedPokemon.source === 'box' ? () => withdraw(selectedPokemon.pokemon) : undefined}
         />
       )}
+
     </div>
   );
 };
 
-const BoxItem: React.FC<{ pokemon: Pokemon, onClick: () => void }> = ({ pokemon, onClick }) => (
-  <button 
-    onClick={onClick}
-    className="aspect-square bg-gray-50 border-2 border-gray-100 rounded-2xl p-2 flex flex-col items-center justify-center active:scale-90 transition-transform"
-  >
-    <img src={pokemon.sprites.front} alt="p" className="w-full h-full object-contain" />
-    <span className="text-[8px] font-black uppercase text-gray-400 truncate w-full text-center">{pokemon.name}</span>
-  </button>
-);
+// SUBCOMPONENT: ENHANCED POKEMON CARD IN BOX / TEAM
+interface BoxPokemonCardProps {
+  pokemon: Pokemon;
+  isTeamMember?: boolean;
+  onClick: () => void;
+}
+
+const BoxPokemonCard: React.FC<BoxPokemonCardProps> = ({ pokemon, isTeamMember, onClick }) => {
+  const primaryType = pokemon.types[0]?.toLowerCase() || 'normal';
+  const typeVisual = getTypeVisual(primaryType);
+  const hpPercent = Math.max(0, Math.min(100, Math.round((pokemon.hp / pokemon.maxHp) * 100)));
+  const canEvolve = pokemon.evolutionInfo && pokemon.level >= pokemon.evolutionInfo.level;
+
+  return (
+    <button 
+      onClick={onClick}
+      className={`aspect-square rounded-2xl border p-2 flex flex-col items-center justify-between relative transition-all duration-200 hover:scale-[1.03] active:scale-95 text-left group overflow-hidden ${
+        isTeamMember
+          ? 'bg-gradient-to-b from-slate-800 to-slate-900 border-emerald-500/40 shadow-sm'
+          : 'bg-slate-900/80 border-slate-800 hover:border-slate-700 hover:bg-slate-800/60 shadow'
+      }`}
+    >
+      {/* Top Indicators: Level & Badges */}
+      <div className="w-full flex items-center justify-between z-10">
+        <span className="text-[10px] font-black text-slate-300 font-mono">
+          L.{pokemon.level}
+        </span>
+        
+        <div className="flex items-center gap-1">
+          {canEvolve && (
+            <span className="text-emerald-400" title="Pronto a Evolversi!">
+              <Zap className="w-3 h-3 fill-emerald-400" />
+            </span>
+          )}
+          {pokemon.isShiny && (
+            <span className="text-amber-400" title="Pokémon Shiny Cromatico!">
+              <Sparkles className="w-3 h-3 fill-amber-400" />
+            </span>
+          )}
+          <span 
+            className={`w-2 h-2 rounded-full ${typeVisual.badge}`} 
+            title={`Tipo ${typeVisual.label}`} 
+          />
+        </div>
+      </div>
+
+      {/* Centered Sprite */}
+      <div className="w-full flex-1 flex items-center justify-center my-0.5 relative">
+        <img 
+          src={pokemon.sprites.front} 
+          alt={pokemon.name} 
+          className="w-full h-full object-contain drop-shadow"
+          loading="lazy" 
+        />
+        {/* Subtle glowing halo for shiny */}
+        {pokemon.isShiny && (
+          <div className="absolute inset-0 bg-amber-400/10 rounded-full blur-md pointer-events-none" />
+        )}
+      </div>
+
+      {/* Bottom Info: HP Bar (if hurt) and Name */}
+      <div className="w-full z-10">
+        {pokemon.hp < pokemon.maxHp && (
+          <div className="w-full h-1 bg-slate-800 rounded-full overflow-hidden mb-1">
+            <div 
+              className={`h-full ${
+                hpPercent > 50 ? 'bg-emerald-500' : hpPercent > 20 ? 'bg-amber-500' : 'bg-rose-500'
+              }`}
+              style={{ width: `${hpPercent}%` }}
+            />
+          </div>
+        )}
+        <span className="text-[10px] font-bold text-slate-200 truncate block text-center uppercase tracking-tight">
+          {pokemon.nickname || pokemon.name}
+        </span>
+      </div>
+    </button>
+  );
+};

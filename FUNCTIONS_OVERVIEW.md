@@ -1,44 +1,124 @@
-# PokePWA: Functions Overview
+# ⚙️ PokePWA: Panoramica Dettagliata delle Funzioni
 
-## /src/lib/battle/
-- `calculateDamage(attacker, target, move)`: Calcola il danno seguendo la formula ufficiale di Pokémon, includendo STAB, critici, efficacia dei tipi e modificatori di stato.
-- `canMove(pokemon)`: Determina se un Pokémon può agire in base al suo stato (es. Sonno, Paralisi). Gestisce anche i contatori per il risveglio.
-- `getStatusEffect(pokemon)`: Calcola i danni ricorrenti (Veleno, Bruciatura) alla fine del turno.
-- `applyStatusStatModifiers(stats, status)`: Applica riduzioni permanenti alle statistiche (es. Velocità dimezzata per Paralisi, Attacco dimezzato per Bruciatura).
-- `checkAbility(pokemon, context)`: Gestisce le abilità passive (es. Erbaiuto, Aiutofuoco) che si attivano in risposta a eventi di gioco.
-- `useItemInBattle(item, target)`: Gestisce l'uso di strumenti in lotta, incluse Pozioni e Poké Ball con logiche di cattura basate su HP.
+Questo documento descrive le principali funzioni, algoritmi e metodi esportati nei vari moduli di **PokePWA**.
 
-## /src/lib/leveling.ts
-- `calculateExpGain(winner, loser)`: Calcola i punti XP guadagnati basandosi sui livelli relativi.
-- `checkLevelUp(pokemon)`: Gestisce l'aumento di livello, la curva di esperienza ufficiale e l'apprendimento di nuove mosse.
-- `applyEvs(pokemon, yieldEvs)`: Applica i punti EV guadagnati sconfiggendo i Pokémon, rispettando i limiti di 252/510.
+---
 
-## /src/data/trainers.ts
-- `getTrainer(id)`: Recupera i dati di un allenatore, generando una squadra di Pokémon completa per la sfida.
-- `TRAINERS_DATA`: Database degli allenatori disponibili per le sfide.
+## 1. Motore di Lotta (`/src/lib/battle/`)
 
-## /src/components/BattleScreen.tsx
-- `handleMove(move)`: Logica principale del turno di lotta, integrata con il sistema di abilità.
-- `handleUseItem(item)`: Gestisce l'azione di usare uno strumento consumandolo dall'inventario.
-- `handleWin()`: Gestisce XP, EV, ricompense in denaro e il passaggio al Pokémon successivo dell'allenatore avversario.
+### `battleMath.ts`
+- **`calculateDamage(attacker, defender, move, weather, isCritical)`**:  
+  Esegue il calcolo del danno secondo la formula ufficiale Pokémon di sesta/settima generazione:
+  $$\text{Danno} = \left(\frac{\left(\frac{2 \times \text{Livello}}{5} + 2\right) \times \text{Potenza} \times \frac{\text{Attacco}}{\text{Difesa}}}{50} + 2\right) \times \text{Modificatori}$$
+  Tiene conto di:
+  - **STAB**: Moltiplicatore 1.5x se il tipo della mossa coincide con uno dei tipi dell'attaccante (o 2.0x con abilità *Adattabilità*).
+  - **Efficacia Elementale**: Calcolo basato sul tipo singolo o doppio del difensore (0x, 0.25x, 0.5x, 1x, 2x, 4x).
+  - **Colpo Critico**: Moltiplicatore 1.5x che ignora le riduzioni d'attacco dell'attaccante e gli aumenti di difesa del difensore.
+  - **Varianza Casuale**: Numero casuale uniforme tra 0.85 e 1.00.
+  - **Meteo**: Incremento del 50% per mosse Fuoco sotto Sole o Acqua sotto Pioggia.
+  - **Bruciatura**: Dimezza il danno delle mosse fisiche se l'attaccante è scottato (a meno che non abbia *Dentistretti*).
+- **`isCriticalHit(move, attacker)`**:  
+  Determina se un attacco è un brutto colpo, basandosi sullo stadio di probabilità della mossa (es. *Foglielama* ha probabilità incrementata).
 
-## /src/lib/pokeapi.ts
-- `fetchPokemonData(id)`: Recupera dati completi del Pokémon, inclusi tipi, statistiche e mosse.
-- `fetchMoveData(url)`: Recupera i dettagli della mossa con traduzione automatica dei nomi in italiano tramite PokeAPI.
-- `MOVE_TRANSLATIONS`: Dizionario di fallback per la localizzazione istantanea delle mosse comuni.
+### `abilities.ts`
+- **`checkAbility(pokemon, opponent, trigger, context)`**:  
+  Controlla e applica l'effetto dell'abilità passiva del Pokémon in risposta a trigger specifici:
+  - `onSwitchIn`: Abilità che si attivano all'ingresso in campo (es. *Prepotenza* riduce l'attacco avversario, *Siccità* o *Piovischio* impostano il meteo).
+  - `beforeMove`: Abilità che proteggono dai danni (es. *Levitazione* annulla mosse Terra, *Assorbacqua* cura con mosse Acqua).
+  - `onDamageDealt`: Incrementa la potenza a salute bassa (es. *Erbaiuto*, *Aiutofuoco*, *Acquaiuto* potenziano del 50% quando HP < 33%).
+  - `onContact`: Effetti di contatto (es. *Statico* paralizza al contatto, *Corpo di Fuoco* brucia).
 
-## /src/components/QuestLog.tsx
-- `claimReward(questId)`: Gestisce il riscatto delle ricompense per le missioni completate, aggiornando denaro e inventario.
-- `QuestCard`: Visualizza i dettagli della missione (obiettivo, categoria, datore) e lo stato attuale.
+### `statusEffects.ts`
+- **`canMove(pokemon)`**:  
+  Valuta se un Pokémon può attaccare durante il turno:
+  - **Sonno**: Riduce il contatore dei turni rimanenti; se raggiunge zero, il Pokémon si sveglia e attacca.
+  - **Paralisi**: Verifica con probabilità del 25% se il Pokémon è completamente bloccato.
+  - **Congelamento**: Concede una probabilità del 20% per turno di scongelamento.
+- **`getStatusEffect(pokemon)`**:  
+  Calcola i danni da logoramento al termine del turno (1/16 dei PS massimi per Scottatura e Avvelenamento; 1/8 per Tossina progressiva).
+- **`applyStatusStatModifiers(stats, status)`**:  
+  Ricalcola le statistiche attive (dimezza la Velocità effettiva per la Paralisi).
 
-## /src/components/Inventory.tsx
-- `applyItemToPokemon(instanceId)`: Gestisce l'uso di strumenti curativi o caramelle rare. Ora include il trigger per l'apprendimento mosse su aumento di livello.
+### `items.ts`
+- **`useItemInBattle(item, targetPokemon, opponentPokemon, isWild)`**:  
+  Gestisce la logica di consumo degli strumenti in lotta:
+  - **Strumenti Curativi**: Ripristina PS fissi (Pozione, Superpozione, Iperpozione) o percentuali, o rimuove gli stati con Cura Totale.
+  - **Poké Ball**: Applica la formula di cattura ufficiale Pokémon:
+    $$a = \frac{3 \times \text{HP}_{\max} - 2 \times \text{HP}_{\text{corr}}}{3 \times \text{HP}_{\max}} \times \text{CatchRate} \times \text{BallMultiplier} \times \text{StatusMultiplier}$$
+    Se $a \ge 255$, la cattura è garantita al 100%. Altrimenti, calcola le 4 scosse della Poké Ball.
 
-## /src/components/Shop.tsx
-- `buyItem(item, quantity)`: Gestisce l'acquisto di strumenti verificando la disponibilità di PokéDollari.
+### `turnOrder.ts`
+- **`getTurnOrder(playerPokemon, opponentPokemon, playerAction, opponentAction)`**:  
+  Determina chi agisce per primo nel turno confrontando:
+  1. Priorità delle azioni (usare uno strumento ha priorità massima +6; mosse prioritarie come *Attacco Rapido* hanno priorità +1).
+  2. Velocità effettiva dei due Pokémon (modificata da stadi e paralisi).
+  3. Spareggio casuale 50/50 in caso di perfetta parità di velocità.
 
-## /src/components/Trade.tsx
-- `executeTrade(pokemonId)`: Sistema di scambio che permette di ottenere Pokémon rari o esclusivi in cambio di altri.
+### `escapeFormula.ts`
+- **`canEscapeFromBattle(playerPokemon, opponentPokemon, escapeAttempts)`**:  
+  Esegue la formula ufficiale di fuga dalle lotte con Pokémon selvatici:
+  $$F = \frac{\text{Velocità}_{\text{giocatore}} \times 128}{\text{Velocità}_{\text{selvatico}}} + 30 \times \text{Tentativi}$$
+  Se $F > 255$ o un numero casuale mod 256 è inferiore a $F$, la fuga ha successo; altrimenti fallisce e si consuma il turno.
 
-## /src/components/Box.tsx
-- `depositPokemon / withdrawPokemon`: Logica per spostare Pokémon tra la squadra attiva e il sistema di archiviazione PC.
+---
+
+## 2. Servizi Pokédex e Dati (`/src/lib/`)
+
+### `pokedexService.ts`
+- **`fetchPokedexIndex()`**:  
+  Restituisce l'indice compatto dei 1025 Pokémon nazionali con id, nome, e id formattato (es. `#0025`) per un rendering fluido a 60fps su dispositivi mobili.
+- **`fetchPokedexDetail(pokemonId)`**:  
+  Scarica o recupera dalla cache i dati completi di una singola specie: descrizione in italiano, artwork ufficiale, sprite shiny, statistiche base con BST, mosse per livello con relative descrizioni tradotte, catena evolutiva e verso audio originale (*cry*).
+- **`getPokemonHabitatInGame(pokemonId)`**:  
+  Mappa l'ID di qualsiasi Pokémon alle 10 zone esplorabili del gioco in cui è possibile trovarlo selvatico.
+
+### `pokeapi.ts`
+- **`fetchPokemonData(idOrName)`**:  
+  Scarica le statistiche, i tipi e le mosse base di un Pokémon da PokéAPI, con cache persistente in memoria e LocalStorage.
+- **`fetchMoveData(moveNameOrUrl)`**:  
+  Recupera le proprietà competitive della mossa (potenza, precisione, tipo, PP, classe di danno) con traduzione automatica in italiano.
+
+---
+
+## 3. Crescita, Statistiche ed Evoluzione (`/src/lib/`)
+
+### `leveling.ts`
+- **`calculateExpGain(winner, faintedEnemy, isWild)`**:  
+  Calcola i punti XP guadagnati al termine dello scontro in base al livello e alla specie del nemico sconfitto (con bonus 1.5x per le lotte contro allenatori).
+- **`checkLevelUp(pokemon)`**:  
+  Verifica se il Pokémon ha superato la soglia di esperienza per salire di livello (secondo la curva di crescita assegnata) e ricalcola le statistiche massime:
+  $$\text{HP} = \left\lfloor \frac{(2 \times \text{Base} + \text{IV} + \lfloor \text{EV}/4 \rfloor) \times \text{Livello}}{100} \right\rfloor + \text{Livello} + 10$$
+  $$\text{Stat} = \left\lfloor \left( \left\lfloor \frac{(2 \times \text{Base} + \text{IV} + \lfloor \text{EV}/4 \rfloor) \times \text{Livello}}{100} \right\rfloor + 5 \right) \times \text{Natura} \right\rfloor$$
+- **`applyEvs(pokemon, yieldEvs)`**:  
+  Aggiunge i punti Effort Values (EV) guadagnati dallo sconfitto, rispettando il tetto di 252 EV per singola statistica e 510 EV totali.
+
+### `evolution.ts`
+- **`checkEvolution(pokemon, itemUsed?)`**:  
+  Determina se un Pokémon possiede i requisiti per evolversi (raggiungimento del livello minimo o esposizione a una specifica pietra evolutiva). Restituisce i dettagli del Pokémon evoluto.
+
+---
+
+## 4. Torre Lotta & Competizione (`/src/lib/battleTower.ts`)
+
+- **`generateTowerOpponent(currentStreak)`**:  
+  Genera proceduralmente un allenatore rivale con Pokémon competitivi di livello pari a quello massimo della squadra del giocatore, assegnando mosse strategiche e bilanciate.
+- **`calculateTowerRewards(streak)`**:  
+  Calcola i Punti Lotta (PL) guadagnati in base alla serie di vittorie consecutive.
+
+---
+
+## 5. Componenti Principali e Interazioni (`/src/components/`)
+
+### `Box.tsx`
+- **`filteredBox` (useMemo)**:  
+  Filtra e ordina l'array dei Pokémon archiviati applicando contemporaneamente ricerca testuale (nome, nickname, #ID), filtro elementale sui 18 tipi, filtro generazioni (Gen 1-9), toggle per Shiny ✨, pronti a evolvere ⚡, feriti ❤️, e ordinamento (recenti, livello, nome, pokedex, statistiche).
+- **`withdraw(targetPokemon)`**:  
+  Sposta in modo sicuro un Pokémon dal Box alla squadra attiva tramite confronto di `instanceId`.
+- **`deposit(targetPokemon)`**:  
+  Sposta un Pokémon dalla squadra al Box verificando che rimanga almeno un Pokémon attivo in squadra.
+
+### `Pokedex.tsx` & `PokedexDetailModal.tsx`
+- **`calculateTypeEffectiveness(types)`**:  
+  Esegue l'algoritmo di moltiplicazione incrociata delle debolezze per doppi tipi (es. tipo Fuoco/Volante riceve danno 4x da Roccia, 0.25x da Erba, 0x da Terra).
+- **`playPokemonCry(cryUrl)`**:  
+  Inizializza e riproduce l'audio nativo HTML5 del verso del Pokémon.
