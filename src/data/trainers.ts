@@ -87,7 +87,7 @@ export const TRAINERS_DATA = {
   'recluta-eclipse-1': {
     name: 'Recluta Eclipse',
     type: 'Team Eclipse',
-    sprite: 'https://play.pokemonshowdown.com/sprites/trainers/grunt-gen1.png',
+    sprite: 'https://play.pokemonshowdown.com/sprites/trainers/rocketgrunt.png',
     quote: 'Il Team Eclipse oscurerà questo mondo!',
     winQuote: 'L\'eclissi è solo rimandata...',
     moneyReward: 500,
@@ -96,7 +96,7 @@ export const TRAINERS_DATA = {
   'recluta-eclipse-2': {
     name: 'Recluta Eclipse',
     type: 'Team Eclipse',
-    sprite: 'https://play.pokemonshowdown.com/sprites/trainers/grunt-gen1.png',
+    sprite: 'https://play.pokemonshowdown.com/sprites/trainers/rocketgrunt.png',
     quote: 'Non passerai di qui! Ordini del capo.',
     winQuote: 'Spostati pure...',
     moneyReward: 600,

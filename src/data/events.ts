@@ -20,7 +20,7 @@ export const ZONE_EVENTS: Record<string, GameEvent[]> = {
       triggerChance: 0.05,
       message: 'Cosa ci fai qui? Questo bosco nasconde segreti che non ti riguardano!',
       speaker: 'Recluta Eclipse',
-      sprite: 'https://play.pokemonshowdown.com/sprites/trainers/grunt-gen1.png',
+      sprite: 'https://play.pokemonshowdown.com/sprites/trainers/rocketgrunt.png',
       trainerId: 'recluta-eclipse-1'
     },
     {
@@ -44,7 +44,7 @@ export const ZONE_EVENTS: Record<string, GameEvent[]> = {
       triggerChance: 0.08,
       message: 'Si dice che nelle notti di luna piena, uno spirito rosa voli tra le chiome degli alberi...',
       speaker: 'Anziano saggio',
-      sprite: 'https://play.pokemonshowdown.com/sprites/trainers/elder.png'
+      sprite: 'https://play.pokemonshowdown.com/sprites/trainers/sage.png'
     }
   ],
   'prateria': [
@@ -112,7 +112,7 @@ export const ZONE_EVENTS: Record<string, GameEvent[]> = {
       triggerChance: 0.1,
       message: 'Nessuno passa da qui senza il permesso del Tenente!',
       speaker: 'Recluta Eclipse',
-      sprite: 'https://play.pokemonshowdown.com/sprites/trainers/grunt-gen1.png',
+      sprite: 'https://play.pokemonshowdown.com/sprites/trainers/rocketgrunt.png',
       trainerId: 'recluta-eclipse-2'
     },
     {
@@ -180,7 +180,7 @@ export const ZONE_EVENTS: Record<string, GameEvent[]> = {
       triggerChance: 0.1,
       message: 'Più sali, più la risoluzione cala. Guarda quelle nuvole a 8-bit!',
       speaker: 'Scalatore Low-Res',
-      sprite: 'https://play.pokemonshowdown.com/sprites/trainers/mountainman.png'
+      sprite: 'https://play.pokemonshowdown.com/sprites/trainers/hiker.png'
     },
     {
       id: 'event-montagna-2',

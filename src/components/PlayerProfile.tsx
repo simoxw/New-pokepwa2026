@@ -25,7 +25,7 @@ interface TitleDef {
 
 const AVATARS: AvatarOption[] = [
   { id: 'red', name: 'Rosso (Classico)', url: 'https://play.pokemonshowdown.com/sprites/trainers/red.png' },
-  { id: 'leaf', name: 'Foglia (Avventuriera)', url: 'https://play.pokemonshowdown.com/sprites/trainers/leaf.png' },
+  { id: 'leaf', name: 'Foglia (Avventuriera)', url: 'https://play.pokemonshowdown.com/sprites/trainers/leaf-gen3.png' },
   { id: 'ethan', name: 'Oro (Retro Cap)', url: 'https://play.pokemonshowdown.com/sprites/trainers/ethan.png' },
   { id: 'lyra', name: 'Lyra (Trendy)', url: 'https://play.pokemonshowdown.com/sprites/trainers/lyra.png' },
   { id: 'lucas', name: 'Lucas (Berretto)', url: 'https://play.pokemonshowdown.com/sprites/trainers/lucas.png' },

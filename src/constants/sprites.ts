@@ -6,7 +6,7 @@ export const SPRITES = {
     LASS: "https://play.pokemonshowdown.com/sprites/trainers/lass.png",
     SCIENTIST: "https://play.pokemonshowdown.com/sprites/trainers/scientist.png",
     FISHERMAN: "https://play.pokemonshowdown.com/sprites/trainers/fisherman.png",
-    COOLTRAINER: "https://play.pokemonshowdown.com/sprites/trainers/cooltrainer.png",
+    COOLTRAINER: "https://play.pokemonshowdown.com/sprites/trainers/acetrainer.png",
     HIKER: "https://play.pokemonshowdown.com/sprites/trainers/hiker.png",
     HEX_MANIAC: "https://play.pokemonshowdown.com/sprites/trainers/hexmaniac-gen6.png",
     FIRE_BREATHER: "https://play.pokemonshowdown.com/sprites/trainers/firebreather.png",
