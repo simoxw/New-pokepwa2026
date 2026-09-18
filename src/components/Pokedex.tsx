@@ -5,6 +5,7 @@ import { GENERATIONS, ALL_TYPES, getTypeVisual } from './pokedex/pokedexConstant
 import { PokedexDetailModal } from './pokedex/PokedexDetailModal';
 import { PokedexTypeCalculatorModal } from './pokedex/PokedexTypeCalculatorModal';
 import { PokedexProgressModal, MILESTONES } from './pokedex/PokedexProgressModal';
+import { playMenuClick } from '../lib/sound';
 import {
   ChevronLeft, Search, Filter, Trophy, Sparkles,
   SlidersHorizontal, Check, Eye, HelpCircle, ArrowUp
@@ -128,7 +129,10 @@ export const Pokedex: React.FC<PokedexProps> = ({ onBack }) => {
       <header className="px-3 py-2.5 bg-slate-900 border-b border-slate-800 flex items-center justify-between gap-2 shrink-0 z-10 shadow-md">
         <div className="flex items-center gap-2.5">
           <button
-            onClick={onBack}
+            onClick={() => {
+              playMenuClick();
+              onBack();
+            }}
             className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 transition-colors"
             title="Torna all'Hub"
           >
@@ -153,7 +157,10 @@ export const Pokedex: React.FC<PokedexProps> = ({ onBack }) => {
         {/* Quick Action Modals Buttons */}
         <div className="flex items-center gap-1.5">
           <button
-            onClick={() => setShowTypeCalculator(true)}
+            onClick={() => {
+              playMenuClick();
+              setShowTypeCalculator(true);
+            }}
             className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200 border border-slate-700 transition-colors"
             title="Tabella Efficacia Tipi"
           >
@@ -162,7 +169,10 @@ export const Pokedex: React.FC<PokedexProps> = ({ onBack }) => {
           </button>
 
           <button
-            onClick={() => setShowProgressModal(true)}
+            onClick={() => {
+              playMenuClick();
+              setShowProgressModal(true);
+            }}
             className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
               claimableMilestonesCount > 0
                 ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 font-black shadow-lg shadow-amber-500/20 animate-pulse'
@@ -310,7 +320,10 @@ export const Pokedex: React.FC<PokedexProps> = ({ onBack }) => {
                 return (
                   <button
                     key={item.id}
-                    onClick={() => setSelectedPokemonId(item.id)}
+                    onClick={() => {
+                      playMenuClick();
+                      setSelectedPokemonId(item.id);
+                    }}
                     className={`aspect-square rounded-2xl border flex flex-col items-center justify-between p-2 relative transition-all duration-200 hover:scale-[1.03] active:scale-95 group ${
                       isCaught
                         ? 'bg-gradient-to-b from-slate-800/90 to-slate-900 border-slate-700 shadow-md hover:border-indigo-500/70 hover:shadow-indigo-500/10'

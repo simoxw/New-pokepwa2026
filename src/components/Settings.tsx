@@ -1,10 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useGame } from '../contexts/GameContext';
-import { ChevronLeft, Save, Trash2, RotateCcw, FileJson, Zap, User, RefreshCw, Smartphone, CheckCircle } from 'lucide-react';
+import { 
+  ChevronLeft, Save, Trash2, RotateCcw, FileJson, Zap, User, 
+  RefreshCw, Smartphone, CheckCircle, Volume2, VolumeX, Database, Sparkles 
+} from 'lucide-react';
 import { exportGameState, validateGameState } from '../lib/utils';
 import { INITIAL_STATE, Pokemon } from '../types/game';
 import { BADGES } from '../lib/badges';
 import { calculateStats } from '../lib/pokeapi';
+import { isSoundEnabled, setSoundEnabled, playMenuClick, playLevelUp } from '../lib/sound';
+import { getStorageEstimate, removeStorageItem } from '../lib/storage';
 
 export const Settings: React.FC<{ onBack: () => void, onProfile: () => void }> = ({ onBack, onProfile }) => {
   const { state, setState } = useGame();
@@ -13,6 +18,31 @@ export const Settings: React.FC<{ onBack: () => void, onProfile: () => void }> =
   const [showCheats, setShowCheats] = React.useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateMsg, setUpdateMsg] = useState<string | null>(null);
+  const [audioActive, setAudioActive] = useState(() => isSoundEnabled());
+  const [storageInfo, setStorageInfo] = useState<{ usageMB: number; quotaMB: number; isIndexedDB: boolean }>({
+    usageMB: 0.5,
+    quotaMB: 500,
+    isIndexedDB: true
+  });
+
+  useEffect(() => {
+    getStorageEstimate().then(setStorageInfo);
+  }, []);
+
+  const handleToggleAudio = () => {
+    const nextState = !audioActive;
+    setAudioActive(nextState);
+    setSoundEnabled(nextState);
+    if (nextState) {
+      playMenuClick();
+    }
+  };
+
+  const handleTestSound = () => {
+    if (audioActive) {
+      playLevelUp();
+    }
+  };
 
   const handleForcePwaUpdate = async () => {
     setIsUpdating(true);
@@ -162,6 +192,69 @@ export const Settings: React.FC<{ onBack: () => void, onProfile: () => void }> =
           >
             Modifica Profilo e Nome
           </button>
+        </div>
+
+        <hr />
+
+        {/* Effetti Sonori Retro */}
+        <div className="space-y-4">
+          <h3 className="font-black text-xs uppercase text-gray-400 tracking-widest flex items-center gap-2">
+            {audioActive ? <Volume2 className="w-3.5 h-3.5 text-blue-500" /> : <VolumeX className="w-3.5 h-3.5 text-gray-400" />} Effetti Sonori Retro
+          </h3>
+          
+          <div className="bg-slate-50 border-2 border-slate-200/80 rounded-2xl p-4 space-y-3">
+            <div className="flex items-center justify-between">
+              <div>
+                <p className="text-xs font-black text-slate-800 uppercase">Audio di Battaglia & Menu</p>
+                <p className="text-[11px] text-slate-500 font-medium">Sintetizzatore 8-bit nativo offline</p>
+              </div>
+              <button
+                onClick={handleToggleAudio}
+                className={`px-4 py-2 rounded-xl text-xs font-black uppercase transition-all shadow-sm ${
+                  audioActive
+                    ? 'bg-emerald-500 text-white shadow-emerald-500/20 active:scale-95'
+                    : 'bg-slate-200 text-slate-600 active:scale-95'
+                }`}
+              >
+                {audioActive ? 'Attivo' : 'Muto'}
+              </button>
+            </div>
+
+            {audioActive && (
+              <button
+                onClick={handleTestSound}
+                className="w-full bg-blue-100 hover:bg-blue-200 text-blue-800 text-xs font-bold py-2 rounded-xl flex items-center justify-center gap-1.5 transition-colors"
+              >
+                <Sparkles className="w-3.5 h-3.5 text-blue-600" />
+                <span>Riproduci suono di prova</span>
+              </button>
+            )}
+          </div>
+        </div>
+
+        <hr />
+
+        {/* Archiviazione & Database */}
+        <div className="space-y-4">
+          <h3 className="font-black text-xs uppercase text-gray-400 tracking-widest flex items-center gap-2">
+            <Database className="w-3.5 h-3.5 text-indigo-500" /> Archiviazione & Dati
+          </h3>
+          
+          <div className="bg-indigo-50/50 border-2 border-indigo-100 rounded-2xl p-4 space-y-2">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-black uppercase text-indigo-900">Motore di Salvataggio</span>
+              <span className="inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[10px] font-black bg-indigo-500 text-white">
+                <CheckCircle className="w-3 h-3" /> IndexedDB Attivo
+              </span>
+            </div>
+            <p className="text-[11px] text-indigo-700 leading-relaxed">
+              Il gioco usa IndexedDB asincrono ad alta capienza (&gt;500 MB). Puoi catturare e conservare oltre 1.000 Pokémon nei Box senza alcun limite o problema di spazio.
+            </p>
+            <div className="pt-1 flex items-center justify-between text-[10px] font-bold text-indigo-600">
+              <span>Spazio Utilizzato: ~{storageInfo.usageMB} MB</span>
+              <span>Capacità Massima: ~{storageInfo.quotaMB} MB</span>
+            </div>
+          </div>
         </div>
 
         <hr />

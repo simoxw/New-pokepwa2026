@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Pokemon, Item } from '../types/game';
+import { playCatchShake, playCatchSuccess } from '../lib/sound';
 
 interface CatchOverlayProps {
   target: Pokemon;
@@ -53,10 +54,19 @@ export const CatchOverlay: React.FC<CatchOverlayProps> = ({ target, ball, onResu
     // Master Ball is always 100%, others max out at 100% too now to avoid "unfair" escapes
     const finalChance = Math.min(1.0, catchChance);
     const roll = Math.random();
+    const success = roll < finalChance;
+
+    // Shake audio sequence
+    setTimeout(() => playCatchShake(), 500);
+    setTimeout(() => playCatchShake(), 1100);
+    setTimeout(() => playCatchShake(), 1600);
     
     setTimeout(() => {
-      setCaptureSuccess(roll < finalChance);
+      setCaptureSuccess(success);
       setStage('result');
+      if (success) {
+        playCatchSuccess();
+      }
     }, 2000);
   };
 

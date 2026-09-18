@@ -1,6 +1,7 @@
 import { fetchWithCache } from './pokeapi';
 import { ZONES } from '../constants/game';
 import { getMoveByName } from '../data/movesData';
+import { getStorageItem, setStorageItem } from './storage';
 
 export interface PokedexDetail {
   id: number;
@@ -316,15 +317,12 @@ export async function fetchPokedexIndex(): Promise<PokedexIndexItem[]> {
     return INDEX_CACHE;
   }
 
-  // Try localStorage first
+  // Try IndexedDB (with localStorage migration) first
   try {
-    const saved = localStorage.getItem('pokepwa_pokedex_index_v1');
-    if (saved) {
-      const parsed = JSON.parse(saved);
-      if (Array.isArray(parsed) && parsed.length >= 1000) {
-        INDEX_CACHE = parsed;
-        return parsed;
-      }
+    const saved = await getStorageItem<PokedexIndexItem[]>('pokepwa_pokedex_index_v1');
+    if (saved && Array.isArray(saved) && saved.length >= 1000) {
+      INDEX_CACHE = saved;
+      return saved;
     }
   } catch {}
 
@@ -346,9 +344,7 @@ export async function fetchPokedexIndex(): Promise<PokedexIndexItem[]> {
         });
 
         INDEX_CACHE = items;
-        try {
-          localStorage.setItem('pokepwa_pokedex_index_v1', JSON.stringify(items));
-        } catch {}
+        setStorageItem('pokepwa_pokedex_index_v1', items).catch(() => {});
         return items;
       }
     }

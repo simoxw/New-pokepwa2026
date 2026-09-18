@@ -25,6 +25,15 @@ import { useItemInBattle } from '../lib/battle/items';
 import { BattleBag } from './battle/BattleBag';
 import { getBadgeForBoss } from '../lib/badges';
 import { CatchOverlay } from './CatchOverlay';
+import { 
+  playHit, 
+  playFaint, 
+  playProtect, 
+  playCharge, 
+  playLevelUp, 
+  playEscape, 
+  playMenuClick 
+} from '../lib/sound';
 
 interface BattleScreenProps {
   enemy: Pokemon;
@@ -270,6 +279,68 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     let nextUserStatusObj = { ...userStatus };
     let nextTargetStatusObj = { ...targetStatus };
 
+    // 0. Protect / Detect handling
+    const mLower = move.name.toLowerCase();
+    const isProtectMove = mLower.includes('protezione') || mLower.includes('protect') || mLower.includes('individuazione') || mLower.includes('detect');
+    
+    if (isProtectMove) {
+      const streak = userVolatile.protectStreak || 0;
+      const successChance = streak === 0 ? 1 : Math.pow(0.5, streak);
+      if (Math.random() < successChance) {
+        setUserVolatile(prev => ({ ...prev, isProtected: true, protectStreak: streak + 1 }));
+        addLog(`${user.name} si è protetto con una barriera impenetrabile!`);
+        playProtect();
+      } else {
+        setUserVolatile(prev => ({ ...prev, isProtected: false, protectStreak: 0 }));
+        addLog(`Ma ${user.name} ha fallito la mossa!`);
+      }
+      return { 
+        nextUserHp: curUserHp, 
+        nextTargetHp: curTargetHp, 
+        targetFainted: false, 
+        userFainted: false,
+        nextUserStatus: nextUserStatusObj,
+        nextTargetStatus: nextTargetStatusObj
+      };
+    } else {
+      setUserVolatile(prev => ({ ...prev, protectStreak: 0 }));
+    }
+
+    // Target is protected
+    if (targetVolatile.isProtected) {
+      addLog(`${target.name} si è protetto completamente dall'attacco!`);
+      playProtect();
+      return { 
+        nextUserHp: curUserHp, 
+        nextTargetHp: curTargetHp, 
+        targetFainted: false, 
+        userFainted: false,
+        nextUserStatus: nextUserStatusObj,
+        nextTargetStatus: nextTargetStatusObj
+      };
+    }
+
+    // Target is semi-invulnerable in air/underground/water (Fly, Dig, Dive, Bounce)
+    if (targetVolatile.chargingState && targetVolatile.chargingState !== 'charge') {
+      const invulnMsgs: Record<string, string> = {
+        fly: `${target.name} è in volo ed evita l'attacco!`,
+        bounce: `${target.name} è altissimo in volo ed evita l'attacco!`,
+        dig: `${target.name} è nascosto sottoterra ed evita l'attacco!`,
+        dive: `${target.name} è nascosto sottacqua ed evita l'attacco!`
+      };
+      if (invulnMsgs[targetVolatile.chargingState]) {
+        addLog(invulnMsgs[targetVolatile.chargingState]);
+        return { 
+          nextUserHp: curUserHp, 
+          nextTargetHp: curTargetHp, 
+          targetFainted: false, 
+          userFainted: false,
+          nextUserStatus: nextUserStatusObj,
+          nextTargetStatus: nextTargetStatusObj
+        };
+      }
+    }
+
     // 1. Accuracy Check
     if (move.accuracy && move.accuracy < 100) {
       const accStage = (userStages.accuracy ?? 0) - (targetStages.evasion ?? 0);
@@ -436,8 +507,15 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       }
 
       setTargetHp(curTargetHp);
-      if (effectiveness > 1) addLog("È superefficace!");
-      if (effectiveness < 1 && effectiveness > 0) addLog("Non è molto efficace...");
+      if (effectiveness > 1) {
+        addLog("È superefficace!");
+        playHit('super');
+      } else if (effectiveness < 1 && effectiveness > 0) {
+        addLog("Non è molto efficace...");
+        playHit('not_very');
+      } else {
+        playHit('normal');
+      }
       addLog(`${user.name} infligge un totale di ${totalDamage} danni colpendo ${actualHits} volte!`);
       
       return { nextUserHp: curUserHp, nextTargetHp: curTargetHp, targetFainted: curTargetHp <= 0, userFainted: false };
@@ -451,11 +529,19 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     );
     const finalDamage = Math.floor(result.damage * damageMult);
 
-    if (result.effectiveness > 1) addLog("È superefficace!");
-    if (result.effectiveness < 1 && result.effectiveness > 0) addLog("Non è molto efficace...");
-    if (result.effectiveness === 0) {
+    if (result.effectiveness > 1) {
+      addLog("È superefficace!");
+      playHit('super');
+    } else if (result.effectiveness < 1 && result.effectiveness > 0) {
+      addLog("Non è molto efficace...");
+      playHit('not_very');
+    } else if (result.effectiveness === 0) {
       addLog("Non ha effetto...");
       return { nextUserHp: curUserHp, nextTargetHp: curTargetHp, targetFainted: false, userFainted: false };
+    } else if (result.isCrit) {
+      playHit('crit');
+    } else {
+      playHit('normal');
     }
     if (result.isCrit) addLog("Brutto colpo!");
 
@@ -533,6 +619,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
 
   // Handle battle victory
   const handleWin = useCallback(async (finalPlayerHp: number) => {
+    playFaint();
     addLog(`${enemy.name} è esausto!`);
     
     const exp = calculateExpGain(playerActive, enemy);
@@ -573,6 +660,9 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     }
     
     const { leveledUp, newPokemon, canEvolve: evoPossible, newMoves } = checkLevelUp(activeClone);
+    if (leveledUp) {
+      playLevelUp();
+    }
     
     const statGains = leveledUp ? {
       hp: Math.max(0, newPokemon.maxHp - oldStats.hp),
@@ -728,6 +818,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
 
   // Handle player fainted
   const handlePlayerFaint = useCallback(async () => {
+    playFaint();
     addLog(`${playerActive.name} è k.o.!`);
     await new Promise(r => setTimeout(r, 1000));
     
@@ -903,6 +994,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
   // Main turn execution: Dynamic Turn Order based on Priority & Effective Speed
   const handleMove = useCallback(async (selectedMove: Move) => {
     if (isAnimating) return;
+    playMenuClick();
 
     // Check if player is locked into a move
     const actualPlayerMove = playerVolatile.lockedMove || selectedMove;
@@ -1041,10 +1133,31 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
 
       // 5. Multi-turn Charge Check
       if (move.multiTurn?.type === 'charge' && !attackerVolatile.charging) {
-        addLog(`${attacker.name} ${move.multiTurn.chargeMessage || 'sta caricando!'}`);
+        let chargeMsg = move.multiTurn.chargeMessage;
+        let cState: 'fly' | 'dig' | 'dive' | 'bounce' | 'charge' = 'charge';
+        const mLower = move.name.toLowerCase();
+        if (mLower.includes('volo') || mLower.includes('fly')) {
+          cState = 'fly';
+          chargeMsg = chargeMsg || 'è volato alto nel cielo!';
+        } else if (mLower.includes('fossa') || mLower.includes('dig')) {
+          cState = 'dig';
+          chargeMsg = chargeMsg || 'si è rintanato sottoterra!';
+        } else if (mLower.includes('sub') || mLower.includes('dive') || mLower.includes('immersione')) {
+          cState = 'dive';
+          chargeMsg = chargeMsg || 'si è immerso negli abissi!';
+        } else if (mLower.includes('rimbalzo') || mLower.includes('bounce')) {
+          cState = 'bounce';
+          chargeMsg = chargeMsg || 'rimbalza altissimo nel cielo!';
+        } else {
+          chargeMsg = chargeMsg || 'assorbe energia!';
+        }
+
+        playCharge();
+        addLog(`${attacker.name} ${chargeMsg}`);
         setAttackerVolatile(prev => ({ 
           ...prev, 
           charging: true, 
+          chargingState: cState,
           lockedMove: move 
         }));
         await new Promise(r => setTimeout(r, 700));
@@ -1053,7 +1166,12 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
 
       // If we were charging, clear it as we are now attacking
       if (attackerVolatile.charging) {
-        setAttackerVolatile(prev => ({ ...prev, charging: false, lockedMove: undefined }));
+        setAttackerVolatile(prev => ({ 
+          ...prev, 
+          charging: false, 
+          chargingState: undefined, 
+          lockedMove: undefined 
+        }));
       }
 
       // 6. Execute Move Action
@@ -1158,9 +1276,9 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     }
 
     // --- EXECUTION PHASE 3: END OF TURN (Clear flinch, status tick damage) ---
-    // Clear flinch
-    setPlayerVolatile(prev => ({ ...prev, isFlinched: false }));
-    setEnemyVolatile(prev => ({ ...prev, isFlinched: false }));
+    // Clear flinch & protect
+    setPlayerVolatile(prev => ({ ...prev, isFlinched: false, isProtected: false }));
+    setEnemyVolatile(prev => ({ ...prev, isFlinched: false, isProtected: false }));
 
     // Player status damage (Poison / Burn)
     curPlayerHp = await handleStatusEndTurn(playerActive, curPlayerHp, setPlayerHp, livePlayerStatus.status);
@@ -1209,6 +1327,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     addLog(result.msg);
 
     if (result.success) {
+      playEscape();
       await new Promise(r => setTimeout(r, 1200));
       setBattleResult({ type: 'escape' });
     } else {

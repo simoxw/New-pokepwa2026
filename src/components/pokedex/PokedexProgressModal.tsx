@@ -2,6 +2,7 @@ import React, { useState } from 'react';
 import { useGame } from '../../contexts/GameContext';
 import { GENERATIONS } from './pokedexConstants';
 import { X, Trophy, Gift, Check, CheckCircle2, Award } from 'lucide-react';
+import { playLevelUp, playMenuClick } from '../../lib/sound';
 
 interface PokedexProgressModalProps {
   onClose: () => void;
@@ -39,6 +40,17 @@ export const MILESTONES: Milestone[] = [
     rewardItems: [{ id: 'poke-ball', name: 'Poké Ball', count: 5 }]
   },
   {
+    id: 'm-15',
+    requiredCount: 15,
+    title: 'Collezionista in Erba',
+    description: '15 Pokémon registrati con successo nei tuoi appunti di viaggio.',
+    rewardMoney: 1500,
+    rewardItems: [
+      { id: 'poke-ball', name: 'Poké Ball', count: 5 },
+      { id: 'pozione', name: 'Pozione', count: 2 }
+    ]
+  },
+  {
     id: 'm-20',
     requiredCount: 20,
     title: 'Taccuino Digitale',
@@ -61,6 +73,17 @@ export const MILESTONES: Milestone[] = [
     ]
   },
   {
+    id: 'm-30',
+    requiredCount: 30,
+    title: 'Cacciatore Urbano',
+    description: '30 specie uniche domate attraverso villaggi e percorsi.',
+    rewardMoney: 3000,
+    rewardItems: [
+      { id: 'mega-ball', name: 'Mega Ball', count: 5 },
+      { id: 'super-pozione', name: 'Super Pozione', count: 2 }
+    ]
+  },
+  {
     id: 'm-35',
     requiredCount: 35,
     title: 'Ranger dei Circuiti',
@@ -69,6 +92,28 @@ export const MILESTONES: Milestone[] = [
     rewardItems: [
       { id: 'mega-ball', name: 'Mega Ball', count: 5 },
       { id: 'revitalizzante', name: 'Revitalizzante', count: 2 }
+    ]
+  },
+  {
+    id: 'm-40',
+    requiredCount: 40,
+    title: 'Esploratore dei Percorsi',
+    description: '40 creature catturate e catalogate nei registri.',
+    rewardMoney: 4000,
+    rewardItems: [
+      { id: 'mega-ball', name: 'Mega Ball', count: 6 },
+      { id: 'super-pozione', name: 'Super Pozione', count: 3 }
+    ]
+  },
+  {
+    id: 'm-45',
+    requiredCount: 45,
+    title: 'Cartografo Rurale',
+    description: '45 esemplari scoperti esplorando ogni angolo della mappa.',
+    rewardMoney: 4500,
+    rewardItems: [
+      { id: 'mega-ball', name: 'Mega Ball', count: 6 },
+      { id: 'iper-pozione', name: 'Iper Pozione', count: 2 }
     ]
   },
   {
@@ -84,11 +129,35 @@ export const MILESTONES: Milestone[] = [
     rewardTitle: 'Collezionista Esperto'
   },
   {
+    id: 'm-60',
+    requiredCount: 60,
+    title: 'Ricercatore di Campo',
+    description: '60 specie catturate, un traguardo invidiato da tutti gli studiosi.',
+    rewardMoney: 6000,
+    rewardItems: [
+      { id: 'ultra-ball', name: 'Ultra Ball', count: 6 },
+      { id: 'iper-pozione', name: 'Iper Pozione', count: 2 },
+      { id: 'caramella-rara', name: 'Caramella Rara', count: 1 }
+    ]
+  },
+  {
     id: 'm-75',
     requiredCount: 75,
     title: 'Naturalista dei Pixel',
     description: '75 specie studiate e domate.',
     rewardMoney: 7500,
+    rewardItems: [
+      { id: 'ultra-ball', name: 'Ultra Ball', count: 8 },
+      { id: 'iper-pozione', name: 'Iper Pozione', count: 3 },
+      { id: 'caramella-rara', name: 'Caramella Rara', count: 2 }
+    ]
+  },
+  {
+    id: 'm-85',
+    requiredCount: 85,
+    title: 'Veterano della Mappa',
+    description: '85 Pokémon catalogati in costante espansione.',
+    rewardMoney: 8500,
     rewardItems: [
       { id: 'ultra-ball', name: 'Ultra Ball', count: 8 },
       { id: 'iper-pozione', name: 'Iper Pozione', count: 3 },
@@ -108,11 +177,35 @@ export const MILESTONES: Milestone[] = [
     rewardTitle: 'Archivista del Web'
   },
   {
+    id: 'm-110',
+    requiredCount: 110,
+    title: 'Pioniere Regionale',
+    description: '110 creature registrate nei tuoi archivi.',
+    rewardMoney: 12000,
+    rewardItems: [
+      { id: 'ultra-ball', name: 'Ultra Ball', count: 10 },
+      { id: 'revitalizzante', name: 'Revitalizzante', count: 2 },
+      { id: 'caramella-rara', name: 'Caramella Rara', count: 2 }
+    ]
+  },
+  {
     id: 'm-125',
     requiredCount: 125,
     title: 'Specialista del Multiverso',
     description: '125 specie catturate attraverso le varie regioni.',
     rewardMoney: 15000,
+    rewardItems: [
+      { id: 'ultra-ball', name: 'Ultra Ball', count: 10 },
+      { id: 'revitalizzante-max', name: 'Revitalizzante Max', count: 3 },
+      { id: 'caramella-rara', name: 'Caramella Rara', count: 3 }
+    ]
+  },
+  {
+    id: 'm-135',
+    requiredCount: 135,
+    title: 'Esploratore delle Terre Selvagge',
+    description: '135 creature uniche catturate nelle lande più remote.',
+    rewardMoney: 17500,
     rewardItems: [
       { id: 'ultra-ball', name: 'Ultra Ball', count: 10 },
       { id: 'revitalizzante-max', name: 'Revitalizzante Max', count: 3 },
@@ -130,6 +223,18 @@ export const MILESTONES: Milestone[] = [
       { id: 'revitalizzante-max', name: 'Revitalizzante Max', count: 5 }
     ],
     rewardTitle: 'Professore del Codice'
+  },
+  {
+    id: 'm-160',
+    requiredCount: 160,
+    title: 'Maestro di Zoologia Digitale',
+    description: '160 specie archiviate con analisi comportamentale impeccabile.',
+    rewardMoney: 22500,
+    rewardItems: [
+      { id: 'ultra-ball', name: 'Ultra Ball', count: 10 },
+      { id: 'revitalizzante-max', name: 'Revitalizzante Max', count: 4 },
+      { id: 'caramella-rara', name: 'Caramella Rara', count: 4 }
+    ]
   },
   {
     id: 'm-175',
@@ -157,6 +262,18 @@ export const MILESTONES: Milestone[] = [
     rewardTitle: 'Pioniere della Biodiversità'
   },
   {
+    id: 'm-225',
+    requiredCount: 225,
+    title: 'Guardiano delle Specie Rare',
+    description: '225 specie uniche arricchiscono il tuo formidabile archivio.',
+    rewardMoney: 40000,
+    rewardItems: [
+      { id: 'master-ball', name: 'Master Ball', count: 1 },
+      { id: 'caramella-rara', name: 'Caramella Rara', count: 7 },
+      { id: 'revitalizzante-max', name: 'Revitalizzante Max', count: 5 }
+    ]
+  },
+  {
     id: 'm-250',
     requiredCount: 250,
     title: 'Maestro Assoluto del Pokédex',
@@ -167,6 +284,18 @@ export const MILESTONES: Milestone[] = [
       { id: 'caramella-rara', name: 'Caramella Rara', count: 8 }
     ],
     rewardTitle: 'Maestro del Pokédex'
+  },
+  {
+    id: 'm-275',
+    requiredCount: 275,
+    title: 'Archivista del Dominio',
+    description: '275 creature uniche registrate con precisione millimetrica.',
+    rewardMoney: 55000,
+    rewardItems: [
+      { id: 'master-ball', name: 'Master Ball', count: 2 },
+      { id: 'caramella-rara', name: 'Caramella Rara', count: 8 },
+      { id: 'revitalizzante-max', name: 'Revitalizzante Max', count: 5 }
+    ]
   },
   {
     id: 'm-300',
@@ -182,6 +311,18 @@ export const MILESTONES: Milestone[] = [
     rewardTitle: 'Saggio delle Generazioni'
   },
   {
+    id: 'm-325',
+    requiredCount: 325,
+    title: 'Cronista delle Origini',
+    description: '325 creature domate attraverso deserti, abissi e foreste.',
+    rewardMoney: 70000,
+    rewardItems: [
+      { id: 'master-ball', name: 'Master Ball', count: 2 },
+      { id: 'caramella-rara', name: 'Caramella Rara', count: 10 },
+      { id: 'revitalizzante-max', name: 'Revitalizzante Max', count: 6 }
+    ]
+  },
+  {
     id: 'm-350',
     requiredCount: 350,
     title: 'Enciclopedia Vivente',
@@ -191,6 +332,18 @@ export const MILESTONES: Milestone[] = [
       { id: 'master-ball', name: 'Master Ball', count: 2 },
       { id: 'caramella-rara', name: 'Caramella Rara', count: 12 },
       { id: 'ultra-ball', name: 'Ultra Ball', count: 15 }
+    ]
+  },
+  {
+    id: 'm-375',
+    requiredCount: 375,
+    title: 'Sapiente dell\'Antico e del Nuovo',
+    description: '375 Pokémon archiviati con padronanza leggendaria.',
+    rewardMoney: 90000,
+    rewardItems: [
+      { id: 'master-ball', name: 'Master Ball', count: 2 },
+      { id: 'caramella-rara', name: 'Caramella Rara', count: 12 },
+      { id: 'revitalizzante-max', name: 'Revitalizzante Max', count: 7 }
     ]
   },
   {
@@ -207,6 +360,19 @@ export const MILESTONES: Milestone[] = [
     rewardTitle: 'Gran Maestro del Codice'
   },
   {
+    id: 'm-450',
+    requiredCount: 450,
+    title: 'Conquistatore di Regioni',
+    description: '450 creature registrate! Il Pokédex vibra di gloria imperiale.',
+    rewardMoney: 125000,
+    rewardItems: [
+      { id: 'master-ball', name: 'Master Ball', count: 3 },
+      { id: 'caramella-rara', name: 'Caramella Rara', count: 18 },
+      { id: 'revitalizzante-max', name: 'Revitalizzante Max', count: 10 }
+    ],
+    rewardTitle: 'Conquistatore di Regioni'
+  },
+  {
     id: 'm-500',
     requiredCount: 500,
     title: 'Leggenda Primordiale (Metà Pokédex)',
@@ -218,6 +384,18 @@ export const MILESTONES: Milestone[] = [
       { id: 'revitalizzante-max', name: 'Revitalizzante Max', count: 10 }
     ],
     rewardTitle: 'Divinità Tascabile'
+  },
+  {
+    id: 'm-550',
+    requiredCount: 550,
+    title: 'Colosso della Biosfera',
+    description: '550 specie catalogate, superando ogni limite naturale.',
+    rewardMoney: 175000,
+    rewardItems: [
+      { id: 'master-ball', name: 'Master Ball', count: 5 },
+      { id: 'caramella-rara', name: 'Caramella Rara', count: 30 },
+      { id: 'revitalizzante-max', name: 'Revitalizzante Max', count: 12 }
+    ]
   },
   {
     id: 'm-600',
@@ -233,6 +411,30 @@ export const MILESTONES: Milestone[] = [
     rewardTitle: 'Architetto dell\'Infinito'
   },
   {
+    id: 'm-650',
+    requiredCount: 650,
+    title: 'Padrone del Genoma Pokémon',
+    description: '650 specie catturate e preservate nei tuoi banchi di memoria.',
+    rewardMoney: 220000,
+    rewardItems: [
+      { id: 'master-ball', name: 'Master Ball', count: 6 },
+      { id: 'caramella-rara', name: 'Caramella Rara', count: 40 },
+      { id: 'revitalizzante-max', name: 'Revitalizzante Max', count: 15 }
+    ]
+  },
+  {
+    id: 'm-700',
+    requiredCount: 700,
+    title: 'Campione Assoluto delle Specie',
+    description: '700 Pokémon archiviati! Una maestria senza paragoni nel mondo.',
+    rewardMoney: 235000,
+    rewardItems: [
+      { id: 'master-ball', name: 'Master Ball', count: 7 },
+      { id: 'caramella-rara', name: 'Caramella Rara', count: 45 },
+      { id: 'revitalizzante-max', name: 'Revitalizzante Max', count: 18 }
+    ]
+  },
+  {
     id: 'm-750',
     requiredCount: 750,
     title: 'Titano delle Creature Celesti',
@@ -246,6 +448,56 @@ export const MILESTONES: Milestone[] = [
     rewardTitle: 'Titano Celeste'
   },
   {
+    id: 'm-800',
+    requiredCount: 800,
+    title: 'Custode dei Nove Domini',
+    description: '800 Pokémon catturati! Il tuo potere si estende su tutte le nove generazioni.',
+    rewardMoney: 300000,
+    rewardItems: [
+      { id: 'master-ball', name: 'Master Ball', count: 8 },
+      { id: 'caramella-rara', name: 'Caramella Rara', count: 60 },
+      { id: 'revitalizzante-max', name: 'Revitalizzante Max', count: 22 }
+    ],
+    rewardTitle: 'Custode dei Domini'
+  },
+  {
+    id: 'm-850',
+    requiredCount: 850,
+    title: 'Demiurgo del Pokédex',
+    description: '850 specie registrate! Sei a un passo dal completamento cosmico.',
+    rewardMoney: 350000,
+    rewardItems: [
+      { id: 'master-ball', name: 'Master Ball', count: 8 },
+      { id: 'caramella-rara', name: 'Caramella Rara', count: 70 },
+      { id: 'revitalizzante-max', name: 'Revitalizzante Max', count: 25 }
+    ]
+  },
+  {
+    id: 'm-900',
+    requiredCount: 900,
+    title: 'Sovrano delle Nove Generazioni',
+    description: '900 Pokémon catturati! L\'olimpo degli allenatori si inchina.',
+    rewardMoney: 400000,
+    rewardItems: [
+      { id: 'master-ball', name: 'Master Ball', count: 9 },
+      { id: 'caramella-rara', name: 'Caramella Rara', count: 80 },
+      { id: 'revitalizzante-max', name: 'Revitalizzante Max', count: 28 }
+    ],
+    rewardTitle: 'Sovrano delle Generazioni'
+  },
+  {
+    id: 'm-950',
+    requiredCount: 950,
+    title: 'Sulla Soglia dell\'Onniscienza',
+    description: '950 creature nel database! Meno di 100 esemplari alla perfezione assoluta.',
+    rewardMoney: 450000,
+    rewardItems: [
+      { id: 'master-ball', name: 'Master Ball', count: 10 },
+      { id: 'caramella-rara', name: 'Caramella Rara', count: 90 },
+      { id: 'revitalizzante-max', name: 'Revitalizzante Max', count: 30 }
+    ]
+  },
+  {
     id: 'm-1000',
     requiredCount: 1000,
     title: 'Trascendenza Assoluta (National Dex Guru)',
@@ -257,6 +509,19 @@ export const MILESTONES: Milestone[] = [
       { id: 'revitalizzante-max', name: 'Revitalizzante Max', count: 30 }
     ],
     rewardTitle: 'Creatore di Mondi'
+  },
+  {
+    id: 'm-1025',
+    requiredCount: 1025,
+    title: 'Completamento Supremo 100% National Dex',
+    description: '1.025 Pokémon catturati! Ogni singola creatura dell\'universo Pokémon vive nel tuo Pokédex!',
+    rewardMoney: 1000000,
+    rewardItems: [
+      { id: 'master-ball', name: 'Master Ball', count: 20 },
+      { id: 'caramella-rara', name: 'Caramella Rara', count: 150 },
+      { id: 'revitalizzante-max', name: 'Revitalizzante Max', count: 50 }
+    ],
+    rewardTitle: 'Divinità Suprema del Pokédex'
   }
 ];
 
@@ -293,6 +558,7 @@ export const PokedexProgressModal: React.FC<PokedexProgressModalProps> = ({
   const handleClaim = (milestone: Milestone) => {
     if (claimed.includes(milestone.id) || totalCaught < milestone.requiredCount) return;
 
+    playLevelUp();
     const newClaimed = [...claimed, milestone.id];
     setClaimed(newClaimed);
     try {
@@ -345,6 +611,7 @@ export const PokedexProgressModal: React.FC<PokedexProgressModalProps> = ({
   const handleClaimAll = () => {
     if (claimableMilestones.length === 0) return;
 
+    playLevelUp();
     const newClaimed = [...claimed, ...claimableMilestones.map(m => m.id)];
     setClaimed(newClaimed);
     try {
@@ -416,7 +683,10 @@ export const PokedexProgressModal: React.FC<PokedexProgressModalProps> = ({
             <h3 className="font-bold text-base text-white">Progressi & Ricompense Pokédex</h3>
           </div>
           <button
-            onClick={onClose}
+            onClick={() => {
+              playMenuClick();
+              onClose();
+            }}
             className="p-1.5 rounded-lg bg-slate-800 hover:bg-red-500/20 hover:text-red-400 transition-colors"
           >
             <X className="w-5 h-5" />
@@ -527,7 +797,10 @@ export const PokedexProgressModal: React.FC<PokedexProgressModalProps> = ({
             {/* Filter Tabs */}
             <div className="flex items-center gap-1.5 p-1 bg-slate-950/60 rounded-xl border border-slate-800 text-xs font-medium">
               <button
-                onClick={() => setMilestoneFilter('all')}
+                onClick={() => {
+                  playMenuClick();
+                  setMilestoneFilter('all');
+                }}
                 className={`flex-1 py-1.5 px-2 rounded-lg text-center transition-colors ${
                   milestoneFilter === 'all'
                     ? 'bg-slate-800 text-white font-bold shadow-sm'
@@ -537,7 +810,10 @@ export const PokedexProgressModal: React.FC<PokedexProgressModalProps> = ({
                 Tutti ({MILESTONES.length})
               </button>
               <button
-                onClick={() => setMilestoneFilter('claimable')}
+                onClick={() => {
+                  playMenuClick();
+                  setMilestoneFilter('claimable');
+                }}
                 className={`flex-1 py-1.5 px-2 rounded-lg text-center transition-colors flex items-center justify-center gap-1.5 ${
                   milestoneFilter === 'claimable'
                     ? 'bg-amber-500/20 text-amber-300 font-bold border border-amber-500/30'
@@ -552,7 +828,10 @@ export const PokedexProgressModal: React.FC<PokedexProgressModalProps> = ({
                 )}
               </button>
               <button
-                onClick={() => setMilestoneFilter('claimed')}
+                onClick={() => {
+                  playMenuClick();
+                  setMilestoneFilter('claimed');
+                }}
                 className={`flex-1 py-1.5 px-2 rounded-lg text-center transition-colors ${
                   milestoneFilter === 'claimed'
                     ? 'bg-slate-800 text-white font-bold shadow-sm'

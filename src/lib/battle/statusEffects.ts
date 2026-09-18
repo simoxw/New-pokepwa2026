@@ -8,8 +8,11 @@ export interface VolatileStatus {
   lockedMove?: Move;
   lockedTurns?: number;
   charging?: boolean;
+  chargingState?: 'fly' | 'dig' | 'dive' | 'bounce' | 'charge';
   recharging?: boolean;
   trapTurns?: number;
+  isProtected?: boolean;
+  protectStreak?: number;
 }
 
 export function checkConfusion(pokemon: Pokemon, confusionTurns: number = 0): {

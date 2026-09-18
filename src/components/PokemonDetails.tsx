@@ -10,10 +10,11 @@ interface PokemonDetailsProps {
   onMoveDown?: () => void;
   onBox?: () => void;
   onWithdraw?: () => void;
+  onRelease?: () => void;
 }
 
 export const PokemonDetails: React.FC<PokemonDetailsProps> = ({ 
-  pokemon, onClose, onMoveUp, onMoveDown, onBox, onWithdraw 
+  pokemon, onClose, onMoveUp, onMoveDown, onBox, onWithdraw, onRelease 
 }) => {
   return (
     <div className="fixed inset-0 z-[100] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
@@ -146,6 +147,7 @@ export const PokemonDetails: React.FC<PokemonDetailsProps> = ({
             <div className="flex gap-2">
               {onBox && <ActionButton onClick={onBox} label="Metti nel Box" color="bg-amber-500 text-white hover:bg-amber-600" />}
               {onWithdraw && <ActionButton onClick={onWithdraw} label="Ritira in Squadra" color="bg-emerald-500 text-white hover:bg-emerald-600" />}
+              {onRelease && <ActionButton onClick={onRelease} label="Rilascia" color="bg-rose-500/10 text-rose-600 hover:bg-rose-500/20 border border-rose-200" />}
             </div>
             <button 
               onClick={onClose}

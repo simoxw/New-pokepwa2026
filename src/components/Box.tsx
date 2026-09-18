@@ -2,11 +2,13 @@ import React, { useState, useMemo } from 'react';
 import { useGame } from '../contexts/GameContext';
 import { 
   ChevronLeft, Search, X, Sparkles, Zap, Heart, 
-  ArrowUpDown, SlidersHorizontal, RotateCcw, ShieldAlert
+  ArrowUpDown, SlidersHorizontal, RotateCcw, ShieldAlert,
+  CheckSquare, Square, Trash2, Check, AlertTriangle
 } from 'lucide-react';
 import { Pokemon } from '../types/game';
 import { PokemonDetails } from './PokemonDetails';
 import { ALL_TYPES, GENERATIONS, getTypeVisual } from './pokedex/pokedexConstants';
+import { playMenuClick, playFaint } from '../lib/sound';
 
 type SortKey = 'recent' | 'level_desc' | 'level_asc' | 'pokedex' | 'name' | 'stats';
 
@@ -23,11 +25,19 @@ export const Box: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [sortBy, setSortBy] = useState<SortKey>('recent');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState<boolean>(false);
 
+  // Multi-Select & Mass Release State
+  const [isMultiSelectMode, setIsMultiSelectMode] = useState<boolean>(false);
+  const [selectedInstanceKeys, setSelectedInstanceKeys] = useState<Set<string>>(new Set());
+  const [showMassReleaseModal, setShowMassReleaseModal] = useState<boolean>(false);
+  const [singleReleaseTarget, setSingleReleaseTarget] = useState<Pokemon | null>(null);
+
   // Selected Pokemon modal
   const [selectedPokemon, setSelectedPokemon] = useState<{ 
     pokemon: Pokemon; 
     source: 'team' | 'box';
   } | null>(null);
+
+  const getPkmnKey = (p: Pokemon) => p.instanceId || `${p.id}-${p.caughtAt || ''}-${p.level}-${p.nickname || ''}`;
 
   // Helper to calculate total stats (BST or current stats)
   const calculateTotalStats = (p: Pokemon) => {
@@ -49,6 +59,7 @@ export const Box: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     (sortBy !== 'recent' ? 1 : 0);
 
   const resetFilters = () => {
+    playMenuClick();
     setSearch('');
     setSelectedType(null);
     setSelectedGen(0);
@@ -132,6 +143,7 @@ export const Box: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       alert("Squadra piena! Sposta prima qualcuno nel Box.");
       return;
     }
+    playMenuClick();
     setState(prev => {
       const boxIdx = prev.player.box.findIndex(p => 
         p.instanceId ? p.instanceId === target.instanceId : p.id === target.id && p.level === target.level && p.caughtAt === target.caughtAt
@@ -156,6 +168,7 @@ export const Box: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       alert("Devi avere almeno un Pokémon in squadra!");
       return;
     }
+    playMenuClick();
     setState(prev => {
       const teamIdx = prev.player.team.findIndex(p => 
         p.instanceId ? p.instanceId === target.instanceId : p.id === target.id && p.level === target.level && p.caughtAt === target.caughtAt
@@ -173,6 +186,79 @@ export const Box: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     });
     setSelectedPokemon(null);
   };
+
+  // Toggle selection in multi-select mode
+  const toggleSelect = (p: Pokemon) => {
+    playMenuClick();
+    const key = getPkmnKey(p);
+    setSelectedInstanceKeys(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  };
+
+  // Select all currently filtered pokemon in box
+  const selectAllFiltered = () => {
+    playMenuClick();
+    const next = new Set<string>();
+    filteredBox.forEach(p => next.add(getPkmnKey(p)));
+    setSelectedInstanceKeys(next);
+  };
+
+  // Deselect all
+  const deselectAll = () => {
+    playMenuClick();
+    setSelectedInstanceKeys(new Set());
+  };
+
+  // Execute mass release
+  const executeMassRelease = () => {
+    if (selectedInstanceKeys.size === 0) return;
+    setState(prev => ({
+      ...prev,
+      player: {
+        ...prev.player,
+        box: prev.player.box.filter(p => !selectedInstanceKeys.has(getPkmnKey(p)))
+      }
+    }));
+    playFaint();
+    setSelectedInstanceKeys(new Set());
+    setShowMassReleaseModal(false);
+    setIsMultiSelectMode(false);
+  };
+
+  // Execute single release
+  const executeSingleRelease = (target: Pokemon) => {
+    const targetKey = getPkmnKey(target);
+    setState(prev => ({
+      ...prev,
+      player: {
+        ...prev.player,
+        box: prev.player.box.filter(p => getPkmnKey(p) !== targetKey)
+      }
+    }));
+    playFaint();
+    setSelectedPokemon(null);
+    setSingleReleaseTarget(null);
+  };
+
+  // List of selected pokemon objects for preview & safety warnings
+  const selectedPokemonList = useMemo(() => {
+    return state.player.box.filter(p => selectedInstanceKeys.has(getPkmnKey(p)));
+  }, [state.player.box, selectedInstanceKeys]);
+
+  const hasShinyInSelection = useMemo(() => {
+    return selectedPokemonList.some(p => p.isShiny);
+  }, [selectedPokemonList]);
+
+  const hasHighLevelInSelection = useMemo(() => {
+    return selectedPokemonList.some(p => p.level >= 30);
+  }, [selectedPokemonList]);
 
   // Shiny counts in box
   const shinyCountInBox = useMemo(() => {
@@ -215,25 +301,90 @@ export const Box: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           </div>
         </div>
 
-        {/* Action Toggle Filters */}
-        <button
-          onClick={() => setShowAdvancedFilters(prev => !prev)}
-          className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-colors ${
-            showAdvancedFilters || activeFiltersCount > 0
-              ? 'bg-indigo-600 text-white border-indigo-400 shadow-sm'
-              : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
-          }`}
-          title="Mostra / Nascondi filtri avanzati"
-        >
-          <SlidersHorizontal className="w-4 h-4" />
-          <span className="hidden sm:inline">Filtri</span>
-          {activeFiltersCount > 0 && (
-            <span className="w-4 h-4 rounded-full bg-white text-indigo-700 text-[10px] font-black flex items-center justify-center">
-              {activeFiltersCount}
-            </span>
-          )}
-        </button>
+        {/* Header Action Buttons */}
+        <div className="flex items-center gap-2">
+          {/* Multi-Select Toggle */}
+          <button
+            onClick={() => {
+              playMenuClick();
+              setIsMultiSelectMode(prev => !prev);
+              if (isMultiSelectMode) {
+                setSelectedInstanceKeys(new Set());
+              }
+            }}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-all ${
+              isMultiSelectMode
+                ? 'bg-amber-600 text-white border-amber-400 shadow-md ring-2 ring-amber-500/30'
+                : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+            }`}
+            title="Attiva / Disattiva selezione multipla"
+          >
+            {isMultiSelectMode ? <CheckSquare className="w-4 h-4 text-amber-200" /> : <Square className="w-4 h-4" />}
+            <span className="hidden sm:inline">Selezione Multipla</span>
+          </button>
+
+          {/* Action Toggle Filters */}
+          <button
+            onClick={() => {
+              playMenuClick();
+              setShowAdvancedFilters(prev => !prev);
+            }}
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl border text-xs font-bold transition-colors ${
+              showAdvancedFilters || activeFiltersCount > 0
+                ? 'bg-indigo-600 text-white border-indigo-400 shadow-sm'
+                : 'bg-slate-800 text-slate-300 border-slate-700 hover:bg-slate-700'
+            }`}
+            title="Mostra / Nascondi filtri avanzati"
+          >
+            <SlidersHorizontal className="w-4 h-4" />
+            <span className="hidden sm:inline">Filtri</span>
+            {activeFiltersCount > 0 && (
+              <span className="w-4 h-4 rounded-full bg-white text-indigo-700 text-[10px] font-black flex items-center justify-center">
+                {activeFiltersCount}
+              </span>
+            )}
+          </button>
+        </div>
       </header>
+
+      {/* MULTI-SELECT SUB-BAR */}
+      {isMultiSelectMode && (
+        <div className="flex items-center justify-between px-3.5 py-2 bg-amber-950/40 border-b border-amber-800/40 text-xs shrink-0">
+          <div className="flex items-center gap-2">
+            <button
+              onClick={selectAllFiltered}
+              className="px-2.5 py-1 rounded-lg bg-amber-600/30 hover:bg-amber-600/50 text-amber-200 border border-amber-600/40 font-bold transition-colors text-[11px]"
+            >
+              Seleziona Visibili ({filteredBox.length})
+            </button>
+            {selectedInstanceKeys.size > 0 && (
+              <button
+                onClick={deselectAll}
+                className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition-colors text-[11px]"
+              >
+                Deseleziona
+              </button>
+            )}
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="text-amber-300 font-black text-xs">
+              {selectedInstanceKeys.size} selezionati
+            </span>
+            {selectedInstanceKeys.size > 0 && (
+              <button
+                onClick={() => {
+                  playMenuClick();
+                  setShowMassReleaseModal(true);
+                }}
+                className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-rose-600 hover:bg-rose-500 text-white font-black text-[11px] shadow-sm transition-all"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span>Rilascia</span>
+              </button>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* SEARCH AND QUICK FILTER CONTROLS */}
       <div className="bg-slate-900/80 border-b border-slate-800 px-3.5 py-2.5 space-y-2 shrink-0">
@@ -454,7 +605,10 @@ export const Box: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 key={pokemon.instanceId || `team-${pokemon.id}-${pokemon.caughtAt}`}
                 pokemon={pokemon}
                 isTeamMember
-                onClick={() => setSelectedPokemon({ pokemon, source: 'team' })}
+                onClick={() => {
+                  playMenuClick();
+                  setSelectedPokemon({ pokemon, source: 'team' });
+                }}
               />
             ))}
             {/* Empty team slots placeholders */}
@@ -505,27 +659,173 @@ export const Box: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
-              {filteredBox.map((pokemon) => (
-                <BoxPokemonCard 
-                  key={pokemon.instanceId || `box-${pokemon.id}-${pokemon.caughtAt}`}
-                  pokemon={pokemon}
-                  onClick={() => setSelectedPokemon({ pokemon, source: 'box' })}
-                />
-              ))}
+            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2 pb-16">
+              {filteredBox.map((pokemon) => {
+                const key = getPkmnKey(pokemon);
+                const isSelected = selectedInstanceKeys.has(key);
+                return (
+                  <BoxPokemonCard 
+                    key={key}
+                    pokemon={pokemon}
+                    isMultiSelect={isMultiSelectMode}
+                    isSelected={isSelected}
+                    onClick={() => {
+                      if (isMultiSelectMode) {
+                        toggleSelect(pokemon);
+                      } else {
+                        playMenuClick();
+                        setSelectedPokemon({ pokemon, source: 'box' });
+                      }
+                    }}
+                  />
+                );
+              })}
             </div>
           )}
         </div>
 
       </div>
 
-      {/* POKEMON DETAILS MODAL (Withdraw / Deposit / Stats) */}
+      {/* FLOATING ACTION BAR FOR MULTI-SELECT */}
+      {isMultiSelectMode && selectedInstanceKeys.size > 0 && (
+        <div className="fixed bottom-4 inset-x-4 max-w-lg mx-auto z-40 bg-slate-900/95 border border-slate-700 backdrop-blur-md p-3 rounded-2xl shadow-2xl flex items-center justify-between gap-3 animate-in fade-in slide-in-from-bottom-2">
+          <div>
+            <span className="text-xs font-black text-white block">
+              {selectedInstanceKeys.size} Pokémon selezionati
+            </span>
+            <span className="text-[10px] text-slate-400">
+              Pronti per il rilascio di massa
+            </span>
+          </div>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => {
+                playMenuClick();
+                setShowMassReleaseModal(true);
+              }}
+              className="flex items-center gap-1.5 px-3 py-2 bg-rose-600 hover:bg-rose-500 text-white rounded-xl text-xs font-black transition-all shadow-md active:scale-95"
+            >
+              <Trash2 className="w-4 h-4" />
+              <span>Rilascia ({selectedInstanceKeys.size})</span>
+            </button>
+            <button
+              onClick={deselectAll}
+              className="p-2 bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white rounded-xl text-xs transition-colors"
+              title="Deseleziona tutti"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          </div>
+        </div>
+      )}
+
+      {/* MASS RELEASE CONFIRMATION MODAL */}
+      {showMassReleaseModal && (
+        <div className="fixed inset-0 z-[120] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-slate-900 border border-slate-800 text-white rounded-3xl max-w-md w-full p-5 space-y-4 shadow-2xl">
+            <div className="flex items-center gap-3 text-rose-400">
+              <div className="p-2.5 rounded-2xl bg-rose-500/20 border border-rose-500/30">
+                <Trash2 className="w-6 h-6 text-rose-400" />
+              </div>
+              <div>
+                <h3 className="text-base font-black uppercase">Conferma Rilascio di Massa</h3>
+                <p className="text-xs text-slate-400">Questa operazione non può essere annullata</p>
+              </div>
+            </div>
+
+            {hasShinyInSelection && (
+              <div className="p-3 bg-amber-500/20 border border-amber-500/40 rounded-2xl flex items-center gap-2.5 text-amber-300 text-xs font-bold">
+                <AlertTriangle className="w-5 h-5 text-amber-400 shrink-0" />
+                <span>Attenzione! Hai selezionato almeno un Pokémon Shiny cromatico!</span>
+              </div>
+            )}
+
+            {hasHighLevelInSelection && (
+              <div className="p-3 bg-indigo-500/20 border border-indigo-500/40 rounded-2xl flex items-center gap-2.5 text-indigo-300 text-xs font-bold">
+                <AlertTriangle className="w-5 h-5 text-indigo-400 shrink-0" />
+                <span>Attenzione! Nella selezione sono presenti Pokémon di livello 30 o superiore!</span>
+              </div>
+            )}
+
+            <div className="max-h-44 overflow-y-auto space-y-1.5 p-2 bg-slate-950 rounded-2xl border border-slate-800">
+              <p className="text-[10px] text-slate-500 font-bold uppercase px-1">
+                Stai per liberare {selectedPokemonList.length} Pokémon:
+              </p>
+              <div className="grid grid-cols-4 gap-2 pt-1">
+                {selectedPokemonList.map(p => (
+                  <div 
+                    key={getPkmnKey(p)} 
+                    className="p-1.5 bg-slate-900 rounded-xl border border-slate-800 flex flex-col items-center text-center"
+                  >
+                    <img src={p.sprites.front} alt={p.name} className="w-10 h-10 object-contain" />
+                    <span className="text-[9px] font-bold text-slate-200 truncate w-full">{p.nickname || p.name}</span>
+                    <span className="text-[8px] font-mono text-slate-400">L.{p.level}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="flex gap-2 pt-2">
+              <button
+                onClick={() => setShowMassReleaseModal(false)}
+                className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-black uppercase text-xs transition-colors"
+              >
+                Annulla
+              </button>
+              <button
+                onClick={executeMassRelease}
+                className="flex-1 py-3 bg-rose-600 hover:bg-rose-500 text-white rounded-xl font-black uppercase text-xs transition-all shadow-lg active:scale-95 flex items-center justify-center gap-1.5"
+              >
+                <Trash2 className="w-4 h-4" />
+                <span>Rilascia ({selectedPokemonList.length})</span>
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* SINGLE RELEASE CONFIRMATION MODAL */}
+      {singleReleaseTarget && (
+        <div className="fixed inset-0 z-[120] bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 animate-in fade-in">
+          <div className="bg-slate-900 border border-slate-800 text-white rounded-3xl max-w-sm w-full p-5 space-y-4 shadow-2xl text-center">
+            <div className="w-14 h-14 mx-auto rounded-full bg-rose-500/20 border border-rose-500/30 flex items-center justify-center">
+              <Trash2 className="w-7 h-7 text-rose-400" />
+            </div>
+            <div>
+              <h3 className="text-base font-black uppercase">Liberare {singleReleaseTarget.nickname || singleReleaseTarget.name}?</h3>
+              <p className="text-xs text-slate-400 mt-1">Dirai addio per sempre a questo Pokémon.</p>
+            </div>
+            {singleReleaseTarget.isShiny && (
+              <div className="p-2.5 bg-amber-500/20 border border-amber-500/40 rounded-xl text-amber-300 text-xs font-bold">
+                ⚠️ Questo Pokémon è Shiny cromatico!
+              </div>
+            )}
+            <div className="flex gap-2 pt-2">
+              <button
+                onClick={() => setSingleReleaseTarget(null)}
+                className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl font-black uppercase text-xs transition-colors"
+              >
+                Annulla
+              </button>
+              <button
+                onClick={() => executeSingleRelease(singleReleaseTarget)}
+                className="flex-1 py-2.5 bg-rose-600 hover:bg-rose-500 text-white rounded-xl font-black uppercase text-xs transition-all shadow-md active:scale-95"
+              >
+                Conferma
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* POKEMON DETAILS MODAL (Withdraw / Deposit / Stats / Release) */}
       {selectedPokemon && (
         <PokemonDetails 
           pokemon={selectedPokemon.pokemon}
           onClose={() => setSelectedPokemon(null)}
           onBox={selectedPokemon.source === 'team' ? () => deposit(selectedPokemon.pokemon) : undefined}
           onWithdraw={selectedPokemon.source === 'box' ? () => withdraw(selectedPokemon.pokemon) : undefined}
+          onRelease={selectedPokemon.source === 'box' ? () => setSingleReleaseTarget(selectedPokemon.pokemon) : undefined}
         />
       )}
 
@@ -537,10 +837,14 @@ export const Box: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 interface BoxPokemonCardProps {
   pokemon: Pokemon;
   isTeamMember?: boolean;
+  isMultiSelect?: boolean;
+  isSelected?: boolean;
   onClick: () => void;
 }
 
-const BoxPokemonCard: React.FC<BoxPokemonCardProps> = ({ pokemon, isTeamMember, onClick }) => {
+const BoxPokemonCard: React.FC<BoxPokemonCardProps> = ({ 
+  pokemon, isTeamMember, isMultiSelect, isSelected, onClick 
+}) => {
   const primaryType = pokemon.types[0]?.toLowerCase() || 'normal';
   const typeVisual = getTypeVisual(primaryType);
   const hpPercent = Math.max(0, Math.min(100, Math.round((pokemon.hp / pokemon.maxHp) * 100)));
@@ -552,9 +856,21 @@ const BoxPokemonCard: React.FC<BoxPokemonCardProps> = ({ pokemon, isTeamMember, 
       className={`aspect-square rounded-2xl border p-2 flex flex-col items-center justify-between relative transition-all duration-200 hover:scale-[1.03] active:scale-95 text-left group overflow-hidden ${
         isTeamMember
           ? 'bg-gradient-to-b from-slate-800 to-slate-900 border-emerald-500/40 shadow-sm'
+          : isSelected
+          ? 'bg-indigo-950/70 border-indigo-400 shadow-md ring-2 ring-indigo-500/60'
           : 'bg-slate-900/80 border-slate-800 hover:border-slate-700 hover:bg-slate-800/60 shadow'
       }`}
     >
+      {/* Multi-select check indicator */}
+      {isMultiSelect && !isTeamMember && (
+        <div className={`absolute top-1.5 left-1.5 z-20 w-4 h-4 rounded flex items-center justify-center transition-all ${
+          isSelected 
+            ? 'bg-indigo-600 text-white shadow-sm ring-1 ring-white' 
+            : 'bg-slate-800/90 border border-slate-600 text-transparent'
+        }`}>
+          <Check className="w-3 h-3 stroke-[3]" />
+        </div>
+      )}
       {/* Top Indicators: Level & Badges */}
       <div className="w-full flex items-center justify-between z-10">
         <span className="text-[10px] font-black text-slate-300 font-mono">

@@ -269,7 +269,29 @@ export function parseMoveObject(moveData: any, fallbackName?: string): Move {
   }
 
   // Target
-  const target = moveData.target?.name || (category === 'status' && (stat_changes.some(sc => sc.change > 0) || healing) ? 'user' : 'selected-pokemon');
+  let target = moveData.target?.name || (category === 'status' && (stat_changes.some(sc => sc.change > 0) || healing) ? 'user' : 'selected-pokemon');
+
+  // Two-turn charge or recharge
+  let multiTurn: Move['multiTurn'] = undefined;
+  if (rawNameLower.includes('fly') || rawNameLower.includes('volo')) {
+    multiTurn = { type: 'charge', chargeMessage: 'è volato alto nel cielo!' };
+  } else if (rawNameLower.includes('dig') || rawNameLower.includes('fossa')) {
+    multiTurn = { type: 'charge', chargeMessage: 'si è rintanato sottoterra!' };
+  } else if (rawNameLower.includes('dive') || rawNameLower.includes('sub') || rawNameLower.includes('immersione')) {
+    multiTurn = { type: 'charge', chargeMessage: 'si è immerso negli abissi!' };
+  } else if (rawNameLower.includes('bounce') || rawNameLower.includes('rimbalzo')) {
+    multiTurn = { type: 'charge', chargeMessage: 'rimbalza altissimo nel cielo!' };
+  } else if (rawNameLower.includes('solar-beam') || rawNameLower.includes('solarraggio') || rawNameLower.includes('solarbeam') || rawNameLower.includes('solar-blade')) {
+    multiTurn = { type: 'charge', chargeMessage: 'assorbe la luce solare!' };
+  } else if (rawNameLower.includes('hyper-beam') || rawNameLower.includes('iper-raggio') || rawNameLower.includes('giga-impact')) {
+    multiTurn = { type: 'recharge' };
+  }
+
+  if (rawNameLower.includes('protect') || rawNameLower.includes('protezione') || rawNameLower.includes('detect') || rawNameLower.includes('individuazione')) {
+    priority = 4;
+    category = 'status';
+    target = 'user';
+  }
 
   return {
     name: itMoveName,
@@ -288,7 +310,8 @@ export function parseMoveObject(moveData: any, fallbackName?: string): Move {
     stat_changes: stat_changes.length > 0 ? stat_changes : undefined,
     statusEffect,
     effectChance,
-    target
+    target,
+    multiTurn
   };
 }
 

@@ -329,6 +329,20 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
     pp: 5,
     maxPp: 5
   },
+  'dive': {
+    englishName: 'dive',
+    name: 'Sub',
+    type: 'water',
+    category: 'physical',
+    power: 80,
+    accuracy: 100,
+    pp: 10,
+    maxPp: 10,
+    multiTurn: {
+      type: 'charge',
+      chargeMessage: 'si è immerso negli abissi!'
+    }
+  },
 
   // --- GRASS ATTACKS ---
   'vine-whip': {
@@ -415,7 +429,11 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
     power: 120,
     accuracy: 100,
     pp: 10,
-    maxPp: 10
+    maxPp: 10,
+    multiTurn: {
+      type: 'charge',
+      chargeMessage: 'assorbe la luce solare!'
+    }
   },
 
   // --- ELECTRIC ATTACKS ---
@@ -638,6 +656,36 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
     maxPp: 10,
     drain: 0.75
   },
+  'fly': {
+    englishName: 'fly',
+    name: 'Volo',
+    type: 'flying',
+    category: 'physical',
+    power: 90,
+    accuracy: 95,
+    pp: 15,
+    maxPp: 15,
+    multiTurn: {
+      type: 'charge',
+      chargeMessage: 'è volato alto nel cielo!'
+    }
+  },
+  'bounce': {
+    englishName: 'bounce',
+    name: 'Rimbalzo',
+    type: 'flying',
+    category: 'physical',
+    power: 85,
+    accuracy: 85,
+    pp: 5,
+    maxPp: 5,
+    statusEffect: 'paralyzed',
+    effectChance: 30,
+    multiTurn: {
+      type: 'charge',
+      chargeMessage: 'rimbalza in alto nel cielo!'
+    }
+  },
 
   // --- PSYCHIC ATTACKS ---
   'confusion': {
@@ -804,6 +852,20 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
     accuracy: 100,
     pp: 10,
     maxPp: 10
+  },
+  'dig': {
+    englishName: 'dig',
+    name: 'Fossa',
+    type: 'ground',
+    category: 'physical',
+    power: 80,
+    accuracy: 100,
+    pp: 10,
+    maxPp: 10,
+    multiTurn: {
+      type: 'charge',
+      chargeMessage: 'si è scavato una fossa sottoterra!'
+    }
   },
   'rock-throw': {
     englishName: 'rock-throw',
@@ -1225,6 +1287,30 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
     pp: 40,
     maxPp: 40,
     target: 'user'
+  },
+  'protect': {
+    englishName: 'protect',
+    name: 'Protezione',
+    type: 'normal',
+    category: 'status',
+    power: 0,
+    accuracy: 100,
+    pp: 10,
+    maxPp: 10,
+    priority: 4,
+    target: 'user'
+  },
+  'detect': {
+    englishName: 'detect',
+    name: 'Individuazione',
+    type: 'fighting',
+    category: 'status',
+    power: 0,
+    accuracy: 100,
+    pp: 5,
+    maxPp: 5,
+    priority: 4,
+    target: 'user'
   }
 };
 
@@ -1269,7 +1355,8 @@ export function getMoveByName(rawName: string): Move {
       recoil: found.recoil,
       recoilMaxHp: found.recoilMaxHp,
       flinchChance: found.flinchChance,
-      confusionChance: found.confusionChance
+      confusionChance: found.confusionChance,
+      multiTurn: found.multiTurn
     };
   }
 
@@ -1295,7 +1382,8 @@ export function getMoveByName(rawName: string): Move {
         recoil: move.recoil,
         recoilMaxHp: move.recoilMaxHp,
         flinchChance: move.flinchChance,
-        confusionChance: move.confusionChance
+        confusionChance: move.confusionChance,
+        multiTurn: move.multiTurn
       };
     }
   }
