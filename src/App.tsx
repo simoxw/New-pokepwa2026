@@ -28,6 +28,7 @@ import { Sfidofono } from './components/Sfidofono';
 import { StarterSelection } from './components/StarterSelection';
 import { LeagueHub } from './components/LeagueHub';
 import { BattleTower } from './components/BattleTower';
+import { playBgm } from './lib/sound';
 
 function GameContent() {
   const { state, setState } = useGame();
@@ -103,6 +104,12 @@ function GameContent() {
       setShowStarterSelect(true);
     }
   }, [state.player.team.length]);
+
+  useEffect(() => {
+    if (!activeBattle) {
+      playBgm('overworld');
+    }
+  }, [activeBattle]);
 
   const handleBattleEnd = useCallback((
     result: 'win' | 'lose' | 'escape' | 'catch', 

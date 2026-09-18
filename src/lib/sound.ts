@@ -186,6 +186,72 @@ export function playHit(effectiveness: 'super' | 'not_very' | 'normal' | 'crit')
   // Normal hits and all synthesized fallback tones are completely silenced per user request
 }
 
+// BGM Music Player Engine
+let currentBgmAudio: HTMLAudioElement | null = null;
+let currentBgmType: 'overworld' | 'battle' | null = null;
+
+export function getCustomBgm(type: 'overworld' | 'battle'): string | null {
+  try {
+    return localStorage.getItem(`pokepwa_custom_bgm_${type}`);
+  } catch {
+    return null;
+  }
+}
+
+export function setCustomBgm(type: 'overworld' | 'battle', base64Audio: string | null): void {
+  try {
+    if (base64Audio) {
+      localStorage.setItem(`pokepwa_custom_bgm_${type}`, base64Audio);
+    } else {
+      localStorage.removeItem(`pokepwa_custom_bgm_${type}`);
+    }
+    // Update active BGM if playing
+    if (currentBgmType === type) {
+      playBgm(type, true);
+    }
+  } catch {}
+}
+
+export function playBgm(type: 'overworld' | 'battle' | 'stop', forceReload = false): void {
+  if (type === 'stop' || !soundEnabled) {
+    if (currentBgmAudio) {
+      currentBgmAudio.pause();
+      currentBgmAudio = null;
+    }
+    currentBgmType = null;
+    return;
+  }
+
+  if (currentBgmType === type && !forceReload && currentBgmAudio) {
+    if (currentBgmAudio.paused) {
+      currentBgmAudio.play().catch(() => {});
+    }
+    return;
+  }
+
+  if (currentBgmAudio) {
+    currentBgmAudio.pause();
+    currentBgmAudio = null;
+  }
+
+  const bgmUrl = getCustomBgm(type);
+  if (!bgmUrl) {
+    currentBgmType = null;
+    return;
+  }
+
+  try {
+    currentBgmAudio = new Audio(bgmUrl);
+    currentBgmAudio.loop = true;
+    currentBgmAudio.volume = 0.5;
+    currentBgmType = type;
+    currentBgmAudio.play().catch(() => {});
+  } catch {
+    currentBgmAudio = null;
+    currentBgmType = null;
+  }
+}
+
 export function playFaint() {
   if (!soundEnabled) return;
   playTone(360, 50, 0.4, 'triangle', 0.12);

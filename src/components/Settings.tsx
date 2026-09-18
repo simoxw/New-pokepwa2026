@@ -2,13 +2,13 @@ import React, { useState, useEffect } from 'react';
 import { useGame } from '../contexts/GameContext';
 import { 
   ChevronLeft, Save, Trash2, RotateCcw, FileJson, Zap, User, 
-  RefreshCw, Smartphone, CheckCircle, Volume2, VolumeX, Database, Sparkles, Upload, Play, X
+  RefreshCw, Smartphone, CheckCircle, Volume2, VolumeX, Database, Sparkles, Upload, Play, X, Music
 } from 'lucide-react';
 import { exportGameState, validateGameState } from '../lib/utils';
 import { INITIAL_STATE, Pokemon } from '../types/game';
 import { BADGES } from '../lib/badges';
 import { calculateStats } from '../lib/pokeapi';
-import { isSoundEnabled, setSoundEnabled, playMenuClick, playLevelUp, getCustomSound, setCustomSound, playHit } from '../lib/sound';
+import { isSoundEnabled, setSoundEnabled, playMenuClick, playLevelUp, getCustomBgm, setCustomBgm, playBgm } from '../lib/sound';
 import { getStorageEstimate, removeStorageItem, setStorageItem } from '../lib/storage';
 
 export const Settings: React.FC<{ onBack: () => void, onProfile: () => void }> = ({ onBack, onProfile }) => {
@@ -19,8 +19,8 @@ export const Settings: React.FC<{ onBack: () => void, onProfile: () => void }> =
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateMsg, setUpdateMsg] = useState<string | null>(null);
   const [audioActive, setAudioActive] = useState(() => isSoundEnabled());
-  const [customSuper, setCustomSuper] = useState<string | null>(() => getCustomSound('super'));
-  const [customNotVery, setCustomNotVery] = useState<string | null>(() => getCustomSound('not_very'));
+  const [bgmOverworld, setBgmOverworld] = useState<string | null>(() => getCustomBgm('overworld'));
+  const [bgmBattle, setBgmBattle] = useState<string | null>(() => getCustomBgm('battle'));
 
   const [storageInfo, setStorageInfo] = useState<{ usageMB: number; quotaMB: number; isIndexedDB: boolean }>({
     usageMB: 0.5,
@@ -32,27 +32,28 @@ export const Settings: React.FC<{ onBack: () => void, onProfile: () => void }> =
     getStorageEstimate().then(setStorageInfo);
   }, []);
 
-  const handleCustomAudioUpload = (type: 'super' | 'not_very', e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleBgmUpload = (type: 'overworld' | 'battle', e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (!file) return;
 
     const reader = new FileReader();
     reader.onload = (evt) => {
       const base64 = evt.target?.result as string;
-      setCustomSound(type, base64);
-      if (type === 'super') setCustomSuper(base64);
-      if (type === 'not_very') setCustomNotVery(base64);
-      alert(`Suono per ${type === 'super' ? 'Superefficace' : 'Non Molto Efficace'} salvato con successo!`);
-      playHit(type);
+      setCustomBgm(type, base64);
+      if (type === 'overworld') setBgmOverworld(base64);
+      if (type === 'battle') setBgmBattle(base64);
+      alert(`Musica per ${type === 'overworld' ? 'Esplorazione' : 'Lotta'} salvata con successo!`);
+      playBgm(type, true);
     };
     reader.readAsDataURL(file);
   };
 
-  const handleRemoveCustomAudio = (type: 'super' | 'not_very') => {
-    setCustomSound(type, null);
-    if (type === 'super') setCustomSuper(null);
-    if (type === 'not_very') setCustomNotVery(null);
-    alert(`Suono personalizzato rimosso.`);
+  const handleRemoveBgm = (type: 'overworld' | 'battle') => {
+    setCustomBgm(type, null);
+    if (type === 'overworld') setBgmOverworld(null);
+    if (type === 'battle') setBgmBattle(null);
+    playBgm('stop');
+    alert(`Musica di sottofondo rimossa.`);
   };
 
   const handleToggleAudio = () => {
@@ -263,61 +264,61 @@ export const Settings: React.FC<{ onBack: () => void, onProfile: () => void }> =
             )}
           </div>
 
-          {/* Caricamento File Audio Personalizzati */}
-          <div className="bg-amber-50/80 border-2 border-amber-200 rounded-2xl p-4 space-y-4">
+          {/* Caricamento Musica di Sottofondo (BGM) */}
+          <div className="bg-indigo-50/80 border-2 border-indigo-200 rounded-2xl p-4 space-y-4">
             <div>
-              <p className="text-xs font-black text-amber-900 uppercase flex items-center gap-1.5">
-                🎵 Suoni di Lotta Personalizzati (i tuoi MP3/WAV)
+              <p className="text-xs font-black text-indigo-900 uppercase flex items-center gap-1.5">
+                <Music className="w-4 h-4 text-indigo-600" /> Musica di Sottofondo Personalizzata (MP3/WAV)
               </p>
-              <p className="text-[11px] text-amber-700 font-medium leading-relaxed mt-0.5">
-                Carica i due file audio che hai scaricato sul tuo dispositivo per usarli durante gli attacchi superefficaci e non efficaci!
+              <p className="text-[11px] text-indigo-700 font-medium leading-relaxed mt-0.5">
+                Puoi caricare un brano musicale per l'esplorazione del mondo di gioco e uno dedicato per le lotte!
               </p>
             </div>
 
-            {/* Superefficace Upload */}
-            <div className="space-y-2 pt-2 border-t border-amber-200/70">
+            {/* Overworld BGM Upload */}
+            <div className="space-y-2 pt-2 border-t border-indigo-200/70">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-black uppercase text-amber-900 flex items-center gap-1">
-                  ⚡ Mossa Superefficace
+                <span className="text-xs font-black uppercase text-indigo-900 flex items-center gap-1">
+                  🗺️ Musica Esplorazione & Mappa
                 </span>
-                {customSuper ? (
+                {bgmOverworld ? (
                   <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-300">
                     File Caricato ✓
                   </span>
                 ) : (
-                  <span className="text-[10px] font-bold text-amber-700">
-                    Predefinito
+                  <span className="text-[10px] font-bold text-indigo-400">
+                    Nessuna
                   </span>
                 )}
               </div>
 
               <div className="flex gap-2">
-                <label className="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-sm active:scale-95 transition-all">
+                <label className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-sm active:scale-95 transition-all">
                   <Upload className="w-3.5 h-3.5" />
-                  <span>{customSuper ? 'Sostituisci File MP3/WAV' : 'Carica File Superefficace'}</span>
+                  <span>{bgmOverworld ? 'Sostituisci Musica Mappa' : 'Carica Musica Esplorazione'}</span>
                   <input 
                     type="file" 
                     accept="audio/*" 
                     className="hidden" 
-                    onChange={(e) => handleCustomAudioUpload('super', e)} 
+                    onChange={(e) => handleBgmUpload('overworld', e)} 
                   />
                 </label>
 
-                {customSuper && (
+                {bgmOverworld && (
                   <>
                     <button
                       type="button"
-                      onClick={() => playHit('super')}
+                      onClick={() => playBgm('overworld', true)}
                       className="bg-emerald-600 text-white font-bold px-3 py-2 rounded-xl text-xs hover:bg-emerald-700 flex items-center gap-1"
-                      title="Riproduci anteprima"
+                      title="Ascolta musica"
                     >
-                      <Play className="w-3 h-3 fill-current" /> Prova
+                      <Play className="w-3 h-3 fill-current" />
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleRemoveCustomAudio('super')}
+                      onClick={() => handleRemoveBgm('overworld')}
                       className="bg-red-500 text-white font-bold px-3 py-2 rounded-xl text-xs hover:bg-red-600"
-                      title="Rimuovi file audio"
+                      title="Rimuovi musica"
                     >
                       <X className="w-3 h-3" />
                     </button>
@@ -326,50 +327,50 @@ export const Settings: React.FC<{ onBack: () => void, onProfile: () => void }> =
               </div>
             </div>
 
-            {/* Non Molto Efficace Upload */}
-            <div className="space-y-2 pt-2 border-t border-amber-200/70">
+            {/* Battle BGM Upload */}
+            <div className="space-y-2 pt-2 border-t border-indigo-200/70">
               <div className="flex items-center justify-between">
-                <span className="text-xs font-black uppercase text-amber-900 flex items-center gap-1">
-                  🛡️ Mossa Non Molto Efficace
+                <span className="text-xs font-black uppercase text-indigo-900 flex items-center gap-1">
+                  ⚔️ Musica di Sottofondo Lotta
                 </span>
-                {customNotVery ? (
+                {bgmBattle ? (
                   <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-300">
                     File Caricato ✓
                   </span>
                 ) : (
-                  <span className="text-[10px] font-bold text-amber-700">
-                    Predefinito
+                  <span className="text-[10px] font-bold text-indigo-400">
+                    Nessuna
                   </span>
                 )}
               </div>
 
               <div className="flex gap-2">
-                <label className="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-sm active:scale-95 transition-all">
+                <label className="flex-1 bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-sm active:scale-95 transition-all">
                   <Upload className="w-3.5 h-3.5" />
-                  <span>{customNotVery ? 'Sostituisci File MP3/WAV' : 'Carica File Non Efficace'}</span>
+                  <span>{bgmBattle ? 'Sostituisci Musica Lotta' : 'Carica Musica Lotta'}</span>
                   <input 
                     type="file" 
                     accept="audio/*" 
                     className="hidden" 
-                    onChange={(e) => handleCustomAudioUpload('not_very', e)} 
+                    onChange={(e) => handleBgmUpload('battle', e)} 
                   />
                 </label>
 
-                {customNotVery && (
+                {bgmBattle && (
                   <>
                     <button
                       type="button"
-                      onClick={() => playHit('not_very')}
+                      onClick={() => playBgm('battle', true)}
                       className="bg-emerald-600 text-white font-bold px-3 py-2 rounded-xl text-xs hover:bg-emerald-700 flex items-center gap-1"
-                      title="Riproduci anteprima"
+                      title="Ascolta musica"
                     >
-                      <Play className="w-3 h-3 fill-current" /> Prova
+                      <Play className="w-3 h-3 fill-current" />
                     </button>
                     <button
                       type="button"
-                      onClick={() => handleRemoveCustomAudio('not_very')}
+                      onClick={() => handleRemoveBgm('battle')}
                       className="bg-red-500 text-white font-bold px-3 py-2 rounded-xl text-xs hover:bg-red-600"
-                      title="Rimuovi file audio"
+                      title="Rimuovi musica"
                     >
                       <X className="w-3 h-3" />
                     </button>

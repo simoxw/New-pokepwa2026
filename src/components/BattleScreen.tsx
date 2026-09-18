@@ -32,7 +32,8 @@ import {
   playCharge, 
   playLevelUp, 
   playEscape, 
-  playMenuClick 
+  playMenuClick,
+  playBgm
 } from '../lib/sound';
 
 interface BattleScreenProps {
@@ -59,6 +60,13 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
   const [playerHp, setPlayerHp] = useState(playerActive.hp);
   const [enemyHp, setEnemyHp] = useState(enemy.hp);
   const [enemyTeam, setEnemyTeam] = useState<Pokemon[]>(trainer ? trainer.team : []);
+
+  useEffect(() => {
+    playBgm('battle');
+    return () => {
+      playBgm('overworld');
+    };
+  }, []);
 
   // Moves with PP tracking
   const [playerMoves, setPlayerMoves] = useState<Move[]>(() => {

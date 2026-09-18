@@ -94,7 +94,15 @@ Questo documento descrive le principali funzioni, algoritmi e metodi esportati n
 
 ### `evolution.ts`
 - **`checkEvolution(pokemon, itemUsed?)`**:  
-  Determina se un Pokémon possiede i requisiti per evolversi (raggiungimento del livello minimo o esposizione a una specifica pietra evolutiva). Restituisce i dettagli del Pokémon evoluto.
+  Determina se un Pokémon possiede i requisiti per evolversi (raggiungimento del livello minimo o esposizione a una specifica pietra evolutiva). Per specie con evoluzioni ramificate (es. Eevee, Tyrogue, Slowpoke, Oddish, Poliwag), restituisce la lista di tutte le opzioni evolutive disponibili da mostrare nel modale di scelta dell'utente.
+
+### `sound.ts`
+- **`playBgm(type, forceReload?)`**:  
+  Gestisce la riproduzione in loop della colonna sonora BGM ('overworld' o 'battle'). Recupera la traccia audio salvata in `localStorage` o interrompe l'audio se si imposta `'stop'`.
+- **`getCustomBgm(type)` / `setCustomBgm(type, base64Audio)`**:  
+  Legge e aggiorna la musica di sottofondo personalizzata salvata in `localStorage` (`pokepwa_custom_bgm_overworld` e `pokepwa_custom_bgm_battle`), in modo del tutto indipendente dalla struttura dei dati di salvataggio del gioco.
+- **`playHit(type)`**:  
+  Riproduce istantaneamente i file audio WAV ufficiali per i colpi superefficaci (`/public/audio/super_effective.wav`) e non molto efficaci (`/public/audio/not_very_effective.wav`).
 
 ---
 
@@ -113,9 +121,9 @@ Questo documento descrive le principali funzioni, algoritmi e metodi esportati n
 - **`filteredBox` (useMemo)**:  
   Filtra e ordina l'array dei Pokémon archiviati applicando contemporaneamente ricerca testuale (nome, nickname, #ID), filtro elementale sui 18 tipi, filtro generazioni (Gen 1-9), toggle per Shiny ✨, pronti a evolvere ⚡, feriti ❤️, e ordinamento (recenti, livello, nome, pokedex, statistiche).
 - **`withdraw(targetPokemon)`**:  
-  Sposta in modo sicuro un Pokémon dal Box alla squadra attiva tramite confronto di `instanceId`.
+  Sposta in modo sicuro un Pokémon dal Box alla squadra attiva tramite confronto di `instanceId` univoco (`Crypto.randomUUID()`), garantendo che eventuali copie identiche della stessa specie mantengano statistiche e livelli indipendenti.
 - **`deposit(targetPokemon)`**:  
-  Sposta un Pokémon dalla squadra al Box verificando che rimanga almeno un Pokémon attivo in squadra.
+  Sposta un Pokémon dalla squadra al Box tramite `instanceId`, verificando che rimanga almeno un Pokémon attivo in squadra.
 
 ### `Pokedex.tsx` & `PokedexDetailModal.tsx`
 - **`calculateTypeEffectiveness(types)`**:  

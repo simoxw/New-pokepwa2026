@@ -39,8 +39,18 @@ Combina la fedeltà delle meccaniche competitive Pokémon ufficiali (formule mat
 
 ---
 
-### 3. ⚔️ Sistema di Battaglia a Turni (Regole Competitive)
+### 3. ⚔️ Sistema di Battaglia a Turni & Interfaccia (Regole Competitive)
 - **Formula Matematica Ufficiale del Danno**: STAB (Same-Type Attack Bonus), brutti colpi, efficacia di tipo (da 0x a 4x) e varianza casuale (0.85 - 1.00).
+- **Interfaccia HUD Avanzata**:
+  - Display trasparente con **badge dei tipi elementali** posizionati sotto la barra della salute (supporto nativo ai doppi tipi come Fuoco/Volante, Erba/Veleno, ecc.).
+  - **HP Numerici in Tempo Reale** sia per il proprio Pokémon sia per il Pokémon avversario/selvatico.
+- **Sistema Audio e Colonna Sonora BGM**:
+  - File audio ufficiali integrati direttamente nel progetto (`/public/audio/super_effective.wav` e `public/audio/not_very_effective.wav`) per un feedback sonoro immediato sui colpi.
+  - **Player BGM nelle Impostazioni**: Caricamento facoltativo di file MP3/WAV personalizzati per la musica della mappa/esplorazione e della battaglia. I brani BGM risiedono in `localStorage` in modo isolato, lasciando intatta la struttura dei salvataggi di gioco.
+  - Effetti sonori reattivi per salita di livello, cattura Pokéball, fuga e K.O.
+- **Evoluzioni Ramificate e Identità Univoca**:
+  - Finestra di scelta interattiva per Pokémon con evoluzioni multiple (es. Eevee, Tyrogue, Slowpoke, Oddish).
+  - Gestione tramite `instanceId` univoco: le copie di uno stesso Pokémon evolvono e salgono di livello in modo del tutto indipendente.
 - **Stati Alterati Completi**: Sonno con contatore dinamico di risveglio (1-3 turni), Paralisi con probabilità del 25% di blocco e dimezzamento della Velocità, Bruciatura con danno ricorrente e dimezzamento dell'Attacco fisico, Avvelenamento e Congelamento.
 - **Mosse Speciali & Complesse**:
   - Mosse a due turni: *Volo*, *Fossa*, *Solarraggio*.
