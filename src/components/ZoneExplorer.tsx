@@ -124,9 +124,12 @@ export const ZoneExplorer: React.FC<ZoneExplorerProps> = ({ onEncounter }) => {
       // Random roll for Trainer vs Wild Pokemon (20% trainer if in zones)
       const encounterTypeRoll = Math.random();
       if (encounterTypeRoll < 0.20 && state.player.location !== 'percorso-1') {
-         // Trainer encounter
-         const trainerIds = Object.keys(TRAINERS_DATA) as (keyof typeof TRAINERS_DATA)[];
-         const randomTrainerId = trainerIds[Math.floor(Math.random() * trainerIds.length)];
+         // Trainer encounter (Exclude Superquattro and Campione - only encounterable in the League)
+         const wildTrainerIds = (Object.keys(TRAINERS_DATA) as (keyof typeof TRAINERS_DATA)[]).filter(id => {
+           const data = TRAINERS_DATA[id];
+           return !id.startsWith('superquattro-') && !id.startsWith('campione-') && data.type !== 'Superquattro' && data.type !== 'Campione del Sistema';
+         });
+         const randomTrainerId = wildTrainerIds[Math.floor(Math.random() * wildTrainerIds.length)];
          const trainer = await getTrainer(randomTrainerId);
          setTrainerEncounter(trainer);
          return;
