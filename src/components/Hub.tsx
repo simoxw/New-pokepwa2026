@@ -37,7 +37,12 @@ export const Hub: React.FC = () => {
       return;
     }
 
-    if (!isAreaUnlocked(zoneId, state.player.badges)) {
+    if (zoneId === 'area-zero' && (state.player.leagueVictories || 0) < 1) {
+      setDialogue("⚠️ ACCESSO NEGATO: L'Area Zero Digitale è protetta da crittografia quantistica! Solo chi ha sconfitto la Lega Pokémon e conquistato il titolo di Campione può entrarvi.");
+      return;
+    }
+
+    if (!isAreaUnlocked(zoneId, state.player.badges, state.player.leagueVictories || 0)) {
       setDialogue("Quella zona è chiusa! Sconfiggi i Capipalestra per ottenere le medaglie necessarie. Non farmi ripetere!");
       return;
     }
@@ -371,23 +376,45 @@ export const Hub: React.FC = () => {
             </div>
             <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
               {ZONES.filter(z => z.id !== 'villaggio').map(zone => {
-                const isUnlocked = isAreaUnlocked(zone.id, state.player.badges);
+                const isAreaZero = zone.id === 'area-zero';
+                const isUnlocked = isAreaUnlocked(zone.id, state.player.badges, state.player.leagueVictories || 0);
+                const lockReason = isAreaZero 
+                  ? 'Accesso riservato: sconfiggi la Lega Pokémon per sbloccare!' 
+                  : (zone.id === 'datacenter-lega' ? 'Richiede 10 Medaglie per entrare.' : 'Area bloccata: richiede una medaglia.');
+                
                 return (
                   <button
                     key={zone.id}
                     onClick={() => goToZone(zone.id)}
-                    className={`w-full flex items-center justify-between p-4 rounded-2xl border-2 transition-colors shrink-0 ${
-                      isUnlocked ? 'border-gray-100 active:bg-blue-50' : 'border-gray-200 bg-gray-50 opacity-60'
+                    className={`w-full flex items-center justify-between p-4 rounded-2xl border-2 transition-all shrink-0 text-left ${
+                      isAreaZero && isUnlocked
+                        ? 'border-purple-300 bg-gradient-to-r from-purple-50 via-indigo-50 to-pink-50 shadow-md shadow-purple-100'
+                        : isUnlocked 
+                          ? 'border-gray-100 active:bg-blue-50' 
+                          : 'border-gray-200 bg-gray-50 opacity-60'
                     }`}
                   >
-                    <div className="text-left">
+                    <div className="text-left pr-2">
                       <h4 className="font-bold flex items-center gap-2">
-                        {zone.name}
-                        {!isUnlocked && <Lock className="w-3 h-3 text-gray-400" />}
+                        <span>{zone.name}</span>
+                        {isAreaZero && isUnlocked && (
+                          <span className="text-[10px] bg-purple-600 text-white font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
+                            Post-Game
+                          </span>
+                        )}
+                        {!isUnlocked && <Lock className="w-3 h-3 text-gray-400 shrink-0" />}
                       </h4>
-                      <p className="text-xs text-gray-500">{isUnlocked ? zone.description : 'Area bloccata: richiede una medaglia.'}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{isUnlocked ? zone.description : lockReason}</p>
                     </div>
-                    {isUnlocked ? <Play className="w-5 h-5 text-blue-500" /> : <Lock className="w-5 h-5 text-gray-400" />}
+                    {isUnlocked ? (
+                      <div className={`p-2 rounded-xl shrink-0 ${isAreaZero ? 'bg-purple-600 text-white' : 'bg-blue-500 text-white'}`}>
+                        <Play className="w-4 h-4 fill-current" />
+                      </div>
+                    ) : (
+                      <div className="p-2 rounded-xl bg-gray-200 text-gray-400 shrink-0">
+                        <Lock className="w-4 h-4" />
+                      </div>
+                    )}
                   </button>
                 );
               })}

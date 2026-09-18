@@ -51,6 +51,14 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       });
 
+      const savedQuests = Array.isArray(parsed.player?.quests) ? parsed.player.quests : [];
+      const quests = [...savedQuests];
+      INITIAL_STATE.player.quests.forEach(initialQuest => {
+        if (!quests.some(q => q.id === initialQuest.id)) {
+          quests.push(initialQuest);
+        }
+      });
+
       return {
         ...INITIAL_STATE,
         ...parsed,
@@ -61,6 +69,7 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
           box,
           pokedex: parsed.player?.pokedex || INITIAL_STATE.player.pokedex,
           inventory,
+          quests,
           badges: Array.isArray(parsed.player?.badges) ? parsed.player.badges : INITIAL_STATE.player.badges,
         }
       };

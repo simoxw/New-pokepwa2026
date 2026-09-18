@@ -83,13 +83,18 @@ export const BADGES: Badge[] = [
   }
 ];
 
-export function isAreaUnlocked(areaId: string, playerBadges: string[]): boolean {
+export function isAreaUnlocked(areaId: string, playerBadges: string[], leagueVictories: number = 0): boolean {
   // Areas that are always unlocked
   if (['villaggio', 'bosco'].includes(areaId)) return true;
 
   // The League Datacenter requires all 10 gym badges
   if (areaId === 'datacenter-lega') {
     return playerBadges.length >= 10;
+  }
+
+  // The Post-Game Area Zero requires beating the League at least once!
+  if (areaId === 'area-zero') {
+    return leagueVictories > 0;
   }
 
   // Find badges that unlock this area

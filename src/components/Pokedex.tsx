@@ -4,7 +4,7 @@ import { fetchPokedexIndex, PokedexIndexItem } from '../lib/pokedexService';
 import { GENERATIONS, ALL_TYPES, getTypeVisual } from './pokedex/pokedexConstants';
 import { PokedexDetailModal } from './pokedex/PokedexDetailModal';
 import { PokedexTypeCalculatorModal } from './pokedex/PokedexTypeCalculatorModal';
-import { PokedexProgressModal } from './pokedex/PokedexProgressModal';
+import { PokedexProgressModal, MILESTONES } from './pokedex/PokedexProgressModal';
 import {
   ChevronLeft, Search, Filter, Trophy, Sparkles,
   SlidersHorizontal, Check, Eye, HelpCircle, ArrowUp
@@ -64,6 +64,16 @@ export const Pokedex: React.FC<PokedexProps> = ({ onBack }) => {
   const totalSeen = useMemo(() => {
     return Object.values(pokedex).filter(s => s === 'seen' || s === 'caught').length;
   }, [pokedex]);
+
+  const claimableMilestonesCount = useMemo(() => {
+    try {
+      const saved = localStorage.getItem('pokepwa_claimed_pokedex_milestones');
+      const claimedList: string[] = saved ? JSON.parse(saved) : [];
+      return MILESTONES.filter(m => !claimedList.includes(m.id) && totalCaught >= m.requiredCount).length;
+    } catch {
+      return 0;
+    }
+  }, [totalCaught, showProgressModal]);
 
   // Filtering
   const filteredPokemon = useMemo(() => {
@@ -153,11 +163,20 @@ export const Pokedex: React.FC<PokedexProps> = ({ onBack }) => {
 
           <button
             onClick={() => setShowProgressModal(true)}
-            className="flex items-center gap-1 px-2.5 py-1.5 rounded-xl bg-amber-500/10 hover:bg-amber-500/20 text-xs font-bold text-amber-300 border border-amber-500/30 transition-colors"
-            title="Progressi e Ricompense"
+            className={`flex items-center gap-1.5 px-2.5 py-1.5 rounded-xl text-xs font-bold transition-all ${
+              claimableMilestonesCount > 0
+                ? 'bg-amber-500 hover:bg-amber-400 text-slate-950 font-black shadow-lg shadow-amber-500/20 animate-pulse'
+                : 'bg-amber-500/10 hover:bg-amber-500/20 text-amber-300 border border-amber-500/30'
+            }`}
+            title="Progressi e Ricompense Pokédex"
           >
-            <Trophy className="w-3.5 h-3.5 text-amber-400" />
+            <Trophy className={`w-3.5 h-3.5 ${claimableMilestonesCount > 0 ? 'text-slate-950' : 'text-amber-400'}`} />
             <span className="hidden sm:inline">Premi</span>
+            {claimableMilestonesCount > 0 && (
+              <span className="px-1.5 py-0.2 rounded-full bg-slate-950 text-amber-300 text-[10px] font-black">
+                {claimableMilestonesCount}
+              </span>
+            )}
           </button>
         </div>
       </header>

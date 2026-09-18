@@ -181,9 +181,16 @@ export function parseMoveObject(moveData: any, fallbackName?: string): Move {
     rawNameLower.includes('mega-drain') || rawNameLower.includes('megassorbimento') ||
     rawNameLower.includes('absorb') || rawNameLower.includes('assorbimento') ||
     rawNameLower.includes('drain-punch') || rawNameLower.includes('assorbipugno') ||
-    rawNameLower.includes('leech-life') || rawNameLower.includes('sanguisuga') || rawNameLower.includes('succhiasangue')
+    rawNameLower.includes('leech-life') || rawNameLower.includes('sanguisuga') || rawNameLower.includes('succhiasangue') ||
+    rawNameLower.includes('horn-leech') || rawNameLower.includes('legnocrno') ||
+    rawNameLower.includes('parabolic-charge') || rawNameLower.includes('caricaparabola')
   ) {
     drain = 0.5;
+  } else if (
+    rawNameLower.includes('draining-kiss') || rawNameLower.includes('bacio-drenante') || rawNameLower.includes('baciodrenante') ||
+    rawNameLower.includes('oblivion-wing') || rawNameLower.includes('ali-del-fato') || rawNameLower.includes('alidelfato')
+  ) {
+    drain = 0.75;
   }
 
   // Healing moves (recovers user's HP)

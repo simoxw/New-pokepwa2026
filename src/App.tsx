@@ -36,6 +36,10 @@ function GameContent() {
     const caughtCount = Object.values(state.player.pokedex).filter(s => s === 'caught').length;
     const badgeCount = state.player.badges.length;
     const money = state.player.money;
+    const leagueVictories = state.player.leagueVictories || 0;
+    const towerHighFloor = state.player.towerHighFloor || 0;
+    const teamMaxLvl = state.player.team.reduce((max, p) => Math.max(max, p.level), 0);
+    const defeatedCount = state.player.defeatedTrainers?.length || 0;
 
     setState(prev => {
       let changed = false;
@@ -46,7 +50,25 @@ function GameContent() {
         if (q.id === 'first-steps' && prev.player.location !== 'villaggio') completed = true;
         if (q.id === 'money-maker' && money >= 50000) completed = true;
         if (q.id === 'badge-collector-pro' && badgeCount >= 10) completed = true;
-        if (q.id === 'area-conqueror' && badgeCount >= 8) completed = true; // Visiting all areas implies many badges
+        if (q.id === 'area-conqueror' && badgeCount >= 8) completed = true;
+        if (q.id === 'champion-of-code' && leagueVictories >= 1) completed = true;
+        if (q.id === 'post-game-explorer' && prev.player.location === 'area-zero') completed = true;
+        if (q.id === 'tower-challenger' && towerHighFloor >= 10) completed = true;
+        if (q.id === 'pokedex-pinnacle' && caughtCount >= 100) completed = true;
+        if (q.id === 'team-powerhouse' && teamMaxLvl >= 70) completed = true;
+        if (q.id === 'trainer-slayer' && defeatedCount >= 50) completed = true;
+
+        if (q.id === 'legend-collector') {
+          const legendIds = [144, 145, 146, 150, 151, 243, 244, 245, 249, 250, 251, 377, 378, 379, 380, 381, 382, 383, 384, 385, 386, 480, 481, 482, 483, 484, 485, 486, 487, 488, 491, 492, 493, 643, 644, 646, 716, 717, 718, 791, 792, 800, 888, 889, 890, 1007, 1008, 1024];
+          const caughtLegends = legendIds.filter(id => prev.player.pokedex[id] === 'caught').length;
+          if (caughtLegends >= 3) completed = true;
+        }
+
+        if (q.id === 'healer-zen') {
+          if (prev.player.team.length > 0 && prev.player.team.every(p => p.hp >= p.maxHp)) {
+            completed = true;
+          }
+        }
         
         if (completed) {
           changed = true;
@@ -58,7 +80,16 @@ function GameContent() {
       if (!changed) return prev;
       return { ...prev, player: { ...prev.player, quests: newQuests } };
     });
-  }, [state.player.location, state.player.money, state.player.badges.length, state.player.pokedex]);
+  }, [
+    state.player.location, 
+    state.player.money, 
+    state.player.badges.length, 
+    state.player.pokedex, 
+    state.player.leagueVictories, 
+    state.player.towerHighFloor, 
+    state.player.team, 
+    state.player.defeatedTrainers?.length
+  ]);
   const [showStarterSelect, setShowStarterSelect] = useState(false);
   const [activeBattle, setActiveBattle] = useState<Pokemon | null>(null);
   const [activeTrainer, setActiveTrainer] = useState<Trainer | undefined>();
@@ -108,6 +139,24 @@ function GameContent() {
         if (spawnInfo && spawnInfo.rarity < 1) {
           newQuests = newQuests.map(q => 
             q.id === 'rare-spawn-hunter' && q.status === 'active' ? { ...q, status: 'completed' as const } : q
+          );
+        }
+
+        // Quest Check: Dragon Tamer
+        if (activeBattle.types?.includes('dragon')) {
+          newQuests = newQuests.map(q => 
+            q.id === 'dragon-tamer' && q.status === 'active' ? { ...q, status: 'completed' as const } : q
+          );
+        }
+
+        // Quest Check: Paradox Catcher (Area Zero legendaries & 20 paradox forms)
+        const areaZeroLegendaryIds = [
+          1007, 1008, 493, 386, 491, 643, 644, 646, 716, 717, 718, 791, 800, 888, 889, 890, 1024, 807, 892,
+          984, 985, 986, 987, 988, 989, 990, 991, 992, 993, 994, 995, 1005, 1006, 1009, 1010, 1020, 1021, 1022, 1023
+        ];
+        if (areaZeroLegendaryIds.includes(activeBattle.id) || prev.player.location === 'area-zero') {
+          newQuests = newQuests.map(q => 
+            q.id === 'paradox-catcher' && q.status === 'active' ? { ...q, status: 'completed' as const } : q
           );
         }
 

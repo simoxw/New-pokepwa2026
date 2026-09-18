@@ -205,5 +205,43 @@ export const ZONE_EVENTS: Record<string, GameEvent[]> = {
       triggerChance: 0.05,
       message: 'Un antico murale raffigura tre creature leggendarie che controllano il tempo, lo spazio e i glitch.',
     }
+  ],
+  'area-zero': [
+    {
+      id: 'event-area-zero-1',
+      type: 'dialogue',
+      triggerChance: 0.12,
+      message: 'Le linee di codice qui sono così pure da piegare la realtà. Sento la presenza di creature ancestrali e forme future!',
+      speaker: 'Hacker Quantistico',
+      sprite: 'https://play.pokemonshowdown.com/sprites/trainers/supernerd-gen1.png'
+    },
+    {
+      id: 'event-area-zero-scanner',
+      type: 'dialogue',
+      triggerChance: 0.10,
+      message: 'Il biosensore ha rilevato esattamente 50 specie uniche in questo abisso: 20 forme paradosso dal passato e dal futuro, titani leggendari e Pokémon trascendenti mai visti in altre zone!',
+      speaker: 'Professoressa Olim & Turum',
+      sprite: 'https://play.pokemonshowdown.com/sprites/trainers/scientist-gen4.png'
+    },
+    {
+      id: 'event-area-zero-2',
+      type: 'item',
+      triggerChance: 0.06,
+      message: 'Incredibile! Hai dissotterrato una Master Ball intatta dal substrato digitale!',
+      item: { name: 'Master Ball', type: 'capture', effectValue: 255.0 }
+    },
+    {
+      id: 'event-area-zero-3',
+      type: 'item',
+      triggerChance: 0.08,
+      message: 'Hai trovato una Caramella Rara fluttuante tra i frammenti di memoria!',
+      item: { name: 'Caramella Rara', type: 'other', effectValue: 1 }
+    },
+    {
+      id: 'event-area-zero-4',
+      type: 'heal',
+      triggerChance: 0.08,
+      message: 'Un flusso di dati quantistici avvolge la tua squadra, ripristinando completamente le forze di tutti i tuoi Pokémon!'
+    }
   ]
 };

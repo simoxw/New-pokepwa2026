@@ -384,6 +384,17 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
     maxPp: 10,
     drain: 0.5
   },
+  'horn-leech': {
+    englishName: 'horn-leech',
+    name: 'Legnocrno',
+    type: 'grass',
+    category: 'physical',
+    power: 75,
+    accuracy: 100,
+    pp: 10,
+    maxPp: 10,
+    drain: 0.5
+  },
   'energy-ball': {
     englishName: 'energy-ball',
     name: 'Energipalla',
@@ -479,6 +490,17 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
     maxPp: 10,
     statusEffect: 'paralyzed',
     effectChance: 30
+  },
+  'parabolic-charge': {
+    englishName: 'parabolic-charge',
+    name: 'Caricaparabola',
+    type: 'electric',
+    category: 'special',
+    power: 65,
+    accuracy: 100,
+    pp: 20,
+    maxPp: 20,
+    drain: 0.5
   },
 
   // --- ICE ATTACKS ---
@@ -604,6 +626,17 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
     pp: 15,
     maxPp: 15,
     recoil: 0.33
+  },
+  'oblivion-wing': {
+    englishName: 'oblivion-wing',
+    name: 'Ali del Fato',
+    type: 'flying',
+    category: 'special',
+    power: 80,
+    accuracy: 100,
+    pp: 10,
+    maxPp: 10,
+    drain: 0.75
   },
 
   // --- PSYCHIC ATTACKS ---
@@ -825,6 +858,28 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
     accuracy: 100,
     pp: 15,
     maxPp: 15
+  },
+  'drain-punch': {
+    englishName: 'drain-punch',
+    name: 'Assorbipugno',
+    type: 'fighting',
+    category: 'physical',
+    power: 75,
+    accuracy: 100,
+    pp: 10,
+    maxPp: 10,
+    drain: 0.5
+  },
+  'draining-kiss': {
+    englishName: 'draining-kiss',
+    name: 'Bacio Drenante',
+    type: 'fairy',
+    category: 'special',
+    power: 50,
+    accuracy: 100,
+    pp: 10,
+    maxPp: 10,
+    drain: 0.75
   },
 
   // --- GHOST & DRAGON & STEEL ATTACKS ---

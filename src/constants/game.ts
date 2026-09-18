@@ -610,6 +610,71 @@ export const ZONES: Zone[] = [
     background: 'bg-slate-900',
     spawnTable: [],
   },
+  {
+    id: 'area-zero',
+    name: 'Area Zero Digitale (Post-Game)',
+    description: 'Dimensione ancestrale accessibile solo dopo aver sconfitto la Lega Pokémon. Custodisce 50 Pokémon esclusivi, creature paradossali del tempo e leggendari primordiali.',
+    background: 'bg-gradient-to-b from-indigo-950 via-purple-950 to-slate-950',
+    spawnTable: [
+      // Titani & Icone del Post-Game
+      { pokemonId: 448, rarity: 4, minLevel: 65, maxLevel: 72 },   // Lucario
+      { pokemonId: 658, rarity: 4, minLevel: 65, maxLevel: 72 },   // Greninja
+      { pokemonId: 59, rarity: 4, minLevel: 65, maxLevel: 70 },    // Arcanine
+      { pokemonId: 68, rarity: 4, minLevel: 65, maxLevel: 70 },    // Machamp
+      { pokemonId: 130, rarity: 4, minLevel: 65, maxLevel: 72 },   // Gyarados
+      { pokemonId: 143, rarity: 4, minLevel: 65, maxLevel: 72 },   // Snorlax
+      { pokemonId: 212, rarity: 4, minLevel: 65, maxLevel: 72 },   // Scizor
+      { pokemonId: 468, rarity: 4, minLevel: 65, maxLevel: 72 },   // Togekiss
+      { pokemonId: 474, rarity: 4, minLevel: 65, maxLevel: 72 },   // Porygon-Z
+      { pokemonId: 998, rarity: 3.5, minLevel: 70, maxLevel: 76 }, // Baxcalibur
+      { pokemonId: 1000, rarity: 3.5, minLevel: 70, maxLevel: 76 },// Gholdengo
+      { pokemonId: 807, rarity: 3, minLevel: 72, maxLevel: 78 },   // Zeraora
+      { pokemonId: 892, rarity: 3, minLevel: 72, maxLevel: 78 },   // Urshifu
+
+      // Forme Paradosso del Passato (Area Zero Antica)
+      { pokemonId: 984, rarity: 3, minLevel: 68, maxLevel: 75 },   // Great Tusk (Denteferrino)
+      { pokemonId: 985, rarity: 3, minLevel: 68, maxLevel: 75 },   // Scream Tail (Codaurlante)
+      { pokemonId: 986, rarity: 3, minLevel: 68, maxLevel: 75 },   // Brute Bonnet (Fungofurioso)
+      { pokemonId: 987, rarity: 3, minLevel: 68, maxLevel: 75 },   // Flutter Mane (Crinealato)
+      { pokemonId: 988, rarity: 3, minLevel: 68, maxLevel: 75 },   // Slither Wing (Alirasenti)
+      { pokemonId: 989, rarity: 3, minLevel: 68, maxLevel: 75 },   // Sandy Shocks (Peldisabbia)
+      { pokemonId: 1005, rarity: 2.5, minLevel: 72, maxLevel: 78 },// Roaring Moon (Lunarugente)
+      { pokemonId: 1009, rarity: 2, minLevel: 74, maxLevel: 80 },  // Walking Wake (Acquacrespa)
+      { pokemonId: 1020, rarity: 2, minLevel: 74, maxLevel: 80 },  // Gouging Fire (Vampaferina)
+      { pokemonId: 1021, rarity: 2, minLevel: 74, maxLevel: 80 },  // Raging Bolt (Furiapulente)
+
+      // Forme Paradosso del Futuro (Area Zero Cibernetica)
+      { pokemonId: 990, rarity: 3, minLevel: 68, maxLevel: 75 },   // Iron Treads (Solcoferreo)
+      { pokemonId: 991, rarity: 3, minLevel: 68, maxLevel: 75 },   // Iron Bundle (Saccoferreo)
+      { pokemonId: 992, rarity: 3, minLevel: 68, maxLevel: 75 },   // Iron Hands (Manoferrea)
+      { pokemonId: 993, rarity: 3, minLevel: 68, maxLevel: 75 },   // Iron Jugulis (Colloferreo)
+      { pokemonId: 994, rarity: 3, minLevel: 68, maxLevel: 75 },   // Iron Moth (Falenaferrea)
+      { pokemonId: 995, rarity: 3, minLevel: 68, maxLevel: 75 },   // Iron Thorns (Spinaferrea)
+      { pokemonId: 1006, rarity: 2.5, minLevel: 72, maxLevel: 78 },// Iron Valiant (Eroeferreo)
+      { pokemonId: 1010, rarity: 2, minLevel: 74, maxLevel: 80 },  // Iron Leaves (Fogliaferrea)
+      { pokemonId: 1022, rarity: 2, minLevel: 74, maxLevel: 80 },  // Iron Boulder (Massoferreo)
+      { pokemonId: 1023, rarity: 2, minLevel: 74, maxLevel: 80 },  // Iron Crown (Capoferreo)
+
+      // Divinità & Leggendari dell'Abisso
+      { pokemonId: 386, rarity: 1.5, minLevel: 75, maxLevel: 80 }, // Deoxys
+      { pokemonId: 491, rarity: 1.5, minLevel: 75, maxLevel: 80 }, // Darkrai
+      { pokemonId: 643, rarity: 1.5, minLevel: 75, maxLevel: 80 }, // Reshiram
+      { pokemonId: 644, rarity: 1.5, minLevel: 75, maxLevel: 80 }, // Zekrom
+      { pokemonId: 646, rarity: 1.5, minLevel: 75, maxLevel: 80 }, // Kyurem
+      { pokemonId: 716, rarity: 1.5, minLevel: 75, maxLevel: 80 }, // Xerneas
+      { pokemonId: 717, rarity: 1.5, minLevel: 75, maxLevel: 80 }, // Yveltal
+      { pokemonId: 718, rarity: 1.5, minLevel: 75, maxLevel: 80 }, // Zygarde
+      { pokemonId: 791, rarity: 1.5, minLevel: 75, maxLevel: 80 }, // Solgaleo
+      { pokemonId: 800, rarity: 1.5, minLevel: 75, maxLevel: 80 }, // Necrozma
+      { pokemonId: 888, rarity: 1.2, minLevel: 76, maxLevel: 82 }, // Zacian
+      { pokemonId: 889, rarity: 1.2, minLevel: 76, maxLevel: 82 }, // Zamazenta
+      { pokemonId: 890, rarity: 1, minLevel: 80, maxLevel: 85 },   // Eternatus
+      { pokemonId: 1007, rarity: 1, minLevel: 80, maxLevel: 85 },  // Koraidon
+      { pokemonId: 1008, rarity: 1, minLevel: 80, maxLevel: 85 },  // Miraidon
+      { pokemonId: 1024, rarity: 1, minLevel: 80, maxLevel: 85 },  // Terapagos
+      { pokemonId: 493, rarity: 0.5, minLevel: 85, maxLevel: 85 }, // Arceus (Il Creatore di Codice)
+    ],
+  },
 ];
 
 export const CHARACTERS = {

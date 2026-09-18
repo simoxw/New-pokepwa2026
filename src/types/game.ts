@@ -1,3 +1,5 @@
+export type StatusCondition = 'paralyzed' | 'poisoned' | 'sleep' | 'frozen' | 'burned';
+
 export interface Pokemon {
   id: number;
   instanceId: string; // Unique ID for this specific Pokemon instance
@@ -62,7 +64,7 @@ export interface Pokemon {
     speed: number;
   };
   isShiny: boolean;
-  status?: 'paralyzed' | 'poisoned' | 'sleep' | 'frozen' | 'burned';
+  status?: StatusCondition;
   statusDuration?: number;
   evolutionInfo?: {
     nextId: number;
@@ -352,6 +354,94 @@ export const INITIAL_STATE: GameState = {
         status: 'available',
         category: 'battle',
         giver: 'Sfidofono'
+      },
+      {
+        id: 'champion-of-code',
+        title: 'Campione dei Crash di Sistema',
+        description: 'La prova regina: sconfiggi i Superquattro dei Crash di Sistema e il Campione al Datacenter della Lega!',
+        objective: 'Batti la Lega Pokémon e conquista il titolo di Campione.',
+        rewardText: '50.000 PokéDollari e 3 Master Ball',
+        reward: { money: 50000, items: [{ id: 'master-ball', count: 3 }] },
+        status: 'available',
+        category: 'battle',
+        giver: 'Lega Pokémon'
+      },
+      {
+        id: 'post-game-explorer',
+        title: 'I Segreti dell\'Area Zero',
+        description: 'Un portale verso l\'Area Zero Digitale è apparso dopo la vittoria alla Lega. Esplora questa dimensione post-game!',
+        objective: 'Entra ed esplora l\'Area Zero Digitale.',
+        rewardText: '25.000 PokéDollari e 5 Caramelle Rare',
+        reward: { money: 25000, items: [{ id: 'caramella-rara', count: 5 }] },
+        status: 'available',
+        category: 'exploration',
+        giver: 'Admin Root'
+      },
+      {
+        id: 'paradox-catcher',
+        title: 'Creature del Multiverso Digitale',
+        description: 'Nell\'Area Zero sono state rilevate entità straordinarie come Koraidon, Miraidon, Arceus e Deoxys!',
+        objective: 'Cattura una creatura leggendaria o paradossale esclusiva dell\'Area Zero.',
+        rewardText: '2 Master Ball e 3 Revitalizzanti Max',
+        reward: { items: [{ id: 'master-ball', count: 2 }, { id: 'revitalizzante-max', count: 3 }] },
+        status: 'available',
+        category: 'collection',
+        giver: 'Scienziato Filippo'
+      },
+      {
+        id: 'dragon-tamer',
+        title: 'Il Signore dei Draghi',
+        description: 'I Pokémon di tipo Drago possiedono una potenza ancestrale. Dimostra di saperne domare uno.',
+        objective: 'Cattura un Pokémon di tipo Drago (es. Dragonite, Salamence, Garchomp, Baxcalibur, Giratina, ecc.).',
+        rewardText: '15.000 PokéDollari e 5 Ultra Ball',
+        reward: { money: 15000, items: [{ id: 'ultra-ball', count: 5 }] },
+        status: 'available',
+        category: 'collection',
+        giver: 'Domadraghi Lance'
+      },
+      {
+        id: 'team-powerhouse',
+        title: 'Squadra dei Titani (Livello 70)',
+        description: 'Le battaglie del post-game e i Pokémon dell\'Area Zero non perdonano chi trascura l\'allenamento.',
+        objective: 'Porta almeno un Pokémon della tua squadra al Livello 70 o superiore.',
+        rewardText: '20.000 PokéDollari e 5 Caramelle Rare',
+        reward: { money: 20000, items: [{ id: 'caramella-rara', count: 5 }] },
+        status: 'available',
+        category: 'battle',
+        giver: 'Gino il Bullo'
+      },
+      {
+        id: 'tower-challenger',
+        title: 'Scalatore della Torre Lotta',
+        description: 'La Torre Lotta è una prova continua di abilità tattica e resistenza.',
+        objective: 'Raggiungi almeno il Piano 10 della Torre Lotta.',
+        rewardText: '30.000 PokéDollari e 10 Caramelle Rare',
+        reward: { money: 30000, items: [{ id: 'caramella-rara', count: 10 }] },
+        status: 'available',
+        category: 'battle',
+        giver: 'Maestro della Torre'
+      },
+      {
+        id: 'pokedex-pinnacle',
+        title: 'Maestro del Pokédex (100 Specie)',
+        description: 'Raccogliere dati su 100 specie differenti è il sogno di ogni vero ricercatore.',
+        objective: 'Cattura almeno 100 Pokémon differenti e registrali nel Pokédex.',
+        rewardText: '100.000 PokéDollari e 5 Master Ball',
+        reward: { money: 100000, items: [{ id: 'master-ball', count: 5 }] },
+        status: 'available',
+        category: 'collection',
+        giver: 'Prof. Scordarello'
+      },
+      {
+        id: 'healer-zen',
+        title: 'Pronto Soccorso Tascabile',
+        description: 'Un vero allenatore non abbandona mai i propri Pokémon quando cadono esausti sul campo.',
+        objective: 'Cura completamente la tua squadra o usa uno strumento di rianimazione.',
+        rewardText: '5 Iper Pozioni e 3 Revitalizzanti Max',
+        reward: { items: [{ id: 'iper-pozione', count: 5 }, { id: 'revitalizzante-max', count: 3 }] },
+        status: 'available',
+        category: 'social',
+        giver: 'Infermiera Joy'
       }
     ],
   },

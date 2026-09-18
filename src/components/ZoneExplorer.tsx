@@ -22,10 +22,10 @@ export const ZoneExplorer: React.FC<ZoneExplorerProps> = ({ onEncounter }) => {
   
   // Security check: if somehow user enters a locked zone, kick them out
   React.useEffect(() => {
-    if (!isAreaUnlocked(state.player.location, state.player.badges)) {
+    if (!isAreaUnlocked(state.player.location, state.player.badges, state.player.leagueVictories || 0)) {
       setState(prev => ({ ...prev, player: { ...prev.player, location: 'villaggio' } }));
     }
-  }, [state.player.location, state.player.badges, setState]);
+  }, [state.player.location, state.player.badges, state.player.leagueVictories, setState]);
   const [isExploring, setIsExploring] = useState(false);
   const [encounter, setEncounter] = useState<Pokemon | null>(null);
   const [isNocturnal, setIsNocturnal] = useState(false);
@@ -202,7 +202,14 @@ export const ZoneExplorer: React.FC<ZoneExplorerProps> = ({ onEncounter }) => {
             <ChevronLeft />
           </button>
           <div>
-            <h2 className="font-bold">{zone.name}</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="font-bold">{zone.name}</h2>
+              {zone.id === 'area-zero' && (
+                <span className="text-[9px] bg-gradient-to-r from-purple-500 to-indigo-500 text-white font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow-sm">
+                  Post-Game
+                </span>
+              )}
+            </div>
             <p className="text-xs opacity-70">{zone.description}</p>
           </div>
         </div>
