@@ -3,7 +3,7 @@ import { useGame } from '../contexts/GameContext';
 import { ChevronLeft, Shield, Zap } from 'lucide-react';
 import { motion } from 'motion/react';
 import { PokemonDetails } from './PokemonDetails';
-import { Pokemon } from '../types/game';
+import { Pokemon, TYPE_COLORS, TYPE_TRANSLATIONS } from '../types/game';
 
 export const Team: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { state, setState } = useGame();
@@ -106,7 +106,21 @@ export const Team: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             <div className="flex-1 relative z-10">
               <div className="flex justify-between items-start mb-2">
                 <div>
-                  <h3 className="font-black text-lg uppercase leading-none">{pokemon.name}</h3>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h3 className="font-black text-lg uppercase leading-none">{pokemon.name}</h3>
+                    <div className="flex gap-1">
+                      {pokemon.types.map(t => {
+                        const typeLower = t.toLowerCase();
+                        const colorClass = TYPE_COLORS[typeLower] || 'bg-slate-500';
+                        const typeLabel = TYPE_TRANSLATIONS[typeLower] || typeLower.toUpperCase();
+                        return (
+                          <span key={t} className={`${colorClass} text-[7px] font-black text-white px-1 py-0.5 rounded shadow-xs uppercase tracking-wider`}>
+                            {typeLabel}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
                   <span className="text-xs font-bold text-gray-400">Lv. {pokemon.level}</span>
                 </div>
               </div>

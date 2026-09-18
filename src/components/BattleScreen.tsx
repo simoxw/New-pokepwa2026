@@ -1113,7 +1113,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
             initial={{ x: 100, opacity: 0 }}
             animate={isAnimating ? { x: [0, -8, 8, 0], opacity: 1 } : { x: 0, opacity: 1 }}
             transition={{ duration: 0.5 }}
-            className={`relative ${trainer ? 'pt-16' : ''}`}
+            className="relative"
           >
             <BattleHUD 
               current={enemyHp} 
@@ -1150,9 +1150,9 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
               </div>
             )}
             {trainer && (
-              <div className="absolute -top-12 -right-2 flex flex-col items-end">
-                <img src={trainer.sprite} alt="trainer" className="w-12 h-12 object-contain grayscale opacity-60" />
-                <span className="text-[9px] font-black uppercase text-white bg-black/40 px-2 py-0.5 rounded-full">{trainer.name}</span>
+              <div className="absolute -bottom-14 -right-2 flex flex-col items-end pointer-events-none">
+                <img src={trainer.sprite} alt="trainer" className="w-14 h-14 object-contain opacity-80 drop-shadow-lg" />
+                <span className="text-[9px] font-black uppercase text-white bg-blue-600/80 px-2 py-0.5 rounded-full border border-blue-400 shadow-sm">{trainer.name}</span>
               </div>
             )}
           </motion.div>
