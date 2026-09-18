@@ -37,7 +37,8 @@ export const Box: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     source: 'team' | 'box';
   } | null>(null);
 
-  const getPkmnKey = (p: Pokemon) => p.instanceId || `${p.id}-${p.caughtAt || ''}-${p.level}-${p.nickname || ''}`;
+  const getPkmnKey = (p: Pokemon, idx?: number) => 
+    p.instanceId ? (idx !== undefined ? `${p.instanceId}-${idx}` : p.instanceId) : `${p.id}-${p.caughtAt || ''}-${p.level}-${p.nickname || ''}-${idx !== undefined ? idx : ''}`;
 
   // Helper to calculate total stats (BST or current stats)
   const calculateTotalStats = (p: Pokemon) => {
@@ -600,9 +601,9 @@ export const Box: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           </div>
 
           <div className="grid grid-cols-3 sm:grid-cols-6 gap-2">
-            {state.player.team.map((pokemon) => (
+            {state.player.team.map((pokemon, idx) => (
               <BoxPokemonCard 
-                key={pokemon.instanceId || `team-${pokemon.id}-${pokemon.caughtAt}`}
+                key={`box-team-${pokemon.instanceId || pokemon.id}-${idx}`}
                 pokemon={pokemon}
                 isTeamMember
                 onClick={() => {
@@ -752,9 +753,9 @@ export const Box: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 Stai per liberare {selectedPokemonList.length} Pokémon:
               </p>
               <div className="grid grid-cols-4 gap-2 pt-1">
-                {selectedPokemonList.map(p => (
+                {selectedPokemonList.map((p, idx) => (
                   <div 
-                    key={getPkmnKey(p)} 
+                    key={`mass-${p.instanceId || p.id}-${idx}`} 
                     className="p-1.5 bg-slate-900 rounded-xl border border-slate-800 flex flex-col items-center text-center"
                   >
                     <img src={p.sprites.front} alt={p.name} className="w-10 h-10 object-contain" />

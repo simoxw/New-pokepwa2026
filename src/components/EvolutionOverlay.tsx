@@ -47,22 +47,30 @@ export const EvolutionOverlay: React.FC<EvolutionOverlayProps> = ({ pokemon, onC
             <p className="text-lg font-bold italic">Sembra che {pokemon.name} stia per evolversi!</p>
 
             {branches && branches.length > 1 && (
-              <div className="space-y-2">
-                <span className="text-xs uppercase font-black text-slate-400">Scegli l'evoluzione:</span>
-                <div className="grid grid-cols-2 gap-2 max-h-40 overflow-y-auto">
-                  {branches.map(branch => (
-                    <button
-                      key={branch.nextId}
-                      onClick={() => setSelectedBranchId(branch.nextId)}
-                      className={`p-3 rounded-xl border-2 font-black uppercase text-xs transition-all ${
-                        selectedBranchId === branch.nextId 
-                          ? 'bg-blue-600 border-white text-white shadow-lg' 
-                          : 'bg-slate-800 border-slate-700 text-slate-300 hover:bg-slate-700'
-                      }`}
-                    >
-                      {branch.name}
-                    </button>
-                  ))}
+              <div className="space-y-3 bg-slate-900/90 p-4 rounded-2xl border border-slate-700/80 text-left">
+                <span className="text-xs uppercase font-black text-amber-400 tracking-wider flex items-center gap-1.5">
+                  ✨ Scegli l'Evoluzione desiderata:
+                </span>
+                <div className="grid grid-cols-2 gap-2 max-h-48 overflow-y-auto pr-1">
+                  {branches.map(branch => {
+                    const isSelected = selectedBranchId === branch.nextId;
+                    const cleanName = branch.name.charAt(0).toUpperCase() + branch.name.slice(1);
+                    return (
+                      <button
+                        key={branch.nextId}
+                        type="button"
+                        onClick={() => setSelectedBranchId(branch.nextId)}
+                        className={`p-3 rounded-xl border-2 font-black uppercase text-xs transition-all flex items-center justify-between ${
+                          isSelected 
+                            ? 'bg-blue-600 border-white text-white shadow-lg shadow-blue-500/30 scale-105 ring-2 ring-blue-400' 
+                            : 'bg-slate-800/80 border-slate-700 text-slate-300 hover:bg-slate-700'
+                        }`}
+                      >
+                        <span>{cleanName}</span>
+                        {isSelected && <span className="text-amber-300 text-sm">✓</span>}
+                      </button>
+                    );
+                  })}
                 </div>
               </div>
             )}
@@ -75,7 +83,7 @@ export const EvolutionOverlay: React.FC<EvolutionOverlayProps> = ({ pokemon, onC
                 Ferma B
               </button>
               <button 
-                onClick={() => startEvolution()}
+                onClick={() => startEvolution(selectedBranchId)}
                 className="flex-1 bg-blue-500 hover:bg-blue-600 py-4 rounded-2xl font-black uppercase tracking-widest text-xs shadow-lg shadow-blue-500/20 cursor-pointer"
               >
                 Evolvi!

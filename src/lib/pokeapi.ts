@@ -669,7 +669,10 @@ export async function fetchPokemonData(id: number, level: number, location: stri
 
     // Evolution Data
     let evolutionInfo;
-    if (speciesData?.evolution_chain?.url) {
+    const { SPECIAL_EVOLUTIONS } = await import('./evolution');
+    if (SPECIAL_EVOLUTIONS[id]) {
+      evolutionInfo = SPECIAL_EVOLUTIONS[id];
+    } else if (speciesData?.evolution_chain?.url) {
       try {
         const evolutionChainData = await fetchWithCache(speciesData.evolution_chain.url);
         let current = evolutionChainData?.chain;

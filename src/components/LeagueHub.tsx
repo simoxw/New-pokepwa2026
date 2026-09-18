@@ -362,7 +362,7 @@ export const LeagueHub: React.FC<LeagueHubProps> = ({ onBack, onOpenInventory, o
               const isFainted = poke.hp <= 0;
               return (
                 <div 
-                  key={poke.instanceId || `league-team-${i}`}
+                  key={`league-team-${poke.instanceId || poke.id}-${i}`}
                   className={`rounded-2xl p-2.5 border flex items-center gap-2 ${
                     isFainted 
                       ? 'bg-red-950/30 border-red-900/50 opacity-60' 
@@ -431,7 +431,7 @@ export const LeagueHub: React.FC<LeagueHubProps> = ({ onBack, onOpenInventory, o
 
                 <div className="grid grid-cols-3 gap-2">
                   {state.player.team.map((poke, i) => (
-                    <div key={poke.instanceId || `hof-${i}`} className="bg-white/5 rounded-xl p-2 flex flex-col items-center border border-white/10">
+                    <div key={`hof-${poke.instanceId || poke.id}-${i}`} className="bg-white/5 rounded-xl p-2 flex flex-col items-center border border-white/10">
                       <img src={poke.sprites.front} alt={poke.name} className="w-12 h-12 object-contain" />
                       <span className="text-[10px] font-black uppercase text-amber-300 truncate w-full">
                         {poke.name}

@@ -994,7 +994,6 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
   // Main turn execution: Dynamic Turn Order based on Priority & Effective Speed
   const handleMove = useCallback(async (selectedMove: Move) => {
     if (isAnimating) return;
-    playMenuClick();
 
     // Check if player is locked into a move
     const actualPlayerMove = playerVolatile.lockedMove || selectedMove;
@@ -1508,6 +1507,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
               max={enemy.maxHp} 
               label={enemy.name} 
               level={enemy.level} 
+              types={enemy.types}
               status={enemyStatus.status} 
               isConfused={Boolean(enemyVolatile.confusionTurns && enemyVolatile.confusionTurns > 0)}
               isShiny={enemy.isShiny}
@@ -1578,6 +1578,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
               max={playerActive.maxHp} 
               label={playerActive.name} 
               level={playerActive.level} 
+              types={playerActive.types}
               isPlayer 
               status={playerStatus.status}
               isConfused={Boolean(playerVolatile.confusionTurns && playerVolatile.confusionTurns > 0)}
@@ -1678,7 +1679,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
           <div className="flex-1 overflow-y-auto space-y-3">
             {state.player.team.map((p, i) => (
               <button
-                key={p.instanceId || `battle-switch-${i}`}
+                key={`battle-switch-${p.instanceId || p.id}-${i}`}
                 disabled={i === 0 || p.hp <= 0}
                 onClick={() => handleSwitch(i)}
                 className={`w-full flex items-center gap-4 p-4 rounded-2xl border-4 transition-all ${i === 0 ? 'border-blue-500 bg-blue-500/20' : p.hp <= 0 ? 'opacity-50 border-gray-500 grayscale' : 'border-white bg-white active:scale-95'}`}

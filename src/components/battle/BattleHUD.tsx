@@ -1,6 +1,6 @@
 import React from 'react';
 import { motion } from 'motion/react';
-import { BattleStages } from '../../types/game';
+import { BattleStages, TYPE_COLORS, TYPE_TRANSLATIONS } from '../../types/game';
 
 interface HpBarProps {
   current: number;
@@ -13,6 +13,7 @@ interface HpBarProps {
   isShiny?: boolean;
   team?: { hp: number }[];
   stages?: Partial<BattleStages>;
+  types?: string[];
 }
 
 const STAT_DISPLAY_NAMES: Record<string, string> = {
@@ -25,7 +26,7 @@ const STAT_DISPLAY_NAMES: Record<string, string> = {
   evasion: 'ELUS',
 };
 
-export const BattleHUD: React.FC<HpBarProps> = ({ current, max, label, level, isPlayer, status, isConfused, isShiny, team, stages }) => {
+export const BattleHUD: React.FC<HpBarProps> = ({ current, max, label, level, isPlayer, status, isConfused, isShiny, team, stages, types }) => {
   const percent = Math.max(0, (current / max) * 100);
   const color = percent > 50 ? 'bg-emerald-500' : percent > 20 ? 'bg-yellow-500' : 'bg-red-500';
 
@@ -80,6 +81,7 @@ export const BattleHUD: React.FC<HpBarProps> = ({ current, max, label, level, is
         </div>
         <span className="text-xs font-bold text-gray-500">Lv.{level}</span>
       </div>
+
       <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
         <motion.div 
           initial={{ width: '100%' }}
@@ -87,10 +89,32 @@ export const BattleHUD: React.FC<HpBarProps> = ({ current, max, label, level, is
           className={`h-full ${color}`}
         />
       </div>
+
+      {/* Row under HP bar for Types and Numeric HP */}
+      <div className="flex items-center justify-between mt-1.5 gap-1 flex-wrap">
+        {types && types.length > 0 ? (
+          <div className="flex gap-1 items-center">
+            {types.map(t => {
+              const typeLower = t.toLowerCase();
+              const colorClass = TYPE_COLORS[typeLower] || 'bg-slate-500';
+              const typeLabel = TYPE_TRANSLATIONS[typeLower] || typeLower.toUpperCase();
+              return (
+                <span key={t} className={`${colorClass} text-[8px] font-black text-white px-1.5 py-0.5 rounded shadow-xs uppercase tracking-wider`}>
+                  {typeLabel}
+                </span>
+              );
+            })}
+          </div>
+        ) : <div />}
+
+        <div className="text-[10px] font-bold text-gray-600 ml-auto">
+          {current} / {max} HP
+        </div>
+      </div>
       
       {/* Stat changes badges */}
       {stages && Object.entries(stages).some(([, val]) => typeof val === 'number' && val !== 0) && (
-        <div className="flex gap-1 flex-wrap mt-1.5">
+        <div className="flex gap-1 flex-wrap mt-1">
           {Object.entries(stages)
             .filter(([, val]) => typeof val === 'number' && val !== 0)
             .map(([stat, val]) => {
@@ -107,12 +131,6 @@ export const BattleHUD: React.FC<HpBarProps> = ({ current, max, label, level, is
                 </span>
               );
             })}
-        </div>
-      )}
-
-      {isPlayer && (
-        <div className="text-[10px] font-bold text-right mt-1 text-gray-500">
-          {current} / {max} HP
         </div>
       )}
     </div>

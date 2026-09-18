@@ -2,14 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { useGame } from '../contexts/GameContext';
 import { 
   ChevronLeft, Save, Trash2, RotateCcw, FileJson, Zap, User, 
-  RefreshCw, Smartphone, CheckCircle, Volume2, VolumeX, Database, Sparkles 
+  RefreshCw, Smartphone, CheckCircle, Volume2, VolumeX, Database, Sparkles, Upload, Play, X
 } from 'lucide-react';
 import { exportGameState, validateGameState } from '../lib/utils';
 import { INITIAL_STATE, Pokemon } from '../types/game';
 import { BADGES } from '../lib/badges';
 import { calculateStats } from '../lib/pokeapi';
-import { isSoundEnabled, setSoundEnabled, playMenuClick, playLevelUp } from '../lib/sound';
-import { getStorageEstimate, removeStorageItem } from '../lib/storage';
+import { isSoundEnabled, setSoundEnabled, playMenuClick, playLevelUp, getCustomSound, setCustomSound, playHit } from '../lib/sound';
+import { getStorageEstimate, removeStorageItem, setStorageItem } from '../lib/storage';
 
 export const Settings: React.FC<{ onBack: () => void, onProfile: () => void }> = ({ onBack, onProfile }) => {
   const { state, setState } = useGame();
@@ -19,6 +19,9 @@ export const Settings: React.FC<{ onBack: () => void, onProfile: () => void }> =
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateMsg, setUpdateMsg] = useState<string | null>(null);
   const [audioActive, setAudioActive] = useState(() => isSoundEnabled());
+  const [customSuper, setCustomSuper] = useState<string | null>(() => getCustomSound('super'));
+  const [customNotVery, setCustomNotVery] = useState<string | null>(() => getCustomSound('not_very'));
+
   const [storageInfo, setStorageInfo] = useState<{ usageMB: number; quotaMB: number; isIndexedDB: boolean }>({
     usageMB: 0.5,
     quotaMB: 500,
@@ -28,6 +31,29 @@ export const Settings: React.FC<{ onBack: () => void, onProfile: () => void }> =
   useEffect(() => {
     getStorageEstimate().then(setStorageInfo);
   }, []);
+
+  const handleCustomAudioUpload = (type: 'super' | 'not_very', e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    const reader = new FileReader();
+    reader.onload = (evt) => {
+      const base64 = evt.target?.result as string;
+      setCustomSound(type, base64);
+      if (type === 'super') setCustomSuper(base64);
+      if (type === 'not_very') setCustomNotVery(base64);
+      alert(`Suono per ${type === 'super' ? 'Superefficace' : 'Non Molto Efficace'} salvato con successo!`);
+      playHit(type);
+    };
+    reader.readAsDataURL(file);
+  };
+
+  const handleRemoveCustomAudio = (type: 'super' | 'not_very') => {
+    setCustomSound(type, null);
+    if (type === 'super') setCustomSuper(null);
+    if (type === 'not_very') setCustomNotVery(null);
+    alert(`Suono personalizzato rimosso.`);
+  };
 
   const handleToggleAudio = () => {
     const nextState = !audioActive;
@@ -151,11 +177,13 @@ export const Settings: React.FC<{ onBack: () => void, onProfile: () => void }> =
     if (!file) return;
 
     const reader = new FileReader();
-    reader.onload = (event) => {
+    reader.onload = async (event) => {
       try {
-        const json = JSON.parse(event.target?.result as string);
+        const raw = event.target?.result as string;
+        const json = JSON.parse(raw);
         if (validateGameState(json)) {
           setState(json);
+          await setStorageItem('pokepwa_save', json);
           alert("Salvataggio ripristinato con successo!");
         } else {
           alert("File di salvataggio non valido!");
@@ -167,9 +195,13 @@ export const Settings: React.FC<{ onBack: () => void, onProfile: () => void }> =
     reader.readAsText(file);
   };
 
-  const resetGame = () => {
+  const resetGame = async () => {
+    try {
+      await removeStorageItem('pokepwa_save');
+    } catch (e) {
+      console.warn(e);
+    }
     localStorage.clear();
-    localStorage.removeItem('pokepwa_save');
     window.location.reload();
   };
 
@@ -229,6 +261,122 @@ export const Settings: React.FC<{ onBack: () => void, onProfile: () => void }> =
                 <span>Riproduci suono di prova</span>
               </button>
             )}
+          </div>
+
+          {/* Caricamento File Audio Personalizzati */}
+          <div className="bg-amber-50/80 border-2 border-amber-200 rounded-2xl p-4 space-y-4">
+            <div>
+              <p className="text-xs font-black text-amber-900 uppercase flex items-center gap-1.5">
+                🎵 Suoni di Lotta Personalizzati (i tuoi MP3/WAV)
+              </p>
+              <p className="text-[11px] text-amber-700 font-medium leading-relaxed mt-0.5">
+                Carica i due file audio che hai scaricato sul tuo dispositivo per usarli durante gli attacchi superefficaci e non efficaci!
+              </p>
+            </div>
+
+            {/* Superefficace Upload */}
+            <div className="space-y-2 pt-2 border-t border-amber-200/70">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black uppercase text-amber-900 flex items-center gap-1">
+                  ⚡ Mossa Superefficace
+                </span>
+                {customSuper ? (
+                  <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-300">
+                    File Caricato ✓
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-bold text-amber-700">
+                    Predefinito
+                  </span>
+                )}
+              </div>
+
+              <div className="flex gap-2">
+                <label className="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-sm active:scale-95 transition-all">
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>{customSuper ? 'Sostituisci File MP3/WAV' : 'Carica File Superefficace'}</span>
+                  <input 
+                    type="file" 
+                    accept="audio/*" 
+                    className="hidden" 
+                    onChange={(e) => handleCustomAudioUpload('super', e)} 
+                  />
+                </label>
+
+                {customSuper && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => playHit('super')}
+                      className="bg-emerald-600 text-white font-bold px-3 py-2 rounded-xl text-xs hover:bg-emerald-700 flex items-center gap-1"
+                      title="Riproduci anteprima"
+                    >
+                      <Play className="w-3 h-3 fill-current" /> Prova
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveCustomAudio('super')}
+                      className="bg-red-500 text-white font-bold px-3 py-2 rounded-xl text-xs hover:bg-red-600"
+                      title="Rimuovi file audio"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
+
+            {/* Non Molto Efficace Upload */}
+            <div className="space-y-2 pt-2 border-t border-amber-200/70">
+              <div className="flex items-center justify-between">
+                <span className="text-xs font-black uppercase text-amber-900 flex items-center gap-1">
+                  🛡️ Mossa Non Molto Efficace
+                </span>
+                {customNotVery ? (
+                  <span className="text-[10px] font-bold bg-emerald-100 text-emerald-800 px-2 py-0.5 rounded-full border border-emerald-300">
+                    File Caricato ✓
+                  </span>
+                ) : (
+                  <span className="text-[10px] font-bold text-amber-700">
+                    Predefinito
+                  </span>
+                )}
+              </div>
+
+              <div className="flex gap-2">
+                <label className="flex-1 bg-amber-600 hover:bg-amber-700 text-white font-bold py-2.5 px-3 rounded-xl text-xs flex items-center justify-center gap-1.5 cursor-pointer shadow-sm active:scale-95 transition-all">
+                  <Upload className="w-3.5 h-3.5" />
+                  <span>{customNotVery ? 'Sostituisci File MP3/WAV' : 'Carica File Non Efficace'}</span>
+                  <input 
+                    type="file" 
+                    accept="audio/*" 
+                    className="hidden" 
+                    onChange={(e) => handleCustomAudioUpload('not_very', e)} 
+                  />
+                </label>
+
+                {customNotVery && (
+                  <>
+                    <button
+                      type="button"
+                      onClick={() => playHit('not_very')}
+                      className="bg-emerald-600 text-white font-bold px-3 py-2 rounded-xl text-xs hover:bg-emerald-700 flex items-center gap-1"
+                      title="Riproduci anteprima"
+                    >
+                      <Play className="w-3 h-3 fill-current" /> Prova
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => handleRemoveCustomAudio('not_very')}
+                      className="bg-red-500 text-white font-bold px-3 py-2 rounded-xl text-xs hover:bg-red-600"
+                      title="Rimuovi file audio"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
         </div>
 

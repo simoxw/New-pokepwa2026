@@ -1,6 +1,7 @@
 import React, { createContext, useContext, useEffect, useState, useCallback, useMemo } from 'react';
 import { GameState, INITIAL_STATE } from '../types/game';
 import { getStorageItem, setStorageItem } from '../lib/storage';
+import { SPECIAL_EVOLUTIONS } from '../lib/evolution';
 
 interface GameContextType {
   state: GameState;
@@ -12,7 +13,21 @@ interface GameContextType {
 const GameContext = createContext<GameContextType | undefined>(undefined);
 
 function normalizeLoadedState(parsed: any): GameState {
+  const usedInstanceIds = new Set<string>();
+
   const migratePokemon = (p: any) => {
+    let instanceId = p.instanceId;
+    if (!instanceId || usedInstanceIds.has(instanceId)) {
+      instanceId = `${p.id || 'pkmn'}_${Math.random().toString(36).substring(2, 11)}_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+    }
+    usedInstanceIds.add(instanceId);
+
+    // Fix evolutionInfo if branches missing for multi-branch evolutions (like Eevee)
+    let evolutionInfo = p.evolutionInfo;
+    if (p.id && SPECIAL_EVOLUTIONS[p.id]) {
+      evolutionInfo = SPECIAL_EVOLUTIONS[p.id];
+    }
+
     const sprites = p.sprites || {};
     const baseSprites = {
       front: sprites.front || p.sprite || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`,
@@ -24,6 +39,8 @@ function normalizeLoadedState(parsed: any): GameState {
 
     return {
       ...p,
+      instanceId,
+      evolutionInfo: evolutionInfo || p.evolutionInfo,
       sprites: baseSprites,
       stats: p.stats || { attack: 50, defense: 50, spAtk: 50, spDef: 50, speed: 50 },
       ivs: p.ivs || { hp: 15, attack: 15, defense: 15, spAtk: 15, spDef: 15, speed: 15 },

@@ -192,7 +192,7 @@ export const Inventory: React.FC<{
             <p className="text-center text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Seleziona un Pokémon</p>
             {state.player.team.map((pokemon, i) => (
               <button
-                key={pokemon.instanceId || `team-usage-${i}`}
+                key={`item-target-${pokemon.instanceId || pokemon.id}-${i}`}
                 onClick={() => applyItemToPokemon(pokemon.instanceId)}
                 className="w-full bg-gray-50 p-4 rounded-3xl border-2 border-transparent active:border-blue-500 flex items-center gap-4 text-left transition-all"
               >

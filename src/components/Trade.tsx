@@ -23,12 +23,18 @@ export const Trade: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       return;
     }
     
+    // Assign a unique instanceId so copied/imported Pokemon is completely independent
+    const importedPokemon: Pokemon = {
+      ...pokemon,
+      instanceId: `${pokemon.id}_${Math.random().toString(36).substring(2, 11)}_${Date.now()}_${Math.floor(Math.random() * 10000)}`
+    };
+
     setState(prev => ({
       ...prev,
       player: {
         ...prev.player,
-        box: [...prev.player.box, pokemon],
-        pokedex: { ...prev.player.pokedex, [pokemon.id]: 'caught' }
+        box: [...prev.player.box, importedPokemon],
+        pokedex: { ...prev.player.pokedex, [importedPokemon.id]: 'caught' }
       }
     }));
     
@@ -63,7 +69,7 @@ export const Trade: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           <div className="flex gap-2 overflow-x-auto pb-4 no-scrollbar">
             {state.player.team.map((p, i) => (
               <button 
-                key={p.instanceId || `trade-${i}`}
+                key={`trade-${p.instanceId || p.id}-${i}`}
                 onClick={() => handleExport(p)}
                 className={`flex-shrink-0 w-16 h-16 rounded-2xl border-2 transition-all ${selectedToExport?.instanceId === p.instanceId ? 'border-blue-500 bg-blue-50 scale-105' : 'border-gray-100 bg-gray-50'}`}
               >

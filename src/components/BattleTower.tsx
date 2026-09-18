@@ -408,7 +408,7 @@ export const BattleTower: React.FC<BattleTowerProps> = ({
               const isFainted = poke.hp <= 0;
               return (
                 <div 
-                  key={poke.instanceId || `tower-poke-${idx}`}
+                  key={`tower-poke-${poke.instanceId || poke.id}-${idx}`}
                   className={`rounded-2xl p-2.5 border flex items-center gap-2 ${
                     isFainted 
                       ? 'bg-red-950/30 border-red-900/50 opacity-60' 

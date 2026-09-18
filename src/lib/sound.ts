@@ -124,76 +124,107 @@ export function playMenuClick() {
   playTone(850, 950, 0.05, 'square', 0.1);
 }
 
+export function getCustomSound(type: 'super' | 'not_very' | 'normal'): string | null {
+  try {
+    return localStorage.getItem(`pokepwa_custom_sound_${type}`);
+  } catch {
+    return null;
+  }
+}
+
+export function setCustomSound(type: 'super' | 'not_very' | 'normal', base64Audio: string | null): void {
+  try {
+    if (base64Audio) {
+      localStorage.setItem(`pokepwa_custom_sound_${type}`, base64Audio);
+    } else {
+      localStorage.removeItem(`pokepwa_custom_sound_${type}`);
+    }
+  } catch {}
+}
+
+export function playCustomSound(type: 'super' | 'not_very' | 'normal' | 'crit'): boolean {
+  if (!soundEnabled) return false;
+  const targetKey = type === 'crit' ? 'super' : type;
+  const customDataUrl = getCustomSound(targetKey);
+  if (customDataUrl) {
+    try {
+      const audio = new Audio(customDataUrl);
+      audio.volume = 0.9;
+      audio.play().catch(() => {});
+      return true;
+    } catch {
+      return false;
+    }
+  }
+  return false;
+}
+
 export function playHit(effectiveness: 'super' | 'not_very' | 'normal' | 'crit') {
   if (!soundEnabled) return;
 
-  if (effectiveness === 'crit') {
-    // Sharp crack + impact
-    playTone(1200, 200, 0.15, 'sawtooth', 0.25);
-    setTimeout(() => playNoise(0.18, 0.3), 30);
-  } else if (effectiveness === 'super') {
-    // High-impact resonant boom
-    playTone(550, 90, 0.22, 'square', 0.28);
-    playNoise(0.2, 0.35);
-  } else if (effectiveness === 'not_very') {
-    // Dull thud
-    playTone(180, 70, 0.12, 'triangle', 0.2);
-  } else {
-    // Normal attack hit
-    playTone(380, 110, 0.12, 'square', 0.2);
-    playNoise(0.08, 0.18);
+  // Priority 1: User uploaded custom audio file in settings
+  if (playCustomSound(effectiveness)) {
+    return;
   }
+
+  // Priority 2: Built-in project WAV audio files in public/audio/
+  let audioUrl: string | null = null;
+  if (effectiveness === 'super' || effectiveness === 'crit') {
+    audioUrl = '/audio/super_effective.wav';
+  } else if (effectiveness === 'not_very') {
+    audioUrl = '/audio/not_very_effective.wav';
+  }
+
+  if (audioUrl) {
+    try {
+      const audio = new Audio(audioUrl);
+      audio.volume = 0.9;
+      audio.play().catch(() => {});
+    } catch {}
+  }
+
+  // Normal hits and all synthesized fallback tones are completely silenced per user request
 }
 
 export function playFaint() {
   if (!soundEnabled) return;
-  // Falling tone sliding down into noise
-  playTone(450, 60, 0.6, 'sawtooth', 0.22);
-  setTimeout(() => playNoise(0.4, 0.25), 250);
+  playTone(360, 50, 0.4, 'triangle', 0.12);
 }
 
 export function playLevelUp() {
   if (!soundEnabled) return;
-  const ctx = getAudioContext();
-  if (!ctx) return;
-
-  // Classic victorious rising arpeggio: C5 -> E5 -> G5 -> C6
   const notes = [523.25, 659.25, 783.99, 1046.50];
   notes.forEach((freq, idx) => {
     setTimeout(() => {
-      playTone(freq, freq, 0.12, 'square', 0.18);
+      playTone(freq, freq, 0.12, 'square', 0.15);
     }, idx * 110);
   });
 }
 
 export function playCatchSuccess() {
   if (!soundEnabled) return;
-  // Triumphant 4-note catch fanfare
   const notes = [440, 554.37, 659.25, 880];
   notes.forEach((freq, idx) => {
     setTimeout(() => {
-      playTone(freq, freq * 1.02, 0.15, 'square', 0.2);
+      playTone(freq, freq * 1.02, 0.15, 'square', 0.18);
     }, idx * 120);
   });
 }
 
 export function playCatchShake() {
-  playTone(280, 320, 0.07, 'triangle', 0.15);
+  if (!soundEnabled) return;
+  playTone(280, 320, 0.07, 'triangle', 0.12);
 }
 
 export function playProtect() {
-  if (!soundEnabled) return;
-  // Shimmering green/blue protective barrier
-  playTone(300, 900, 0.18, 'sine', 0.2);
-  setTimeout(() => playTone(900, 1400, 0.22, 'triangle', 0.22), 80);
+  // Silenced
 }
 
 export function playCharge() {
-  if (!soundEnabled) return;
-  // Rising power charge hum
-  playTone(150, 700, 0.5, 'sawtooth', 0.18);
+  // Silenced
 }
 
 export function playEscape() {
-  playTone(200, 900, 0.2, 'square', 0.15);
+  if (!soundEnabled) return;
+  playTone(200, 800, 0.2, 'square', 0.12);
 }

@@ -467,3 +467,24 @@ export const TYPE_COLORS: Record<string, string> = {
   fairy: 'bg-[#D685AD]',
   dark: 'bg-[#705746]',
 };
+
+export const TYPE_TRANSLATIONS: Record<string, string> = {
+  normal: 'NORMALE',
+  fire: 'FUOCO',
+  water: 'ACQUA',
+  electric: 'ELETTRO',
+  grass: 'ERBA',
+  ice: 'GHIACCIO',
+  fighting: 'LOTTA',
+  poison: 'VELENO',
+  ground: 'TERRA',
+  flying: 'VOLANTE',
+  psychic: 'PSICO',
+  bug: 'COLEOTT.',
+  rock: 'ROCCIA',
+  ghost: 'SPETTRO',
+  dragon: 'DRAGO',
+  steel: 'ACCIAIO',
+  fairy: 'FOLLETTO',
+  dark: 'BUIO',
+};

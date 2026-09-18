@@ -224,9 +224,12 @@ function GameContent() {
       const team = prev.player.team.map(p => 
         p.instanceId === updatedPokemon.instanceId ? updatedPokemon : p
       );
+      const box = prev.player.box.map(p => 
+        p.instanceId === updatedPokemon.instanceId ? updatedPokemon : p
+      );
       return {
         ...prev,
-        player: { ...prev.player, team }
+        player: { ...prev.player, team, box }
       };
     });
     setShowMoveLearning(null);
@@ -237,9 +240,12 @@ function GameContent() {
       const team = prev.player.team.map(p => 
         p.instanceId === evolvedPokemon.instanceId ? evolvedPokemon : p
       );
+      const box = prev.player.box.map(p => 
+        p.instanceId === evolvedPokemon.instanceId ? evolvedPokemon : p
+      );
       return {
         ...prev,
-        player: { ...prev.player, team }
+        player: { ...prev.player, team, box }
       };
     });
     setShowEvolution(null);

@@ -55,7 +55,7 @@ export const Team: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
         {state.player.team.map((pokemon, i) => (
           <motion.div
-            key={pokemon.instanceId || `team-member-${i}`}
+            key={`team-member-${pokemon.instanceId || pokemon.id}-${i}`}
             initial={{ x: -20, opacity: 0 }}
             animate={{ x: 0, opacity: 1 }}
             transition={{ delay: i * 0.1 }}
