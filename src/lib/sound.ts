@@ -30,6 +30,58 @@ function getAudioContext(): AudioContext | null {
   return audioCtx;
 }
 
+let audioUnlocked = false;
+
+export function unlockAudio() {
+  if (audioUnlocked) return;
+  const ctx = getAudioContext();
+  if (ctx && ctx.state === 'suspended') {
+    ctx.resume().then(() => {
+      audioUnlocked = true;
+    }).catch(() => {});
+  } else if (ctx) {
+    audioUnlocked = true;
+  }
+}
+
+if (typeof window !== 'undefined') {
+  const handleUserUnlock = () => {
+    unlockAudio();
+    window.removeEventListener('touchstart', handleUserUnlock);
+    window.removeEventListener('click', handleUserUnlock);
+  };
+  window.addEventListener('touchstart', handleUserUnlock, { passive: true });
+  window.addEventListener('click', handleUserUnlock, { passive: true });
+}
+
+const audioElementsCache = new Map<string, HTMLAudioElement>();
+
+function playAudioUrl(urlOrBase64: string, volume: number = 0.9): boolean {
+  if (!soundEnabled) return false;
+  unlockAudio();
+  try {
+    let audio = audioElementsCache.get(urlOrBase64);
+    if (!audio) {
+      audio = new Audio(urlOrBase64);
+      audioElementsCache.set(urlOrBase64, audio);
+    }
+    audio.volume = volume;
+    audio.currentTime = 0;
+    const playPromise = audio.play();
+    if (playPromise !== undefined) {
+      playPromise.catch(() => {
+        // Fallback for mobile if cached instance failed
+        const freshAudio = new Audio(urlOrBase64);
+        freshAudio.volume = volume;
+        freshAudio.play().catch(() => {});
+      });
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
 export function isSoundEnabled(): boolean {
   return soundEnabled;
 }
@@ -147,14 +199,7 @@ export function playCustomSound(type: 'super' | 'not_very' | 'normal' | 'crit'):
   const targetKey = type === 'crit' ? 'super' : type;
   const customDataUrl = getCustomSound(targetKey);
   if (customDataUrl) {
-    try {
-      const audio = new Audio(customDataUrl);
-      audio.volume = 0.9;
-      audio.play().catch(() => {});
-      return true;
-    } catch {
-      return false;
-    }
+    return playAudioUrl(customDataUrl, 0.9);
   }
   return false;
 }
@@ -176,14 +221,20 @@ export function playHit(effectiveness: 'super' | 'not_very' | 'normal' | 'crit')
   }
 
   if (audioUrl) {
-    try {
-      const audio = new Audio(audioUrl);
-      audio.volume = 0.9;
-      audio.play().catch(() => {});
-    } catch {}
+    playAudioUrl(audioUrl, 0.9);
   }
 
   // Normal hits and all synthesized fallback tones are completely silenced per user request
+}
+
+export function playPokemonCry(pokemonId: number): void {
+  if (!soundEnabled || !pokemonId) return;
+  const cryUrl = `https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/latest/${pokemonId}.ogg`;
+  const success = playAudioUrl(cryUrl, 0.4);
+  if (!success) {
+    const legacyUrl = `https://raw.githubusercontent.com/PokeAPI/cries/main/cries/pokemon/legacy/${pokemonId}.ogg`;
+    playAudioUrl(legacyUrl, 0.4);
+  }
 }
 
 // BGM Music Player Engine

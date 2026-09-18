@@ -11,6 +11,7 @@ const SHOP_ITEMS = [
   { id: 'super-pozione', name: 'Super Pozione', price: 700, description: 'Ripristina 50 HP.', type: 'healing' as const, effectValue: 50, emoji: '🧪' },
   { id: 'iper-pozione', name: 'Iper Pozione', price: 1500, description: 'Ripristina 200 HP.', type: 'healing' as const, effectValue: 200, emoji: '🍶' },
   { id: 'caramella-rara', name: 'Caramella Rara', price: 5000, description: 'Alza di un livello un Pokémon.', type: 'other' as const, emoji: '🍬' },
+  { id: 'tm-universal', name: 'MT Universale', price: 2500, description: 'Scegli e insegna qualsiasi mossa al tuo Pokémon da PokéAPI!', type: 'other' as const, emoji: '💿' },
   { id: 'revitalizzante', name: 'Revitalizzante', price: 1500, description: 'Rianima un Pokémon (50% PS).', type: 'healing' as const, effectValue: 0.5, emoji: '✨' },
   { id: 'revitalizzante-max', name: 'Revitalizzante Max', price: 3000, description: 'Rianima un Pokémon (100% PS).', type: 'healing' as const, effectValue: 1, emoji: '🌟' },
   { id: 'master-ball', name: 'Master Ball', price: 50000, description: 'La Ball definitiva: cattura sempre.', type: 'capture' as const, emoji: '🟣' },

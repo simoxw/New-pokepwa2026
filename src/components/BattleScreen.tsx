@@ -33,7 +33,8 @@ import {
   playLevelUp, 
   playEscape, 
   playMenuClick,
-  playBgm
+  playBgm,
+  playPokemonCry
 } from '../lib/sound';
 
 interface BattleScreenProps {
@@ -63,6 +64,8 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
 
   useEffect(() => {
     playBgm('battle');
+    if (playerActive) playPokemonCry(playerActive.id);
+    if (initialEnemy) setTimeout(() => playPokemonCry(initialEnemy.id), 500);
     return () => {
       playBgm('overworld');
     };

@@ -1331,6 +1331,22 @@ export function normalizeMoveKey(name: string): string {
  * Retrieves a battle-ready Move object with reliable power, category, type, and PP.
  * Never returns a 0-power status move unless it is genuinely a status move!
  */
+export function getItalianMoveName(rawName: string): string {
+  if (!rawName) return '';
+  const key = normalizeMoveKey(rawName);
+  const found = MOVES_DATABASE[key];
+  if (found) return found.name;
+
+  for (const move of Object.values(MOVES_DATABASE)) {
+    if (normalizeMoveKey(move.englishName) === key || normalizeMoveKey(move.name) === key) {
+      return move.name;
+    }
+  }
+
+  const formatted = rawName.replace(/[-_]/g, ' ');
+  return formatted.charAt(0).toUpperCase() + formatted.slice(1);
+}
+
 export function getMoveByName(rawName: string): Move {
   const key = normalizeMoveKey(rawName);
 

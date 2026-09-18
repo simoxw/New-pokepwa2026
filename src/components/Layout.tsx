@@ -60,10 +60,11 @@ export const Layout: React.FC<LayoutProps> = ({ children, onNavigate }) => {
 
       {/* Global Navigation - Only visible in Hub */}
       {state.player.location === 'villaggio' && (
-        <nav className="h-20 border-t border-black/10 bg-white grid grid-cols-4 items-center px-2 pb-safe z-10">
+        <nav className="h-20 border-t border-black/10 bg-white grid grid-cols-5 items-center px-1 pb-safe z-10">
           <NavItem label="Squadra" icon="🐉" onClick={() => onNavigate('team')} />
           <NavItem label="Zaino" icon="🎒" onClick={() => onNavigate('inventory')} />
           <NavItem label="Pokedex" icon="📱" onClick={() => onNavigate('pokedex')} />
+          <NavItem label="Box PC" icon="💻" onClick={() => onNavigate('box')} />
           <NavItem label="Mappa" icon="🗺️" onClick={() => onNavigate('game')} />
         </nav>
       )}

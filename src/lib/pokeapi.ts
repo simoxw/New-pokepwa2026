@@ -771,3 +771,21 @@ export async function fetchPokemonData(id: number, level: number, location: stri
     return generateFallbackPokemon(id, level, location);
   }
 }
+
+export async function fetchAllSpeciesMoves(pokemonId: number): Promise<{ name: string; url: string }[]> {
+  try {
+    const data = await fetchWithCache(`https://pokeapi.co/api/v2/pokemon/${pokemonId}`);
+    if (!data || !Array.isArray(data.moves)) {
+      return [];
+    }
+    const moveList = data.moves.map((m: any) => ({
+      name: m.move?.name || '',
+      url: m.move?.url || ''
+    })).filter((m: any) => m.name && m.url);
+
+    return moveList;
+  } catch (e) {
+    console.error("Failed to fetch all species moves for TM", e);
+    return [];
+  }
+}

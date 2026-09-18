@@ -4,6 +4,7 @@ import { ChevronLeft, Package, User } from 'lucide-react';
 import { Pokemon, Item, Move } from '../types/game';
 import { calculateStats, fetchMoveData } from '../lib/pokeapi';
 import { canEvolve } from '../lib/evolution';
+import { TMSelectionModal } from './TMSelectionModal';
 
 export const Inventory: React.FC<{ 
   onBack: () => void, 
@@ -12,9 +13,22 @@ export const Inventory: React.FC<{
 }> = ({ onBack, onEvolution, onMoveLearning }) => {
   const { state, setState } = useGame();
   const [usingItem, setUsingItem] = React.useState<Item | null>(null);
+  const [tmPokemon, setTmPokemon] = React.useState<Pokemon | null>(null);
+
+  const isUsableItem = (item: Item) => {
+    return item.type === 'healing' || item.id === 'caramella-rara' || item.id === 'tm-universal';
+  };
 
   const applyItemToPokemon = async (pokemonInstanceId: string) => {
     if (!usingItem) return;
+
+    if (usingItem.id === 'tm-universal') {
+      const target = state.player.team.find(p => p.instanceId === pokemonInstanceId);
+      if (target) {
+        setTmPokemon(target);
+      }
+      return;
+    }
 
     let evolutionCandidate: Pokemon | null = null;
     let moveCandidate: { pokemon: Pokemon, move: Move } | null = null;
@@ -134,6 +148,55 @@ export const Inventory: React.FC<{
     }
   };
 
+  const handleTmMoveSelected = (selectedMove: Move) => {
+    if (!tmPokemon) return;
+
+    const newInventory = state.player.inventory.map(i =>
+      i.id === 'tm-universal' ? { ...i, count: i.count - 1 } : i
+    );
+
+    let updatedPokemon = { ...tmPokemon };
+    
+    if (updatedPokemon.moves.length < 4) {
+      updatedPokemon.moves = [...updatedPokemon.moves, selectedMove];
+
+      setState(prev => {
+        const teamIndex = prev.player.team.findIndex(p => p.instanceId === updatedPokemon.instanceId);
+        if (teamIndex === -1) return prev;
+        const newTeam = [...prev.player.team];
+        newTeam[teamIndex] = updatedPokemon;
+        return {
+          ...prev,
+          player: {
+            ...prev.player,
+            inventory: newInventory,
+            team: newTeam
+          }
+        };
+      });
+
+      alert(`${updatedPokemon.nickname || updatedPokemon.name} ha imparato ${selectedMove.name}!`);
+      setTmPokemon(null);
+      setUsingItem(null);
+    } else {
+      setState(prev => ({
+        ...prev,
+        player: {
+          ...prev.player,
+          inventory: newInventory
+        }
+      }));
+
+      const targetP = { ...tmPokemon };
+      setTmPokemon(null);
+      setUsingItem(null);
+
+      if (onMoveLearning) {
+        onMoveLearning(targetP, selectedMove);
+      }
+    }
+  };
+
   return (
     <div className="h-full bg-white flex flex-col relative">
       <div className="p-4 border-b flex items-center gap-4">
@@ -151,9 +214,9 @@ export const Inventory: React.FC<{
           state.player.inventory.filter(i => i.count > 0).map((item) => (
             <div 
               key={item.id} 
-              onClick={() => (item.type === 'healing' || item.id === 'caramella-rara') && setUsingItem(item)}
+              onClick={() => isUsableItem(item) && setUsingItem(item)}
               className={`bg-gray-50 p-4 rounded-2xl flex items-center justify-between border-2 border-transparent transition-all active:scale-[0.98] ${
-                (item.type === 'healing' || item.id === 'caramella-rara') ? 'hover:border-blue-500 cursor-pointer' : 'opacity-60'
+                isUsableItem(item) ? 'hover:border-blue-500 cursor-pointer' : 'opacity-60'
               }`}
             >
               <div className="flex items-center gap-4">
@@ -164,6 +227,7 @@ export const Inventory: React.FC<{
                     item.id === 'mega-ball' ? '🔵' : '🔴'
                   ) : (
                     item.id === 'caramella-rara' ? '🍬' : 
+                    item.id === 'tm-universal' ? '💿' :
                     item.id === 'revitalizzante' ? '✨' :
                     item.id === 'revitalizzante-max' ? '🌟' : '💊'
                   )}
@@ -182,7 +246,7 @@ export const Inventory: React.FC<{
       </div>
 
       {/* Item Usage Selection */}
-      {usingItem && (
+      {usingItem && !tmPokemon && (
         <div className="absolute inset-0 z-50 bg-white flex flex-col">
           <div className="p-4 border-b flex items-center gap-4">
             <button onClick={() => setUsingItem(null)} className="p-2 hover:bg-gray-100 rounded-full"><ChevronLeft /></button>
@@ -218,6 +282,15 @@ export const Inventory: React.FC<{
             ))}
           </div>
         </div>
+      )}
+
+      {/* TM Selection Modal */}
+      {tmPokemon && (
+        <TMSelectionModal 
+          pokemon={tmPokemon}
+          onClose={() => setTmPokemon(null)}
+          onSelectMove={handleTmMoveSelected}
+        />
       )}
 
       <div className="p-6 bg-blue-50">

@@ -291,8 +291,8 @@ export const Hub: React.FC = () => {
           isNight={isNight}
         />
         <ActionButton 
-          icon={<span className="text-xl">📦</span>} 
-          label="Box" 
+          icon={<span className="text-xl">💻</span>} 
+          label="Box PC" 
           onClick={() => (window as any).onNavigate('box')}
           color="border-cyan-400"
           isNight={isNight}

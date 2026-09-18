@@ -294,7 +294,7 @@ export const Box: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             </div>
             <div className="flex items-center gap-3 text-[11px] text-slate-400 font-medium">
               <span>👥 Squadra: <strong className="text-emerald-400">{state.player.team.length}/6</strong></span>
-              <span>📦 Box: <strong className="text-indigo-400">{state.player.box.length}</strong></span>
+              <span>💻 Box: <strong className="text-indigo-400">{state.player.box.length}</strong></span>
               {shinyCountInBox > 0 && (
                 <span className="text-amber-400 font-bold">✨ {shinyCountInBox} Shiny</span>
               )}
