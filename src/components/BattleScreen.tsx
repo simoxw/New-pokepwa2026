@@ -27,6 +27,7 @@ import { useItemInBattle } from '../lib/battle/items';
 import { BattleBag } from './battle/BattleBag';
 import { getBadgeForBoss } from '../lib/badges';
 import { CatchOverlay } from './CatchOverlay';
+import { ZONES } from '../constants/game';
 import { 
   playHit, 
   playFaint, 
@@ -1100,13 +1101,18 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     }
   };
 
+  const zone = ZONES.find(z => z.id === state.player.location);
+  const battleBg = zone?.background || 'bg-gradient-to-b from-blue-400 to-emerald-400';
+
   return (
-    <div className="fixed inset-0 z-[80] bg-gradient-to-b from-blue-400 to-emerald-400 overflow-y-auto">
+    <div className={`fixed inset-0 z-[80] ${battleBg} overflow-y-auto`}>
       <div className="min-h-full flex flex-col p-3 pb-6 max-w-4xl mx-auto">
         {/* Enemy Side */}
         <div className="flex-1 flex flex-col items-end justify-start pt-8 pr-2 min-h-[140px]">
           <motion.div 
-            animate={isAnimating ? { x: [0, -8, 8, 0] } : {}}
+            initial={{ x: 100, opacity: 0 }}
+            animate={isAnimating ? { x: [0, -8, 8, 0], opacity: 1 } : { x: 0, opacity: 1 }}
+            transition={{ duration: 0.5 }}
             className={`relative ${trainer ? 'pt-16' : ''}`}
           >
             <BattleHUD 
@@ -1124,7 +1130,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
             <img 
               src={enemy.sprites.artwork} 
               alt={enemy.name} 
-              className={`w-24 h-24 sm:w-32 sm:h-32 drop-shadow-2xl object-contain ml-auto ${enemy.isShiny ? 'relative' : ''}`} 
+              className={`w-32 h-32 sm:w-44 sm:h-44 drop-shadow-2xl object-contain ml-auto ${enemy.isShiny ? 'relative' : ''}`} 
             />
             {enemy.isShiny && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
@@ -1155,13 +1161,15 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
         {/* Player Side */}
         <div className="flex-1 flex flex-col items-start justify-center py-2 pl-2 min-h-[160px]">
           <motion.div 
-            animate={isAnimating ? { x: [0, 8, -8, 0] } : {}}
+            initial={{ x: -100, opacity: 0 }}
+            animate={isAnimating ? { x: [0, 8, -8, 0], opacity: 1 } : { x: 0, opacity: 1 }}
+            transition={{ duration: 0.5 }}
             className="relative"
           >
             <img 
               src={playerActive.sprites.artwork} 
               alt={playerActive.name} 
-              className={`w-32 h-32 sm:w-40 sm:h-40 drop-shadow-2xl scale-x-[-1] object-contain ${playerActive.isShiny ? 'relative' : ''}`} 
+              className={`w-40 h-40 sm:w-52 sm:h-52 drop-shadow-2xl scale-x-[-1] object-contain ${playerActive.isShiny ? 'relative' : ''}`} 
             />
             {playerActive.isShiny && (
               <div className="absolute inset-0 flex items-center justify-center pointer-events-none">

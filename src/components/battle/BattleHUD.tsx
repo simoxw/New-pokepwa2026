@@ -28,7 +28,6 @@ const STAT_DISPLAY_NAMES: Record<string, string> = {
 
 export const BattleHUD: React.FC<HpBarProps> = ({ current, max, label, level, isPlayer, status, isConfused, isShiny, team, stages, types }) => {
   const percent = Math.max(0, (current / max) * 100);
-  const color = percent > 50 ? 'bg-emerald-500' : percent > 20 ? 'bg-yellow-500' : 'bg-red-500';
 
   const STATUS_COLORS: Record<string, string> = {
     poisoned: 'bg-purple-500',
@@ -84,9 +83,13 @@ export const BattleHUD: React.FC<HpBarProps> = ({ current, max, label, level, is
 
       <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
         <motion.div 
-          initial={{ width: '100%' }}
-          animate={{ width: `${percent}%` }}
-          className={`h-full ${color}`}
+          initial={{ width: '100%', backgroundColor: '#10b981' }}
+          animate={{ 
+            width: `${percent}%`,
+            backgroundColor: percent > 50 ? '#10b981' : percent > 20 ? '#f59e0b' : '#ef4444'
+          }}
+          transition={{ duration: 0.5 }}
+          className="h-full"
         />
       </div>
 

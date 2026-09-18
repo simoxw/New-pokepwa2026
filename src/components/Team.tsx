@@ -8,6 +8,7 @@ import { Pokemon } from '../types/game';
 export const Team: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { state, setState } = useGame();
   const [selected, setSelected] = useState<{ pokemon: Pokemon, index: number } | null>(null);
+  const [swapSourceIndex, setSwapSourceIndex] = useState<number | null>(null);
 
   const moveMember = (index: number, direction: 'up' | 'down') => {
     const newIndex = direction === 'up' ? index - 1 : index + 1;
@@ -24,6 +25,26 @@ export const Team: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     
     if (selected) {
        setSelected({ pokemon: removed, index: newIndex });
+    }
+  };
+
+  const handleSwapClick = (e: React.MouseEvent, index: number) => {
+    e.stopPropagation();
+    if (swapSourceIndex === null) {
+      setSwapSourceIndex(index);
+    } else {
+      if (swapSourceIndex !== index) {
+        const newTeam = [...state.player.team];
+        const temp = newTeam[swapSourceIndex];
+        newTeam[swapSourceIndex] = newTeam[index];
+        newTeam[index] = temp;
+
+        setState(prev => ({
+          ...prev,
+          player: { ...prev.player, team: newTeam }
+        }));
+      }
+      setSwapSourceIndex(null);
     }
   };
 
@@ -60,8 +81,24 @@ export const Team: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             animate={{ x: 0, opacity: 1 }}
             transition={{ delay: i * 0.1 }}
             onClick={() => setSelected({ pokemon, index: i })}
-            className="bg-white p-4 rounded-3xl border-4 border-gray-100 shadow-sm flex items-center gap-4 relative overflow-hidden active:scale-[0.98] transition-transform"
+            className={`p-4 rounded-3xl border-4 shadow-sm flex items-center gap-4 relative overflow-hidden active:scale-[0.98] transition-all ${
+              swapSourceIndex === i ? 'bg-blue-50 border-blue-400 ring-2 ring-blue-400' : 'bg-white border-gray-100'
+            }`}
           >
+            {/* Swapping Handle */}
+            <button
+              onClick={(e) => handleSwapClick(e, i)}
+              className={`w-8 h-8 rounded-full flex items-center justify-center font-black text-sm shadow-sm transition-all z-20 shrink-0 ${
+                swapSourceIndex === i 
+                  ? 'bg-blue-600 text-white scale-110' 
+                  : swapSourceIndex !== null 
+                    ? 'bg-emerald-500 text-white animate-pulse' 
+                    : 'bg-gray-100 text-gray-400 hover:bg-gray-200'
+              }`}
+            >
+              {i + 1}
+            </button>
+
             <div className="w-20 h-20 bg-gray-50 rounded-2xl flex items-center justify-center p-2 relative z-10">
               <img src={pokemon.sprites.artwork} alt={pokemon.name} className="w-full h-full object-contain" />
             </div>

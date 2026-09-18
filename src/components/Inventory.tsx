@@ -148,6 +148,25 @@ export const Inventory: React.FC<{
     }
   };
 
+  const handleSellItem = (item: Item) => {
+    if (item.count <= 0) return;
+    
+    const sellPrice = item.id === 'pepita' ? 5000 : 100; // Default sell price if needed, but primarily for nugget
+    
+    if (confirm(`Vuoi vendere 1 ${item.name} per $${sellPrice}?`)) {
+      setState(prev => ({
+        ...prev,
+        player: {
+          ...prev.player,
+          money: prev.player.money + sellPrice,
+          inventory: prev.player.inventory.map(i => 
+            i.id === item.id ? { ...i, count: i.count - 1 } : i
+          )
+        }
+      }));
+    }
+  };
+
   const handleTmMoveSelected = (selectedMove: Move) => {
     if (!tmPokemon) return;
 
@@ -237,8 +256,21 @@ export const Inventory: React.FC<{
                   <p className="text-[10px] text-gray-500">{item.description}</p>
                 </div>
               </div>
-              <div className="bg-blue-600 text-white px-3 py-1 rounded-full font-black text-xs">
-                x{item.count}
+              <div className="flex flex-col items-end gap-2">
+                <div className="bg-blue-600 text-white px-3 py-1 rounded-full font-black text-xs">
+                  x{item.count}
+                </div>
+                {item.id === 'pepita' && (
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleSellItem(item);
+                    }}
+                    className="bg-emerald-500 text-white px-3 py-1 rounded-lg font-bold text-[10px] uppercase hover:bg-emerald-600 active:scale-95 transition-all"
+                  >
+                    Vendi
+                  </button>
+                )}
               </div>
             </div>
           ))
