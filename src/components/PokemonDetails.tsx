@@ -1,7 +1,8 @@
-import React from 'react';
-import { motion } from 'motion/react';
-import { Pokemon, TYPE_COLORS } from '../types/game';
+import React, { useState, useRef } from 'react';
+import { motion, AnimatePresence } from 'motion/react';
+import { Pokemon, Move, TYPE_COLORS } from '../types/game';
 import { Shield, Sword, Zap, Heart, Star, MapPin } from 'lucide-react';
+import { MoveInfoModal } from './battle/MoveInfoModal';
 
 interface PokemonDetailsProps {
   pokemon: Pokemon;
@@ -16,8 +17,52 @@ interface PokemonDetailsProps {
 export const PokemonDetails: React.FC<PokemonDetailsProps> = ({ 
   pokemon, onClose, onMoveUp, onMoveDown, onBox, onWithdraw, onRelease 
 }) => {
+  const [inspectingMove, setInspectingMove] = useState<Move | null>(null);
+  const [holdingMoveName, setHoldingMoveName] = useState<string | null>(null);
+  const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
+  const isLongPressActiveRef = useRef<boolean>(false);
+  const pressStartTimeRef = useRef<number>(0);
+
+  const startPress = (move: Move) => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+    }
+    isLongPressActiveRef.current = false;
+    pressStartTimeRef.current = Date.now();
+    setHoldingMoveName(move.name);
+
+    longPressTimerRef.current = setTimeout(() => {
+      isLongPressActiveRef.current = true;
+      setInspectingMove(move);
+      if (typeof navigator !== 'undefined' && navigator.vibrate) {
+        try { navigator.vibrate(35); } catch { /* ignore */ }
+      }
+    }, 600);
+  };
+
+  const endPress = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    setHoldingMoveName(null);
+  };
+
+  const cancelPress = () => {
+    if (longPressTimerRef.current) {
+      clearTimeout(longPressTimerRef.current);
+      longPressTimerRef.current = null;
+    }
+    setHoldingMoveName(null);
+    isLongPressActiveRef.current = false;
+  };
+
   return (
     <div className="fixed inset-0 z-[100] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
+      <MoveInfoModal 
+        move={inspectingMove} 
+        onClose={() => setInspectingMove(null)} 
+      />
       <motion.div 
         initial={{ y: 50, opacity: 0 }}
         animate={{ y: 0, opacity: 1 }}
@@ -126,14 +171,33 @@ export const PokemonDetails: React.FC<PokemonDetailsProps> = ({
             </div>
           </div>
 
-          <div className="space-y-2">
+          <div className="space-y-2 select-none">
              <h4 className="font-black text-xs uppercase text-slate-500 tracking-widest">Mosse</h4>
+             <p className="text-[9px] font-bold text-slate-400 uppercase mb-1">(Tieni premuto per info)</p>
              <div className="grid grid-cols-2 gap-2">
                 {pokemon.moves.map((m, index) => (
-                  <div key={`${m.name}-${index}`} className={`p-3 rounded-2xl flex flex-col text-white shadow-sm border-b-4 border-black/10 ${TYPE_COLORS[m.type] || 'bg-slate-500'}`}>
+                  <button 
+                    key={`${m.name}-${index}`} 
+                    onMouseDown={() => startPress(m)}
+                    onMouseUp={endPress}
+                    onMouseLeave={cancelPress}
+                    onTouchStart={() => startPress(m)}
+                    onTouchEnd={endPress}
+                    onTouchCancel={cancelPress}
+                    onContextMenu={(e) => e.preventDefault()}
+                    className={`p-3 rounded-2xl flex flex-col text-white shadow-sm border-b-4 border-black/10 relative overflow-hidden transition-transform active:scale-95 text-left ${TYPE_COLORS[m.type.toLowerCase()] || 'bg-slate-500'}`}
+                  >
+                    {holdingMoveName === m.name && (
+                      <motion.div
+                        initial={{ width: '0%' }}
+                        animate={{ width: '100%' }}
+                        transition={{ duration: 0.6, ease: 'linear' }}
+                        className="absolute bottom-0 left-0 h-1 bg-white/75 pointer-events-none"
+                      />
+                    )}
                     <span className="font-black text-[10px] uppercase truncate">{m.name}</span>
-                    <span className="text-[8px] opacity-90 font-bold uppercase">{m.type} | P: {m.power} | ACC: {m.accuracy}%</span>
-                  </div>
+                    <span className="text-[8px] opacity-90 font-bold uppercase">{m.type} | P: {m.power || '—'} | ACC: {m.accuracy || '—'}%</span>
+                  </button>
                 ))}
              </div>
           </div>

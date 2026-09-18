@@ -1,9 +1,9 @@
 import React, { useState, useRef } from 'react';
-import { motion, AnimatePresence } from 'motion/react';
+import { motion } from 'motion/react';
 import { Move, TYPE_COLORS } from '../../types/game';
 import { getEffectiveness } from '../../lib/battle/typeChart';
 import { STRUGGLE_MOVE } from '../../lib/pokeapi';
-import { Sparkles, Swords, Activity, Zap, ShieldAlert } from 'lucide-react';
+import { MoveInfoModal } from './MoveInfoModal';
 
 interface BattleControlsProps {
   moves: Move[];
@@ -15,48 +15,6 @@ interface BattleControlsProps {
   enemyTypes?: string[];
   encryptedMoveIndex?: number | null;
   onEncryptedMoveClick?: () => void;
-}
-
-function getCategoryMeta(category?: 'physical' | 'special' | 'status', type?: string, power?: number) {
-  let cat = category;
-  if (!cat) {
-    if (!power || power === 0) cat = 'status';
-    else {
-      const physicalTypes = ['normal', 'fighting', 'flying', 'poison', 'ground', 'rock', 'bug', 'ghost', 'steel'];
-      cat = physicalTypes.includes((type || '').toLowerCase()) ? 'physical' : 'special';
-    }
-  }
-
-  switch (cat) {
-    case 'physical':
-      return {
-        label: 'Fisica',
-        icon: Swords,
-        color: 'bg-orange-500 text-white',
-        border: 'border-orange-600',
-        badge: '💥 FISICA',
-        desc: 'Calcolata sull\'Attacco di chi attacca e la Difesa del bersaglio.'
-      };
-    case 'special':
-      return {
-        label: 'Speciale',
-        icon: Sparkles,
-        color: 'bg-indigo-500 text-white',
-        border: 'border-indigo-600',
-        badge: '✨ SPECIALE',
-        desc: 'Calcolata sull\'Attacco Speciale di chi attacca e la Difesa Speciale del bersaglio.'
-      };
-    case 'status':
-    default:
-      return {
-        label: 'Stato',
-        icon: Activity,
-        color: 'bg-slate-500 text-white',
-        border: 'border-slate-600',
-        badge: '☯️ STATO',
-        desc: 'Non infligge danno diretto. Altera statistiche, infligge problemi di stato o attiva effetti speciali.'
-      };
-  }
 }
 
 function getEffectivenessInfo(move: Move, enemyTypes?: string[]) {
@@ -202,163 +160,11 @@ export const BattleControls: React.FC<BattleControlsProps> = ({
 
   return (
     <div className="flex-shrink-0 bg-white rounded-3xl p-3 shadow-2xl flex flex-col gap-2 mt-2 relative select-none">
-      {/* Detailed Move Inspection Overlay (Triggered by 600ms hold) */}
-      <AnimatePresence>
-        {inspectingMove && (
-          <motion.div
-            initial={{ opacity: 0, scale: 0.95, y: 10 }}
-            animate={{ opacity: 1, scale: 1, y: 0 }}
-            exit={{ opacity: 0, scale: 0.95, y: 10 }}
-            transition={{ duration: 0.15 }}
-            onClick={() => setInspectingMove(null)}
-            className="fixed inset-0 z-[150] flex items-end sm:items-center justify-center p-4 bg-black/60 backdrop-blur-sm cursor-pointer"
-          >
-            <div 
-              onClick={(e) => e.stopPropagation()}
-              className="bg-white text-slate-900 w-full max-w-sm rounded-[2rem] p-5 shadow-2xl border-4 border-slate-200 pointer-events-auto space-y-3.5 cursor-default relative"
-            >
-              {/* Header with Type & Category */}
-              <div className="flex items-start justify-between gap-2 border-b border-slate-100 pb-3">
-                <div className="min-w-0">
-                  <div className="flex items-center gap-2 flex-wrap">
-                    <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase text-white shadow-sm ${TYPE_COLORS[inspectingMove.type.toLowerCase()] || 'bg-slate-600'}`}>
-                      {inspectingMove.type}
-                    </span>
-                    {(() => {
-                      const cat = getCategoryMeta(inspectingMove.category, inspectingMove.type, inspectingMove.power);
-                      return (
-                        <span className={`px-2.5 py-0.5 rounded-full text-[10px] font-black uppercase shadow-sm ${cat.color}`}>
-                          {cat.badge}
-                        </span>
-                      );
-                    })()}
-                  </div>
-                  <h3 className="text-xl font-black uppercase tracking-tight text-slate-900 mt-1">
-                    {inspectingMove.name}
-                  </h3>
-                </div>
-
-                <div className="text-right shrink-0">
-                  <span className="text-[10px] font-black uppercase text-slate-400 block">PP</span>
-                  <span className="text-base font-mono font-black text-slate-800">
-                    {inspectingMove.pp ?? inspectingMove.maxPp ?? 35} / {inspectingMove.maxPp ?? inspectingMove.pp ?? 35}
-                  </span>
-                </div>
-              </div>
-
-              {/* Stats Grid: Potenza, Precisione, Priorità */}
-              <div className="grid grid-cols-3 gap-2 text-center bg-slate-50 p-2.5 rounded-2xl border border-slate-100">
-                <div>
-                  <span className="text-[9px] font-black uppercase text-slate-400 block">Potenza</span>
-                  <span className="text-sm font-black text-slate-800 font-mono">
-                    {inspectingMove.category === 'status' || !inspectingMove.power || inspectingMove.power === 0 
-                      ? '—' 
-                      : inspectingMove.power}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-[9px] font-black uppercase text-slate-400 block">Precisione</span>
-                  <span className="text-sm font-black text-slate-800 font-mono">
-                    {inspectingMove.accuracy ? `${inspectingMove.accuracy}%` : '—'}
-                  </span>
-                </div>
-                <div>
-                  <span className="text-[9px] font-black uppercase text-slate-400 block">Priorità</span>
-                  <span className="text-sm font-black text-slate-800 font-mono">
-                    {inspectingMove.priority ? `+${inspectingMove.priority}` : 'Normale (0)'}
-                  </span>
-                </div>
-              </div>
-
-              {/* Category Explanation */}
-              {(() => {
-                const cat = getCategoryMeta(inspectingMove.category, inspectingMove.type, inspectingMove.power);
-                return (
-                  <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-100 flex items-start gap-2">
-                    <span className="text-lg shrink-0 mt-0.5">{cat.icon === Swords ? '💥' : cat.icon === Sparkles ? '✨' : '☯️'}</span>
-                    <p className="text-[11px] text-slate-600 font-medium leading-snug">
-                      <strong className="text-slate-900 font-bold uppercase">{cat.label}:</strong> {cat.desc}
-                    </p>
-                  </div>
-                );
-              })()}
-
-              {/* Type Effectiveness against opponent */}
-              {enemyTypes && enemyTypes.length > 0 && (
-                <div className="bg-slate-50 rounded-xl p-2.5 border border-slate-100">
-                  <span className="text-[9px] font-black uppercase text-slate-400 block mb-0.5">
-                    Efficacia contro avversario ({enemyTypes.join('/')}):
-                  </span>
-                  {(() => {
-                    const info = getEffectivenessInfo(inspectingMove, enemyTypes);
-                    return (
-                      <p className={`text-xs ${info.color}`}>
-                        {info.text}
-                      </p>
-                    );
-                  })()}
-                </div>
-              )}
-
-              {/* Move Description or Additional Effects */}
-              {inspectingMove.description && (
-                <div className="text-xs text-slate-600 italic bg-amber-50/70 border border-amber-200/60 p-2.5 rounded-xl">
-                  "{inspectingMove.description}"
-                </div>
-              )}
-
-              {/* Specific secondary effects */}
-              <div className="space-y-1 text-[11px] font-semibold text-slate-700">
-                {inspectingMove.statusEffect && (
-                  <div className="flex items-center gap-1.5 text-purple-700">
-                    <Zap className="w-3.5 h-3.5 shrink-0" />
-                    <span>
-                      Può infliggere <strong>{
-                        inspectingMove.statusEffect === 'poisoned' ? 'Avvelenamento' :
-                        inspectingMove.statusEffect === 'paralyzed' ? 'Paralisi' :
-                        inspectingMove.statusEffect === 'burned' ? 'Scottatura' :
-                        inspectingMove.statusEffect === 'sleep' ? 'Sonno' : 'Congelamento'
-                      }</strong>{inspectingMove.effectChance ? ` (${inspectingMove.effectChance}%)` : ''}
-                    </span>
-                  </div>
-                )}
-                {inspectingMove.flinchChance && (
-                  <div className="flex items-center gap-1.5 text-blue-700">
-                    <ShieldAlert className="w-3.5 h-3.5 shrink-0" />
-                    <span>Può far tentennare il nemico ({inspectingMove.flinchChance}%)</span>
-                  </div>
-                )}
-                {inspectingMove.drain && (
-                  <div className="text-emerald-700">
-                    🌿 Ripristina il {Math.round(inspectingMove.drain * 100)}% del danno inflitto come PS
-                  </div>
-                )}
-                {inspectingMove.healing && (
-                  <div className="text-emerald-700">
-                    💚 Cura il {Math.round(inspectingMove.healing * 100)}% dei PS massimi dell'utilizzatore
-                  </div>
-                )}
-                {inspectingMove.recoil && (
-                  <div className="text-red-600">
-                    ⚠️ Subisce il {Math.round(inspectingMove.recoil * 100)}% del danno come contraccolpo
-                  </div>
-                )}
-              </div>
-
-              {/* Close button footer */}
-              <div className="pt-2 border-t border-slate-100">
-                <button
-                  type="button"
-                  onClick={() => setInspectingMove(null)}
-                  className="w-full bg-slate-900 hover:bg-slate-800 text-white py-3 rounded-xl font-black uppercase tracking-wider text-xs shadow-md transition-all cursor-pointer"
-                >
-                  Chiudi Scheda
-                </button>
-              </div>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
+      <MoveInfoModal 
+        move={inspectingMove} 
+        onClose={() => setInspectingMove(null)} 
+        enemyTypes={enemyTypes}
+      />
 
       {allPpDepleted ? (
         <div className="flex flex-col gap-1.5">
@@ -436,7 +242,6 @@ export const BattleControls: React.FC<BattleControlsProps> = ({
                 )}
 
                 <div className="flex items-center justify-between w-full px-2">
-                  {/* Dedicated smaller font size for move name only */}
                   <span className="text-[11px] sm:text-xs font-bold leading-tight truncate text-left">
                     {move.name}
                   </span>
