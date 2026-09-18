@@ -42,6 +42,30 @@ export function unlockAudio() {
   } else if (ctx) {
     audioUnlocked = true;
   }
+
+  // Pre-load and unlock audio elements on touch gesture so mobile OS allows async playback during battle
+  if (typeof window !== 'undefined') {
+    const defaultUrls = ['/audio/super_effective.wav', '/audio/not_very_effective.wav'];
+    defaultUrls.forEach(url => {
+      try {
+        let audio = audioElementsCache.get(url);
+        if (!audio) {
+          audio = new Audio(url);
+          audio.preload = 'auto';
+          audioElementsCache.set(url, audio);
+        }
+        audio.volume = 0.001;
+        const promise = audio.play();
+        if (promise !== undefined) {
+          promise.then(() => {
+            audio?.pause();
+            audio!.currentTime = 0;
+            audio!.volume = 0.9;
+          }).catch(() => {});
+        }
+      } catch {}
+    });
+  }
 }
 
 if (typeof window !== 'undefined') {
@@ -221,7 +245,15 @@ export function playHit(effectiveness: 'super' | 'not_very' | 'normal' | 'crit')
   }
 
   if (audioUrl) {
-    playAudioUrl(audioUrl, 0.9);
+    const played = playAudioUrl(audioUrl, 0.9);
+    if (!played) {
+      // Synthesized 8-bit Web Audio fallback for mobile devices
+      if (effectiveness === 'super' || effectiveness === 'crit') {
+        playTone(523, 1046, 0.25, 'triangle', 0.2);
+      } else if (effectiveness === 'not_very') {
+        playTone(220, 110, 0.2, 'sawtooth', 0.15);
+      }
+    }
   }
 
   // Normal hits and all synthesized fallback tones are completely silenced per user request
