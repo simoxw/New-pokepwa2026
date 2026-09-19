@@ -31,19 +31,25 @@ export const Hub: React.FC = () => {
   ];
 
   const goToZone = (zoneId: string) => {
-    if (zoneId === 'datacenter-lega') {
-      openLeague();
-      setShowMap(false);
-      return;
-    }
-
-    if (zoneId === 'area-zero' && (state.player.leagueVictories || 0) < 1) {
-      setDialogue("⚠️ ACCESSO NEGATO: L'Area Zero Digitale è protetta da crittografia quantistica! Solo chi ha sconfitto la Lega Pokémon e conquistato il titolo di Campione può entrarvi.");
+    const isPostGameZone = ['area-zero', 'santuario-glitch', 'abisso-codice'].includes(zoneId);
+    
+    if (isPostGameZone && (state.player.leagueVictories || 0) < 1) {
+      setDialogue(`⚠️ ACCESSO NEGATO: ${ZONES.find(z => z.id === zoneId)?.name || 'Questa zona'} è protetta da crittografia quantistica! Solo chi ha sconfitto la Lega Pokémon e conquistato il titolo di Campione può entrarvi.`);
       return;
     }
 
     if (!isAreaUnlocked(zoneId, state.player.badges, state.player.leagueVictories || 0)) {
-      setDialogue("Quella zona è chiusa! Sconfiggi i Capipalestra per ottenere le medaglie necessarie. Non farmi ripetere!");
+      const zone = ZONES.find(z => z.id === zoneId);
+      const lockMsg = zoneId === 'datacenter-lega' 
+        ? "Accesso negato al Datacenter. Devi possedere tutte le 10 Medaglie per sfidare la Lega Pokémon!"
+        : "Quella zona è chiusa! Sconfiggi i Capipalestra per ottenere le medaglie necessarie.";
+      setDialogue(lockMsg);
+      return;
+    }
+
+    if (zoneId === 'datacenter-lega') {
+      openLeague();
+      setShowMap(false);
       return;
     }
     setState(prev => ({
@@ -287,7 +293,7 @@ export const Hub: React.FC = () => {
           icon={<span className="text-xl">👑</span>} 
           label={state.player.badges.length >= 10 ? "Lega Pokémon" : "Lega (10 Med.)"} 
           onClick={openLeague}
-          color="border-purple-600"
+          color={state.player.badges.length >= 10 ? "border-purple-600" : "border-gray-400 opacity-70 grayscale"}
           isNight={isNight}
         />
         <ActionButton 
@@ -376,9 +382,9 @@ export const Hub: React.FC = () => {
             </div>
             <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
               {ZONES.filter(z => z.id !== 'villaggio').map(zone => {
-                const isAreaZero = zone.id === 'area-zero';
+                const isPostGame = ['area-zero', 'santuario-glitch', 'abisso-codice'].includes(zone.id);
                 const isUnlocked = isAreaUnlocked(zone.id, state.player.badges, state.player.leagueVictories || 0);
-                const lockReason = isAreaZero 
+                const lockReason = isPostGame 
                   ? 'Accesso riservato: sconfiggi la Lega Pokémon per sbloccare!' 
                   : (zone.id === 'datacenter-lega' ? 'Richiede 10 Medaglie per entrare.' : 'Area bloccata: richiede una medaglia.');
                 
@@ -387,7 +393,7 @@ export const Hub: React.FC = () => {
                     key={zone.id}
                     onClick={() => goToZone(zone.id)}
                     className={`w-full flex items-center justify-between p-4 rounded-2xl border-2 transition-all shrink-0 text-left ${
-                      isAreaZero && isUnlocked
+                      isPostGame && isUnlocked
                         ? 'border-purple-300 bg-gradient-to-r from-purple-50 via-indigo-50 to-pink-50 shadow-md shadow-purple-100'
                         : isUnlocked 
                           ? 'border-gray-100 active:bg-blue-50' 
@@ -397,7 +403,7 @@ export const Hub: React.FC = () => {
                     <div className="text-left pr-2">
                       <h4 className="font-bold flex items-center gap-2">
                         <span>{zone.name}</span>
-                        {isAreaZero && isUnlocked && (
+                        {isPostGame && isUnlocked && (
                           <span className="text-[10px] bg-purple-600 text-white font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
                             Post-Game
                           </span>
@@ -407,7 +413,7 @@ export const Hub: React.FC = () => {
                       <p className="text-xs text-gray-500 mt-0.5">{isUnlocked ? zone.description : lockReason}</p>
                     </div>
                     {isUnlocked ? (
-                      <div className={`p-2 rounded-xl shrink-0 ${isAreaZero ? 'bg-purple-600 text-white' : 'bg-blue-500 text-white'}`}>
+                      <div className={`p-2 rounded-xl shrink-0 ${isPostGame ? 'bg-purple-600 text-white' : 'bg-blue-500 text-white'}`}>
                         <Play className="w-4 h-4 fill-current" />
                       </div>
                     ) : (

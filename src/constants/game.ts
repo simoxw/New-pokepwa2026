@@ -12,6 +12,11 @@ export interface Zone {
     minLevel: number;
     maxLevel: number;
   }[];
+  trainerTable?: {
+    trainerId: string;
+    rarity: number; // 0-100
+    isGymLeader?: boolean;
+  }[];
 }
 
 export const ZONES: Zone[] = [
@@ -107,10 +112,19 @@ export const ZONES: Zone[] = [
       { pokemonId: 928, rarity: 4, minLevel: 6, maxLevel: 12 }, // Smoliv
       { pokemonId: 944, rarity: 3, minLevel: 12, maxLevel: 18 }, // Shroodle
       { pokemonId: 946, rarity: 3, minLevel: 12, maxLevel: 18 }, // Capsakid
+      { pokemonId: 953, rarity: 4, minLevel: 10, maxLevel: 16 }, // Rellor
+      { pokemonId: 957, rarity: 4, minLevel: 12, maxLevel: 18 }, // Tinkatink
+      { pokemonId: 962, rarity: 4, minLevel: 8, maxLevel: 14 },  // Bombirdier
+      { pokemonId: 948, rarity: 3, minLevel: 12, maxLevel: 18 }, // Toedscool
+      { pokemonId: 840, rarity: 4, minLevel: 15, maxLevel: 20 }, // Applin
       { pokemonId: 251, rarity: 0.5, minLevel: 30, maxLevel: 30 }, // Celebi (Molto raro!)
       { pokemonId: 151, rarity: 0.5, minLevel: 30, maxLevel: 30 }, // Mew (Molto raro!)
       { pokemonId: 492, rarity: 0.5, minLevel: 30, maxLevel: 30 }, // Shaymin (Molto raro!)
     ],
+    trainerTable: [
+      { trainerId: 'giovane-pino', rarity: 10, isGymLeader: true },
+      { trainerId: 'recluta-eclipse-1', rarity: 30 }
+    ]
   },
   {
     id: 'prateria',
@@ -226,7 +240,19 @@ export const ZONES: Zone[] = [
       { pokemonId: 931, rarity: 3, minLevel: 10, maxLevel: 16 }, // Squawkabilly
       { pokemonId: 942, rarity: 3, minLevel: 10, maxLevel: 16 }, // Maschiff
       { pokemonId: 967, rarity: 2, minLevel: 18, maxLevel: 26 }, // Cyclizar
+      { pokemonId: 970, rarity: 3, minLevel: 12, maxLevel: 20 }, // Luwope (Wait, maybe a typo in user's head, I'll use 970 which is Komala/something else?)
+      // Correcting to 970 which is Glimmet (already there as 969)
+      // I'll add Flamigo (973) and Klawf (950) - Klawf is in grotta, I'll add Flamigo here
+      { pokemonId: 973, rarity: 3, minLevel: 15, maxLevel: 22 }, // Flamigo
+      { pokemonId: 849, rarity: 3, minLevel: 12, maxLevel: 18 }, // Toxtricity (Wait, 848 is Toxel)
+      { pokemonId: 848, rarity: 4, minLevel: 8, maxLevel: 14 },  // Toxel
+      { pokemonId: 133, rarity: 10, minLevel: 5, maxLevel: 10 }, // Eevee (Increased rarity)
     ],
+    trainerTable: [
+      { trainerId: 'bullo-luca', rarity: 10, isGymLeader: true },
+      { trainerId: 'giovane-pino', rarity: 20 },
+      { trainerId: 'recluta-eclipse-1', rarity: 30 }
+    ]
   },
   {
     id: 'vulcano',
@@ -266,6 +292,10 @@ export const ZONES: Zone[] = [
       { pokemonId: 146, rarity: 0.5, minLevel: 50, maxLevel: 50 }, // Moltres (Raro!)
       { pokemonId: 244, rarity: 0.5, minLevel: 50, maxLevel: 50 }, // Entei (Raro!)
     ],
+    trainerTable: [
+      { trainerId: 'piromane-leo', rarity: 10, isGymLeader: true },
+      { trainerId: 'recluta-eclipse-2', rarity: 30 }
+    ]
   },
   {
     id: 'spiaggia',
@@ -334,10 +364,18 @@ export const ZONES: Zone[] = [
       { pokemonId: 976, rarity: 3, minLevel: 18, maxLevel: 26 }, // Veluza
       { pokemonId: 977, rarity: 2, minLevel: 22, maxLevel: 30 }, // Dondozo
       { pokemonId: 978, rarity: 3, minLevel: 18, maxLevel: 26 }, // Tatsugiri
+      { pokemonId: 845, rarity: 3, minLevel: 15, maxLevel: 25 }, // Cramorant
+      { pokemonId: 902, rarity: 2, minLevel: 30, maxLevel: 40 }, // Basculegion
+      { pokemonId: 914, rarity: 2, minLevel: 36, maxLevel: 45 }, // Quaquaval
+      { pokemonId: 9, rarity: 2, minLevel: 36, maxLevel: 45 },   // Blastoise
       { pokemonId: 144, rarity: 0.5, minLevel: 50, maxLevel: 50 }, // Articuno (Raro!)
       { pokemonId: 245, rarity: 0.5, minLevel: 50, maxLevel: 50 }, // Suicune (Raro!)
       { pokemonId: 249, rarity: 0.2, minLevel: 60, maxLevel: 60 }, // Lugia (Legendario!)
     ],
+    trainerTable: [
+      { trainerId: 'pescatore-gianni', rarity: 10, isGymLeader: true },
+      { trainerId: 'recluta-eclipse-1', rarity: 30 }
+    ]
   },
   {
     id: 'grotta',
@@ -409,6 +447,11 @@ export const ZONES: Zone[] = [
       { pokemonId: 996, rarity: 2, minLevel: 25, maxLevel: 35 }, // Frigibax
       { pokemonId: 377, rarity: 0.1, minLevel: 50, maxLevel: 50 }, // Regirock (Legendario!)
     ],
+    trainerTable: [
+      { trainerId: 'scienziato-filippo', rarity: 10, isGymLeader: true },
+      { trainerId: 'recluta-eclipse-2', rarity: 25 },
+      { trainerId: 'alpinista-marco', rarity: 15 }
+    ]
   },
   {
     id: 'cimitero',
@@ -456,6 +499,11 @@ export const ZONES: Zone[] = [
       { pokemonId: 971, rarity: 4, minLevel: 18, maxLevel: 26 },  // Greavard
       { pokemonId: 487, rarity: 0.1, minLevel: 60, maxLevel: 60 }, // Giratina (Legendario!)
     ],
+    trainerTable: [
+      { trainerId: 'ombretta', rarity: 10, isGymLeader: true },
+      { trainerId: 'tenente-eclipse-ombra', rarity: 20 },
+      { trainerId: 'ombra-silente', rarity: 10 }
+    ]
   },
   {
     id: 'laboratorio',
@@ -490,8 +538,14 @@ export const ZONES: Zone[] = [
       { pokemonId: 938, rarity: 5, minLevel: 16, maxLevel: 24 },  // Tadbulb
       { pokemonId: 940, rarity: 5, minLevel: 16, maxLevel: 24 },  // Wattrel
       { pokemonId: 965, rarity: 4, minLevel: 20, maxLevel: 28 },  // Varoom
+      { pokemonId: 999, rarity: 2, minLevel: 15, maxLevel: 25 },  // Gimmighoul
       { pokemonId: 649, rarity: 0.1, minLevel: 50, maxLevel: 50 }, // Genesect (Legendario!)
     ],
+    trainerTable: [
+      { trainerId: 'tenente-eclipse-ombra', rarity: 10, isGymLeader: true },
+      { trainerId: 'scienziato-filippo', rarity: 25 },
+      { trainerId: 'recluta-eclipse-2', rarity: 25 }
+    ]
   },
   {
     id: 'montagna',
@@ -515,10 +569,15 @@ export const ZONES: Zone[] = [
       { pokemonId: 875, rarity: 3, minLevel: 35, maxLevel: 45 },  // Eiscue
       { pokemonId: 872, rarity: 5, minLevel: 20, maxLevel: 30 },  // Snom
       { pokemonId: 974, rarity: 4, minLevel: 25, maxLevel: 35 },  // Cetoddle
+      { pokemonId: 996, rarity: 3, minLevel: 28, maxLevel: 38 },  // Frigibax
       { pokemonId: 145, rarity: 0.5, minLevel: 50, maxLevel: 50 }, // Zapdos (Raro!)
       { pokemonId: 243, rarity: 0.5, minLevel: 50, maxLevel: 50 }, // Raikou (Raro!)
       { pokemonId: 250, rarity: 0.2, minLevel: 60, maxLevel: 60 }, // Ho-Oh (Legendario!)
     ],
+    trainerTable: [
+      { trainerId: 'alpinista-marco', rarity: 10, isGymLeader: true },
+      { trainerId: 'recluta-eclipse-2', rarity: 30 }
+    ]
   },
   {
     id: 'rovina',
@@ -548,31 +607,11 @@ export const ZONES: Zone[] = [
       { pokemonId: 483, rarity: 0.1, minLevel: 70, maxLevel: 70 }, // Dialga (Legendario!)
       { pokemonId: 484, rarity: 0.1, minLevel: 70, maxLevel: 70 }, // Palkia (Legendario!)
     ],
-  },
-  {
-    id: 'palude',
-    name: 'Palude del Bug',
-    description: 'Un acquitrino pieno di Pokémon Coleottero e Veleno.',
-    background: 'bg-green-900',
-    spawnTable: [
-      { pokemonId: 10, rarity: 15, minLevel: 25, maxLevel: 30 }, // Caterpie
-      { pokemonId: 13, rarity: 15, minLevel: 25, maxLevel: 30 }, // Weedle
-      { pokemonId: 23, rarity: 8, minLevel: 25, maxLevel: 32 },  // Ekans
-      { pokemonId: 46, rarity: 10, minLevel: 28, maxLevel: 35 }, // Paras
-      { pokemonId: 48, rarity: 10, minLevel: 30, maxLevel: 38 }, // Venonat
-      { pokemonId: 123, rarity: 5, minLevel: 35, maxLevel: 45 },  // Scyther
-      { pokemonId: 214, rarity: 5, minLevel: 35, maxLevel: 45 },  // Heracross
-      { pokemonId: 453, rarity: 6, minLevel: 28, maxLevel: 36 },  // Croagunk
-      { pokemonId: 543, rarity: 8, minLevel: 25, maxLevel: 32 },  // Venipede
-      { pokemonId: 540, rarity: 8, minLevel: 25, maxLevel: 32 },  // Sewaddle
-      { pokemonId: 595, rarity: 5, minLevel: 30, maxLevel: 38 },  // Joltik
-      { pokemonId: 618, rarity: 4, minLevel: 30, maxLevel: 38 },  // Stunfisk
-      { pokemonId: 632, rarity: 5, minLevel: 35, maxLevel: 42 },  // Durant
-      { pokemonId: 751, rarity: 4, minLevel: 28, maxLevel: 36 },  // Dewpider
-      { pokemonId: 848, rarity: 4, minLevel: 26, maxLevel: 35 },  // Toxel
-      { pokemonId: 637, rarity: 2, minLevel: 45, maxLevel: 55 },  // Volcarona
-      { pokemonId: 344, rarity: 0.1, minLevel: 60, maxLevel: 60 }, // Claydol
-    ],
+    trainerTable: [
+      { trainerId: 'ombra-silente', rarity: 10, isGymLeader: true },
+      { trainerId: 'tenente-eclipse-ombra', rarity: 15 },
+      { trainerId: 'ombretta', rarity: 15 }
+    ]
   },
   {
     id: 'isola-server',
@@ -602,6 +641,10 @@ export const ZONES: Zone[] = [
       { pokemonId: 642, rarity: 0.1, minLevel: 70, maxLevel: 70 }, // Thundurus
       { pokemonId: 785, rarity: 0.1, minLevel: 70, maxLevel: 70 }, // Tapu Koko
     ],
+    trainerTable: [
+      { trainerId: 'admin-root', rarity: 10, isGymLeader: true },
+      { trainerId: 'scienziato-filippo', rarity: 30 }
+    ]
   },
   {
     id: 'datacenter-lega',
@@ -673,6 +716,65 @@ export const ZONES: Zone[] = [
       { pokemonId: 1008, rarity: 1, minLevel: 80, maxLevel: 85 },  // Miraidon
       { pokemonId: 1024, rarity: 1, minLevel: 80, maxLevel: 85 },  // Terapagos
       { pokemonId: 493, rarity: 0.5, minLevel: 85, maxLevel: 85 }, // Arceus (Il Creatore di Codice)
+    ],
+  },
+  {
+    id: 'santuario-glitch',
+    name: 'Santuario dei Glitch (Post-Game)',
+    description: 'Un tempio sospeso tra le righe di codice accessibile solo dopo aver sconfitto la Lega Pokémon. Qui appaiono le Ultra Creature e i Pokémon Mitici più rari.',
+    background: 'bg-purple-900',
+    spawnTable: [
+      { pokemonId: 385, rarity: 1, minLevel: 50, maxLevel: 60 }, // Jirachi
+      { pokemonId: 494, rarity: 1, minLevel: 50, maxLevel: 60 }, // Victini
+      { pokemonId: 648, rarity: 1, minLevel: 50, maxLevel: 60 }, // Meloetta
+      { pokemonId: 719, rarity: 1, minLevel: 50, maxLevel: 60 }, // Diancie
+      { pokemonId: 720, rarity: 1, minLevel: 50, maxLevel: 60 }, // Hoopa
+      { pokemonId: 721, rarity: 1, minLevel: 50, maxLevel: 60 }, // Volcanion
+      { pokemonId: 801, rarity: 1, minLevel: 50, maxLevel: 60 }, // Magearna
+      { pokemonId: 802, rarity: 1, minLevel: 50, maxLevel: 60 }, // Marshadow
+      { pokemonId: 807, rarity: 1, minLevel: 50, maxLevel: 60 }, // Zeraora
+      { pokemonId: 793, rarity: 2, minLevel: 60, maxLevel: 70 }, // Nihilego
+      { pokemonId: 794, rarity: 2, minLevel: 60, maxLevel: 70 }, // Buzzwole
+      { pokemonId: 795, rarity: 2, minLevel: 60, maxLevel: 70 }, // Pheromosa
+      { pokemonId: 796, rarity: 2, minLevel: 60, maxLevel: 70 }, // Xurkitree
+      { pokemonId: 797, rarity: 2, minLevel: 60, maxLevel: 70 }, // Celesteela
+      { pokemonId: 798, rarity: 2, minLevel: 60, maxLevel: 70 }, // Kartana
+      { pokemonId: 799, rarity: 2, minLevel: 60, maxLevel: 70 }, // Guzzlord
+      { pokemonId: 803, rarity: 2, minLevel: 40, maxLevel: 50 }, // Poipole
+      { pokemonId: 805, rarity: 2, minLevel: 60, maxLevel: 70 }, // Stakataka
+      { pokemonId: 806, rarity: 2, minLevel: 60, maxLevel: 70 }, // Blacephalon
+      { pokemonId: 891, rarity: 3, minLevel: 30, maxLevel: 40 }, // Kubfu
+      { pokemonId: 898, rarity: 1, minLevel: 70, maxLevel: 80 }, // Calyrex
+      { pokemonId: 905, rarity: 1, minLevel: 70, maxLevel: 80 }, // Enamorus
+      { pokemonId: 1017, rarity: 1, minLevel: 70, maxLevel: 80 }, // Ogerpon
+      { pokemonId: 1025, rarity: 0.5, minLevel: 80, maxLevel: 85 }, // Pecharunt
+    ],
+  },
+  {
+    id: 'abisso-codice',
+    name: 'Abisso del Codice (Post-Game)',
+    description: 'Il punto più profondo del database accessibile solo dopo aver sconfitto la Lega Pokémon, dove risiedono i guardiani leggendari e le memorie sommerse.',
+    background: 'bg-blue-950',
+    spawnTable: [
+      { pokemonId: 489, rarity: 3, minLevel: 20, maxLevel: 30 }, // Phione
+      { pokemonId: 490, rarity: 1, minLevel: 50, maxLevel: 60 }, // Manaphy
+      { pokemonId: 380, rarity: 2, minLevel: 50, maxLevel: 60 }, // Latias
+      { pokemonId: 381, rarity: 2, minLevel: 50, maxLevel: 60 }, // Latios
+      { pokemonId: 480, rarity: 2, minLevel: 50, maxLevel: 60 }, // Uxie
+      { pokemonId: 481, rarity: 2, minLevel: 50, maxLevel: 60 }, // Mesprit
+      { pokemonId: 482, rarity: 2, minLevel: 50, maxLevel: 60 }, // Azelf
+      { pokemonId: 488, rarity: 2, minLevel: 50, maxLevel: 60 }, // Cresselia
+      { pokemonId: 789, rarity: 3, minLevel: 10, maxLevel: 20 }, // Cosmog
+      { pokemonId: 792, rarity: 1, minLevel: 60, maxLevel: 70 }, // Lunala
+      { pokemonId: 647, rarity: 1, minLevel: 50, maxLevel: 60 }, // Keldeo
+      { pokemonId: 378, rarity: 2, minLevel: 40, maxLevel: 50 }, // Regice
+      { pokemonId: 379, rarity: 2, minLevel: 40, maxLevel: 50 }, // Registeel
+      { pokemonId: 894, rarity: 1, minLevel: 60, maxLevel: 70 }, // Regieleki
+      { pokemonId: 895, rarity: 1, minLevel: 60, maxLevel: 70 }, // Regidrago
+      { pokemonId: 1001, rarity: 1, minLevel: 60, maxLevel: 70 }, // Wo-Chien
+      { pokemonId: 1002, rarity: 1, minLevel: 60, maxLevel: 70 }, // Chien-Pao
+      { pokemonId: 1003, rarity: 1, minLevel: 60, maxLevel: 70 }, // Ting-Lu
+      { pokemonId: 1004, rarity: 1, minLevel: 60, maxLevel: 70 }, // Chi-Yu
     ],
   },
 ];

@@ -15,11 +15,31 @@ export const Sfidofono: React.FC<SfidofonoProps> = ({ onBack, onStartBattle }) =
   const [loading, setLoading] = React.useState(false);
 
   const defeatedIds = state.player.defeatedTrainers || [];
+  const badgeIds = state.player.badges || [];
+  
+  // Map badges to their corresponding trainer IDs
+  const gymLeaderMapping: Record<string, string> = {
+    'badge-1': 'giovane-pino',
+    'badge-2': 'bullo-luca',
+    'badge-3': 'pescatore-gianni',
+    'badge-4': 'piromane-leo',
+    'badge-5': 'scienziato-filippo',
+    'badge-6': 'ombretta',
+    'badge-7': 'tenente-eclipse-ombra',
+    'badge-8': 'alpinista-marco',
+    'badge-9': 'ombra-silente',
+    'badge-10': 'admin-root',
+  };
+
+  // Combine defeated trainers and gym leaders from badges
+  const gymLeaderIdsFromBadges = badgeIds.map(bid => gymLeaderMapping[bid]).filter(Boolean);
+  const allAvailableTrainers = Array.from(new Set([...defeatedIds, ...gymLeaderIdsFromBadges]));
   
   const handleRematch = async (trainerId: string) => {
     setLoading(true);
     try {
-      const trainer = await getTrainer(trainerId as any);
+      const isGymLeader = Object.values(gymLeaderMapping).includes(trainerId);
+      const trainer = await getTrainer(trainerId as any, isGymLeader);
       onStartBattle(trainer);
     } catch (e) {
       console.error(e);
@@ -49,14 +69,14 @@ export const Sfidofono: React.FC<SfidofonoProps> = ({ onBack, onStartBattle }) =
       </p>
 
       <div className="flex-1 overflow-y-auto pr-2 custom-scrollbar">
-        {defeatedIds.length === 0 ? (
+        {allAvailableTrainers.length === 0 ? (
           <div className="h-full flex flex-col items-center justify-center text-center p-8 opacity-40">
             <Swords className="w-16 h-16 mb-4" />
             <p className="text-sm font-bold uppercase">Non hai ancora sconfitto nessun allenatore degno di nota.</p>
           </div>
         ) : (
           <div className="space-y-4 pb-6">
-            {defeatedIds.map((id) => {
+            {allAvailableTrainers.map((id) => {
               const data = (TRAINERS_DATA as any)[id];
               if (!data) return null;
               
@@ -77,7 +97,9 @@ export const Sfidofono: React.FC<SfidofonoProps> = ({ onBack, onStartBattle }) =
                     </div>
                     <div>
                       <h3 className="font-black uppercase text-sm">{data.name}</h3>
-                      <p className="text-[10px] text-blue-400 font-bold uppercase">{data.type}</p>
+                      <p className="text-[10px] text-blue-400 font-bold uppercase">
+                        {Object.values(gymLeaderMapping).includes(id) ? 'Capopalestra' : data.type}
+                      </p>
                     </div>
                   </div>
                   

@@ -127,7 +127,9 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
 
   // Logs & UI
   const [logs, setLogs] = useState<string[]>(() => {
-    const initialLogs = trainer ? [`L'allenatore ${trainer.name} ti sfida!`, `Inizia la battaglia!`] : ['Inizia la battaglia!'];
+    const initialLogs = trainer 
+      ? [`${trainer.isGymLeader ? 'IL CAPOPALESTRA' : 'L\'allenatore'} ${trainer.name} ti sfida!`, `Inizia la battaglia!`] 
+      : ['Inizia la battaglia!'];
     if (initialEnemy.isShiny) {
       initialLogs.unshift(`✨ Un Pokémon cromatico è apparso! ✨`);
     }
@@ -1150,9 +1152,14 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
               </div>
             )}
             {trainer && (
-              <div className="absolute -bottom-14 -right-2 flex flex-col items-end pointer-events-none">
+              <div className="absolute -bottom-16 -right-2 flex flex-col items-end pointer-events-none">
                 <img src={trainer.sprite} alt="trainer" className="w-14 h-14 object-contain opacity-80 drop-shadow-lg" />
-                <span className="text-[9px] font-black uppercase text-white bg-blue-600/80 px-2 py-0.5 rounded-full border border-blue-400 shadow-sm">{trainer.name}</span>
+                <div className="flex flex-col items-end">
+                  <span className="text-[10px] font-black uppercase text-white bg-blue-600/80 px-2 py-0.5 rounded-full border border-blue-400 shadow-sm leading-none">{trainer.name}</span>
+                  {trainer.isGymLeader && (
+                    <span className="text-[7px] font-black uppercase text-yellow-300 bg-black/80 px-1.5 py-0.5 rounded-full border border-yellow-500/50 mt-0.5 animate-pulse shadow-lg shadow-yellow-500/20">Capopalestra</span>
+                  )}
+                </div>
               </div>
             )}
           </motion.div>

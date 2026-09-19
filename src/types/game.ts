@@ -141,6 +141,7 @@ export interface Trainer {
   quote: string;
   winQuote: string;
   moneyReward: number;
+  isGymLeader?: boolean;
 }
 
 export interface Item {

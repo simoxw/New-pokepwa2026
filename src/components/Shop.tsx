@@ -28,7 +28,8 @@ export const Shop: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
     setState(prev => {
       const inventory = [...prev.player.inventory];
-      const itemIndex = inventory.findIndex(i => i.id === shopItem.id);
+      const searchName = shopItem.name.toLowerCase();
+      const itemIndex = inventory.findIndex(i => i.name.toLowerCase() === searchName);
 
       if (itemIndex > -1) {
         inventory[itemIndex] = { ...inventory[itemIndex], count: inventory[itemIndex].count + 1 };

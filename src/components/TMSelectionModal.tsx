@@ -78,13 +78,13 @@ export const TMSelectionModal: React.FC<TMSelectionModalProps> = ({
               </h3>
               <p className="text-xs font-semibold text-purple-200 flex items-center gap-1.5 flex-wrap">
                 Insegna una mossa a <span className="text-white font-bold">{pokemon.nickname || pokemon.name}</span>
-                <span className="flex gap-1">
+                <span className="flex gap-1 flex-wrap">
                   {pokemon.types.map(t => {
                     const typeLower = t.toLowerCase();
                     const colorClass = TYPE_COLORS[typeLower] || 'bg-slate-500';
                     const typeLabel = TYPE_TRANSLATIONS[typeLower] || typeLower.toUpperCase();
                     return (
-                      <span key={t} className={`${colorClass} text-[7px] font-black text-white px-1 py-0.5 rounded shadow-xs uppercase tracking-wider border border-white/20`}>
+                      <span key={t} className={`${colorClass} text-[9px] font-bold text-white px-2 py-0.5 rounded-full shadow-sm uppercase tracking-tight border border-white/20`}>
                         {typeLabel}
                       </span>
                     );

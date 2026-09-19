@@ -57,16 +57,31 @@ function normalizeLoadedState(parsed: any): GameState {
   box.forEach((p: any) => { if (p.id) pokedex[p.id] = 'caught'; });
 
   const savedInventory = Array.isArray(parsed.player?.inventory) ? parsed.player.inventory : [];
-  const inventory = INITIAL_STATE.player.inventory.map(initialItem => {
-    const savedItem = savedInventory.find(i => i.id === initialItem.id);
-    return savedItem ? { ...initialItem, ...savedItem } : initialItem;
+  const inventoryMap = new Map<string, any>();
+
+  // 1. Initialize with entries from INITIAL_STATE to preserve standard IDs and descriptions
+  INITIAL_STATE.player.inventory.forEach(item => {
+    inventoryMap.set(item.name.toLowerCase(), { ...item, count: 0 });
   });
 
+  // 2. Merge saved items into the map by name (case-insensitive)
   savedInventory.forEach(savedItem => {
-    if (!inventory.find(i => i.id === savedItem.id)) {
-      inventory.push(savedItem);
+    const nameKey = savedItem.name.toLowerCase();
+    const existing = inventoryMap.get(nameKey);
+    
+    if (existing) {
+      existing.count += (savedItem.count || 0);
+      // Preserve important properties if missing (like effectValue)
+      if (savedItem.effectValue && !existing.effectValue) {
+        existing.effectValue = savedItem.effectValue;
+      }
+    } else {
+      inventoryMap.set(nameKey, { ...savedItem });
     }
   });
+
+  // 3. Final inventory list (keep all items, but those with count > 0 will be shown)
+  const inventory = Array.from(inventoryMap.values());
 
   const savedQuests = Array.isArray(parsed.player?.quests) ? parsed.player.quests : [];
   const quests = [...savedQuests];

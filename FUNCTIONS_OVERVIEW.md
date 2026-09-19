@@ -70,7 +70,7 @@ Questo documento descrive le principali funzioni, algoritmi e metodi esportati n
 - **`fetchPokedexDetail(pokemonId)`**:  
   Scarica o recupera dalla cache i dati completi di una singola specie: descrizione in italiano, artwork ufficiale, sprite shiny, statistiche base con BST, mosse per livello con relative descrizioni tradotte, catena evolutiva e verso audio originale (*cry*).
 - **`getPokemonHabitatInGame(pokemonId)`**:  
-  Mappa l'ID di qualsiasi Pokémon alle 10 zone esplorabili del gioco in cui è possibile trovarlo selvatico.
+  Mappa l'ID di qualsiasi Pokémon alle 14 zone esplorabili del gioco in cui è possibile trovarlo selvatico.
 
 ### `pokeapi.ts`
 - **`fetchPokemonData(idOrName)`**:  
@@ -115,7 +115,17 @@ Questo documento descrive le principali funzioni, algoritmi e metodi esportati n
 
 ---
 
-## 5. Componenti Principali e Interazioni (`/src/components/`)
+## 6. Sistema di Progressione e Zone (`/src/lib/badges.ts` & `/src/constants/game.ts`)
+
+### `isAreaUnlocked(areaId, playerBadges, leagueVictories)`
+- **Progressione Lineare**: Implementa un sistema di sblocco sequenziale per le 10 zone principali del gioco. Ogni zona (tranne la prima) richiede il possesso della medaglia ottenuta nella zona precedente.
+- **Accesso alla Lega**: Il Datacenter della Lega Pokémon richiede obbligatoriamente il possesso di tutte le **10 Medaglie** dei Capipalestra.
+- **Post-Game (Area Zero)**: Le aree speciali (Area Zero, Santuario dei Glitch, Abisso del Codice) vengono sbloccate solo dopo aver ottenuto almeno una vittoria nella Lega Pokémon (`leagueVictories > 0`).
+
+### Sistema di Incontri (`/src/components/ZoneExplorer.tsx`)
+- **Pity System Capopalestra**: Se un giocatore si trova in una zona di cui non possiede ancora la medaglia, la probabilità di incontrare il Capopalestra aumenta di **8 volte** rispetto al normale, facilitando la progressione iniziale.
+- **Tabelle Allenatori Locali**: Ogni zona attinge a una `trainerTable` specifica definita in `game.ts`, garantendo che gli NPC incontrati siano tematicamente coerenti con l'ambiente (es. Pescatori in Spiaggia, Alpinisti in Montagna).
+- **Spawn Dinamico**: Il livello dei Pokémon selvatici e degli allenatori scala progressivamente tra le zone, partendo dal livello 2 nel Bosco dei Selfie fino al livello 100 nelle zone più profonde del Post-Game.
 
 ### `Box.tsx`
 - **`filteredBox` (useMemo)**:  

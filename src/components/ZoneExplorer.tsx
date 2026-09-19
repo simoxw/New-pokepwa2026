@@ -6,7 +6,7 @@ import { fetchPokemonData } from '../lib/pokeapi';
 import { getTrainer, TRAINERS_DATA } from '../data/trainers';
 import { Pokemon, Trainer, Item } from '../types/game';
 import { ChevronLeft, Footprints, Sword, Gift, MessageCircle, Heart, Moon } from 'lucide-react';
-import { isAreaUnlocked } from '../lib/badges';
+import { isAreaUnlocked, getBadgeForBoss } from '../lib/badges';
 import { ZONE_EVENTS, GameEvent } from '../data/events';
 import { useDayNight } from '../hooks/useDayNight';
 import { NIGHT_EXCLUSIVE_POKEMON } from '../lib/dayNight';
@@ -55,7 +55,7 @@ export const ZoneExplorer: React.FC<ZoneExplorerProps> = ({ onEncounter }) => {
         const firstStepsQuest = state.player.quests.find(q => q.id === 'first-steps' && q.status === 'active');
         
         if (triggeredEvent.type === 'battle' && triggeredEvent.trainerId) {
-          const trainer = await getTrainer(triggeredEvent.trainerId as any);
+          const trainer = await getTrainer(triggeredEvent.trainerId as any, (triggeredEvent as any).isGymLeader);
           setTrainerEncounter(trainer);
           return;
         }
@@ -136,15 +136,37 @@ export const ZoneExplorer: React.FC<ZoneExplorerProps> = ({ onEncounter }) => {
       }
 
       // Random roll for Trainer vs Wild Pokemon (20% trainer if in zones)
+      const currentZone = ZONES.find(z => z.id === state.player.location);
       const encounterTypeRoll = Math.random();
-      if (encounterTypeRoll < 0.20 && state.player.location !== 'percorso-1') {
-         // Trainer encounter (Exclude Superquattro and Campione - only encounterable in the League)
-         const wildTrainerIds = (Object.keys(TRAINERS_DATA) as (keyof typeof TRAINERS_DATA)[]).filter(id => {
-           const data = TRAINERS_DATA[id];
-           return !id.startsWith('superquattro-') && !id.startsWith('campione-') && data.type !== 'Superquattro' && data.type !== 'Campione del Sistema';
+      
+      if (encounterTypeRoll < 0.20 && currentZone?.trainerTable && currentZone.trainerTable.length > 0) {
+         // Filter and weight trainers by zone table
+         const table = currentZone.trainerTable.map(t => {
+           let rarity = t.rarity;
+           // INCREASE Gym Leader rarity if badge is not yet owned (Pity system)
+           if (t.isGymLeader) {
+             const bossName = TRAINERS_DATA[t.trainerId as keyof typeof TRAINERS_DATA]?.name;
+             const badge = bossName ? getBadgeForBoss(bossName) : null;
+             if (badge && !state.player.badges.includes(badge.id)) {
+               rarity = rarity * 12; // 12x more likely to find him the first time
+             }
+           }
+           return { ...t, rarity };
          });
-         const randomTrainerId = wildTrainerIds[Math.floor(Math.random() * wildTrainerIds.length)];
-         const trainer = await getTrainer(randomTrainerId);
+         
+         const totalRarity = table.reduce((sum, t) => sum + t.rarity, 0);
+         let roll = Math.random() * totalRarity;
+         let selectedTrainerId = table[0].trainerId;
+         
+         for (const t of table) {
+           if (roll <= t.rarity) {
+             selectedTrainerId = t.trainerId;
+             break;
+           }
+           roll -= t.rarity;
+         }
+
+         const trainer = await getTrainer(selectedTrainerId as any, table.find(t => t.trainerId === selectedTrainerId)?.isGymLeader);
          setTrainerEncounter(trainer);
          return;
       }

@@ -14,35 +14,19 @@ export const BADGES: Badge[] = [
     name: 'Medaglia Lag',
     description: 'Ottenuta sconfiggendo il Capopalestra nella Prateria del Lag.',
     image: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/badges/9.png',
-    unlockedArea: 'vulcano',
+    unlockedArea: 'spiaggia',
     bossName: 'Bullo Luca'
   },
   {
     id: 'badge-3',
-    name: 'Medaglia Volt',
-    description: 'Ottenuta sconfiggendo il ricercatore folle.',
-    image: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/badges/3.png',
-    unlockedArea: 'laboratorio',
-    bossName: 'Scienziato Filippo'
-  },
-  {
-    id: 'badge-4',
     name: 'Medaglia Nettuno',
     description: 'Sconfiggi il pescatore leggendario.',
     image: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/badges/2.png',
-    unlockedArea: 'spiaggia',
+    unlockedArea: 'vulcano',
     bossName: 'Pescatore Gianni'
   },
   {
-    id: 'badge-5',
-    name: 'Medaglia Spettro',
-    description: 'Sconfiggi l\'entità misteriosa nel cimitero.',
-    image: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/badges/12.png',
-    unlockedArea: 'cimitero',
-    bossName: 'Ombretta'
-  },
-  {
-    id: 'badge-6',
+    id: 'badge-4',
     name: 'Medaglia Calore',
     description: 'Sconfiggi il piromane del vulcano.',
     image: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/badges/7.png',
@@ -50,35 +34,51 @@ export const BADGES: Badge[] = [
     bossName: 'Piromane Leo'
   },
   {
+    id: 'badge-5',
+    name: 'Medaglia Volt',
+    description: 'Ottenuta sconfiggendo il ricercatore folle.',
+    image: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/badges/3.png',
+    unlockedArea: 'cimitero',
+    bossName: 'Scienziato Filippo'
+  },
+  {
+    id: 'badge-6',
+    name: 'Medaglia Spettro',
+    description: 'Sconfiggi l\'entità misteriosa nel cimitero.',
+    image: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/badges/12.png',
+    unlockedArea: 'laboratorio',
+    bossName: 'Ombretta'
+  },
+  {
     id: 'badge-7',
-    name: 'Medaglia Glaciale',
-    description: 'Sconfiggi l\'alpinista del Picco del Buffering.',
-    image: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/badges/15.png',
+    name: 'Medaglia Bit',
+    description: 'Sconfiggi il Tenente del Team Eclipse.',
+    image: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/badges/13.png',
     unlockedArea: 'montagna',
-    bossName: 'Alpinista Marco'
+    bossName: 'Tenente Ombra'
   },
   {
     id: 'badge-8',
-    name: 'Medaglia Spettrale',
-    description: 'Sconfiggi l\'entità della Rovina dei Frame.',
-    image: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/badges/8.png',
+    name: 'Medaglia Glaciale',
+    description: 'Sconfiggi l\'alpinista del Picco del Buffering.',
+    image: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/badges/15.png',
     unlockedArea: 'rovina',
-    bossName: 'Ombra Silente'
+    bossName: 'Alpinista Marco'
   },
   {
     id: 'badge-9',
-    name: 'Medaglia Palude',
-    description: 'Sconfiggi il guardiano della Palude del Bug.',
-    image: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/badges/6.png',
-    unlockedArea: 'palude',
-    bossName: 'Entomologo Ezio'
+    name: 'Medaglia Spettrale',
+    description: 'Sconfiggi l\'entità della Rovina dei Frame.',
+    image: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/badges/8.png',
+    unlockedArea: 'isola-server',
+    bossName: 'Ombra Silente'
   },
   {
     id: 'badge-10',
     name: 'Medaglia Server',
     description: 'Sconfiggi l\'Amministratore di Sistema.',
     image: 'https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/badges/14.png',
-    unlockedArea: 'isola-server',
+    unlockedArea: 'datacenter-lega',
     bossName: 'Admin Root'
   }
 ];
@@ -92,8 +92,8 @@ export function isAreaUnlocked(areaId: string, playerBadges: string[], leagueVic
     return playerBadges.length >= 10;
   }
 
-  // The Post-Game Area Zero requires beating the League at least once!
-  if (areaId === 'area-zero') {
+  // The Post-Game Area Zero and new zones require beating the League at least once!
+  if (['area-zero', 'santuario-glitch', 'abisso-codice'].includes(areaId)) {
     return leagueVictories > 0;
   }
 

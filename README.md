@@ -63,7 +63,7 @@ Combina la fedeltà delle meccaniche competitive Pokémon ufficiali (formule mat
 ---
 
 ### 4. 🗺️ Esplorazione, Aree & Ciclo Giorno/Notte
-- **10 Zone Esplorabili con 452 Specie Catturabili in Natura**:
+- **14 Zone Esplorabili con tutti i 1025 Pokémon catturabili**:
   1. 🌲 **Bosco dei Selfie** (Capopalestra *Giovane Pino* → **Medaglia Selfie**)
   2. 🌾 **Prateria del Lag** (Capopalestra *Bullo Luca* → **Medaglia Lag**)
   3. ⚡ **Laboratorio Glitch** (Capopalestra *Scienziato Filippo* → **Medaglia Volt**)
@@ -74,7 +74,12 @@ Combina la fedeltà delle meccaniche competitive Pokémon ufficiali (formule mat
   8. 🏛️ **Rovina dei Frame** (Capopalestra *Ombra Silente* → **Medaglia Spettrale**)
   9. 🦗 **Palude del Bug** (Capopalestra *Entomologo Ezio* → **Medaglia Palude**)
   10. 🔌 **Isola del Server** (Capopalestra *Admin Root* → **Medaglia Server**)
+  11. ✨ **Area Zero Digitale** (Post-Game - Creature Paradossali)
+  12. 🌌 **Santuario dei Glitch** (Post-Game - Ultra Creature & Mitici)
+  13. 🌑 **Abisso del Codice** (Post-Game - Leggendari Abissali)
+  14. 🏆 **Datacenter della Lega** (Sfida Finale)
 - **Ciclo Giorno / Tramonto / Notte in Tempo Reale**: Atmosfera visiva dinamica sincronizzata con l'orario reale o simulato.
+- **Pokedex Completo**: Consulta `POKEMON_ZONES.md` per la guida completa alla cattura.
 - **Torre Lotta (Battle Tower)**: Modalità infinita competitiva con avversari a difficoltà scalare, serie di vittorie e Punti Lotta (PL).
 - **Lega Pokémon**: Sfida i leggendari Superquattro e il Campione per entrare nella Sala d'Onore.
 

@@ -24,7 +24,12 @@ export const QuestLog: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         if (quest.reward.money) newMoney += quest.reward.money;
         if (quest.reward.items) {
           quest.reward.items.forEach(rewardItem => {
-            const itemIndex = newInventory.findIndex(i => i.id === rewardItem.id);
+            // Standardize reward name (replace hyphens with spaces and capitalize)
+            const standardName = rewardItem.id.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+            const searchName = standardName.toLowerCase();
+            
+            const itemIndex = newInventory.findIndex(i => i.name.toLowerCase() === searchName);
+            
             if (itemIndex > -1) {
               newInventory[itemIndex] = { 
                 ...newInventory[itemIndex], 
@@ -33,7 +38,7 @@ export const QuestLog: React.FC<{ onBack: () => void }> = ({ onBack }) => {
             } else {
               newInventory.push({ 
                 id: rewardItem.id, 
-                name: rewardItem.id.replace(/-/g, ' '), 
+                name: standardName, 
                 description: 'Ricompensa missione.', 
                 count: rewardItem.count, 
                 type: 'other' 
