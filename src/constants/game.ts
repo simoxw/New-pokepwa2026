@@ -717,6 +717,10 @@ export const ZONES: Zone[] = [
       { pokemonId: 1024, rarity: 1, minLevel: 80, maxLevel: 85 },  // Terapagos
       { pokemonId: 493, rarity: 0.5, minLevel: 85, maxLevel: 85 }, // Arceus (Il Creatore di Codice)
     ],
+    trainerTable: [
+      { trainerId: 'rosso-leggenda', rarity: 15 },
+      { trainerId: 'giovanni-rocket', rarity: 15 },
+    ],
   },
   {
     id: 'santuario-glitch',
@@ -749,6 +753,10 @@ export const ZONES: Zone[] = [
       { pokemonId: 1017, rarity: 1, minLevel: 70, maxLevel: 80 }, // Ogerpon
       { pokemonId: 1025, rarity: 0.5, minLevel: 80, maxLevel: 85 }, // Pecharunt
     ],
+    trainerTable: [
+      { trainerId: 'camilla-cynthia', rarity: 15 },
+      { trainerId: 'ciro-cyrus', rarity: 15 },
+    ],
   },
   {
     id: 'abisso-codice',
@@ -775,6 +783,10 @@ export const ZONES: Zone[] = [
       { pokemonId: 1002, rarity: 1, minLevel: 60, maxLevel: 70 }, // Chien-Pao
       { pokemonId: 1003, rarity: 1, minLevel: 60, maxLevel: 70 }, // Ting-Lu
       { pokemonId: 1004, rarity: 1, minLevel: 60, maxLevel: 70 }, // Chi-Yu
+    ],
+    trainerTable: [
+      { trainerId: 'rocco-steven', rarity: 15 },
+      { trainerId: 'n-harmonia', rarity: 15 },
     ],
   },
 ];

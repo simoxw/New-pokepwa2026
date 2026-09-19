@@ -164,6 +164,60 @@ export const TRAINERS_DATA = {
     winQuote: 'Sprint retroattiva approvata... Il debito tecnico è mostruoso, ma ti nomino ufficialmente Lead Architect e Campione di PokePWA!',
     moneyReward: 30000,
     teamIds: [{ id: 248, level: 73 }, { id: 445, level: 74 }, { id: 130, level: 74 }, { id: 637, level: 74 }, { id: 149, level: 75 }, { id: 150, level: 76 }] // Tyranitar, Garchomp, Gyarados, Volcarona, Dragonite, Mewtwo
+  },
+  'rosso-leggenda': {
+    name: 'Rosso (Red)',
+    type: 'Campione Leggendario',
+    sprite: 'https://play.pokemonshowdown.com/sprites/trainers/red.png',
+    quote: '...',
+    winQuote: '...',
+    moneyReward: 20000,
+    teamIds: [{ id: 25, level: 85 }, { id: 6, level: 84 }, { id: 9, level: 84 }, { id: 3, level: 84 }, { id: 143, level: 82 }, { id: 131, level: 82 }] // Pikachu, Charizard, Blastoise, Venusaur, Snorlax, Lapras
+  },
+  'giovanni-rocket': {
+    name: 'Giovanni',
+    type: 'Capo Team Rocket',
+    sprite: 'https://play.pokemonshowdown.com/sprites/trainers/giovanni.png',
+    quote: 'Benvenuto nell\'ombra del codice. Il Team Rocket sfrutterà il potere di questo database per dominare ogni sistema!',
+    winQuote: 'Impossibile... Un altro ragazzino manda all\'aria il mio piano perfetto!',
+    moneyReward: 18000,
+    teamIds: [{ id: 150, level: 85 }, { id: 34, level: 82 }, { id: 31, level: 82 }, { id: 112, level: 80 }, { id: 53, level: 80 }, { id: 248, level: 83 }] // Mewtwo, Nidoking, Nidoqueen, Rhydon, Persian, Tyranitar
+  },
+  'camilla-cynthia': {
+    name: 'Camilla (Cynthia)',
+    type: 'Campionessa Sinnoh',
+    sprite: 'https://play.pokemonshowdown.com/sprites/trainers/cynthia.png',
+    quote: 'La passione e la ricerca della verità collegano ogni allenatore ai suoi Pokémon. Mostrami la forza della tua determinazione!',
+    winQuote: 'Che battaglia straordinaria! Il tuo legame con i tuoi Pokémon è davvero leggendario.',
+    moneyReward: 25000,
+    teamIds: [{ id: 445, level: 85 }, { id: 448, level: 83 }, { id: 350, level: 83 }, { id: 468, level: 82 }, { id: 442, level: 82 }, { id: 407, level: 82 }] // Garchomp, Lucario, Milotic, Togekiss, Spiritomb, Roserade
+  },
+  'ciro-cyrus': {
+    name: 'Ciro (Cyrus)',
+    type: 'Leader Team Galassia',
+    sprite: 'https://play.pokemonshowdown.com/sprites/trainers/cyrus.png',
+    quote: 'Le emozioni umane sono solo imperfezioni del codice. Creerò un nuovo mondo privo di errori e privo di spirito!',
+    winQuote: 'Anche in questa dimensione cibernetica il mio mondo ideale resta irraggiungibile...',
+    moneyReward: 18000,
+    teamIds: [{ id: 461, level: 83 }, { id: 430, level: 81 }, { id: 130, level: 82 }, { id: 169, level: 81 }, { id: 229, level: 81 }, { id: 462, level: 82 }] // Weavile, Honchkrow, Gyarados, Crobat, Houndoom, Magnezone
+  },
+  'rocco-steven': {
+    name: 'Rocco Petri (Steven)',
+    type: 'Campione Hoenn',
+    sprite: 'https://play.pokemonshowdown.com/sprites/trainers/steven.png',
+    quote: 'Alla fine hai trovato il minerale più raro di tutti: una battaglia tra veri maestri! I miei Pokémon di Acciaio non si piegheranno.',
+    winQuote: 'Splendido! Risplendi di una luce più brillante del miglior diamante grezzo.',
+    moneyReward: 22000,
+    teamIds: [{ id: 376, level: 85 }, { id: 227, level: 82 }, { id: 306, level: 82 }, { id: 346, level: 81 }, { id: 348, level: 81 }, { id: 344, level: 82 }] // Metagross, Skarmory, Aggron, Cradily, Armaldo, Claydol
+  },
+  'n-harmonia': {
+    name: 'N (Harmonia)',
+    type: 'Re del Team Plasma',
+    sprite: 'https://play.pokemonshowdown.com/sprites/trainers/n.png',
+    quote: 'I Pokémon non sono meri dati o strumenti nell\'algoritmo. Posso sentire le formule dei loro cuori... Sfidami per il loro futuro!',
+    winQuote: 'La tua formula per la vittoria è mossa da un sincero affetto. Continua a perseguire il tuo ideale!',
+    moneyReward: 20000,
+    teamIds: [{ id: 571, level: 84 }, { id: 644, level: 85 }, { id: 643, level: 85 }, { id: 567, level: 82 }, { id: 565, level: 82 }, { id: 601, level: 81 }] // Zoroark, Zekrom, Reshiram, Archeops, Carracosta, Klinklang
   }
 };
 
