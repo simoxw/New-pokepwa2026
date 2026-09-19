@@ -51,6 +51,11 @@ function normalizeLoadedState(parsed: any): GameState {
   const team = Array.isArray(parsed.player?.team) ? parsed.player.team.map(migratePokemon) : INITIAL_STATE.player.team;
   const box = Array.isArray(parsed.player?.box) ? parsed.player.box.map(migratePokemon) : INITIAL_STATE.player.box;
 
+  // Retroactive Pokedex Fix: ensures all owned Pokemon are marked as caught in the Pokedex
+  const pokedex = { ...(parsed.player?.pokedex || INITIAL_STATE.player.pokedex) };
+  team.forEach((p: any) => { if (p.id) pokedex[p.id] = 'caught'; });
+  box.forEach((p: any) => { if (p.id) pokedex[p.id] = 'caught'; });
+
   const savedInventory = Array.isArray(parsed.player?.inventory) ? parsed.player.inventory : [];
   const inventory = INITIAL_STATE.player.inventory.map(initialItem => {
     const savedItem = savedInventory.find(i => i.id === initialItem.id);
@@ -79,7 +84,7 @@ function normalizeLoadedState(parsed: any): GameState {
       ...parsed.player,
       team,
       box,
-      pokedex: parsed.player?.pokedex || INITIAL_STATE.player.pokedex,
+      pokedex,
       inventory,
       quests,
       badges: Array.isArray(parsed.player?.badges) ? parsed.player.badges : INITIAL_STATE.player.badges,

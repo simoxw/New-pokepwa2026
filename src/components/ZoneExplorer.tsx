@@ -62,18 +62,32 @@ export const ZoneExplorer: React.FC<ZoneExplorerProps> = ({ onEncounter }) => {
 
         if (triggeredEvent.type === 'item' && triggeredEvent.item) {
           setState(prev => {
+            const inventory = [...prev.player.inventory];
+            // Case-insensitive merge by name
+            const searchName = triggeredEvent.item!.name?.toLowerCase();
+            const existingItemIndex = inventory.findIndex(i => i.name.toLowerCase() === searchName);
+
+            if (existingItemIndex > -1) {
+              inventory[existingItemIndex] = {
+                ...inventory[existingItemIndex],
+                count: inventory[existingItemIndex].count + 1
+              };
+            } else {
+              inventory.push({
+                id: `found-${Date.now()}`,
+                name: triggeredEvent.item!.name!,
+                type: triggeredEvent.item!.type!,
+                count: 1,
+                effectValue: triggeredEvent.item!.effectValue,
+                description: 'Trovato durante l\'esplorazione.'
+              } as Item);
+            }
+
             const newState = {
               ...prev,
               player: {
                 ...prev.player,
-                inventory: [...prev.player.inventory, { 
-                  id: `found-${Date.now()}`,
-                  name: triggeredEvent.item!.name!,
-                  type: triggeredEvent.item!.type!,
-                  count: 1,
-                  effectValue: triggeredEvent.item!.effectValue,
-                  description: 'Trovato durante l\'esplorazione.'
-                } as Item]
+                inventory
               }
             };
             
@@ -191,10 +205,10 @@ export const ZoneExplorer: React.FC<ZoneExplorerProps> = ({ onEncounter }) => {
           ? 'bg-gradient-to-b from-amber-950/40 via-slate-900 to-slate-950 text-white' 
           : 'bg-white text-gray-900'
     }`}>
-      {/* ... header ... */}
-      <div className={`p-4 flex items-center justify-between border-b ${
-        isNight || isSunset ? 'border-white/10 bg-slate-900/60' : 'border-gray-100 bg-white/60'
-      } backdrop-blur-md`}>
+      {/* Header */}
+      <div className={`p-4 flex items-center justify-between border-b transition-colors ${
+        isNight || isSunset ? 'border-white/10 bg-slate-900/60 text-white' : 'border-gray-100 bg-white/60 text-slate-900'
+      } backdrop-blur-md sticky top-0 z-20`}>
         <div className="flex items-center gap-4">
           <button 
             onClick={() => setState(prev => ({ ...prev, player: { ...prev.player, location: 'villaggio' } }))}
@@ -213,7 +227,7 @@ export const ZoneExplorer: React.FC<ZoneExplorerProps> = ({ onEncounter }) => {
                 </span>
               )}
             </div>
-            <p className="text-xs opacity-70">{zone.description}</p>
+            <p className={`text-xs ${isNight || isSunset ? 'text-white/60' : 'text-slate-500'}`}>{zone.description}</p>
           </div>
         </div>
 
@@ -270,11 +284,13 @@ export const ZoneExplorer: React.FC<ZoneExplorerProps> = ({ onEncounter }) => {
                   <h4 className="font-black uppercase text-purple-600">{activeEvent.speaker}</h4>
                 )}
                 
-                <p className="font-bold text-gray-700 italic">"{activeEvent.message}"</p>
+                <p className={`font-bold italic ${isNight || isSunset ? 'text-white' : 'text-gray-700'}`}>"{activeEvent.message}"</p>
                 
                 <button 
                   onClick={() => setActiveEvent(null)}
-                  className="mt-4 bg-gray-200 text-gray-700 font-black px-6 py-2 rounded-full active:scale-95 transition-transform"
+                  className={`mt-4 font-black px-6 py-2 rounded-full active:scale-95 transition-transform ${
+                    isNight || isSunset ? 'bg-white/10 text-white border border-white/20' : 'bg-gray-200 text-gray-700'
+                  }`}
                 >
                   OK!
                 </button>
@@ -295,8 +311,8 @@ export const ZoneExplorer: React.FC<ZoneExplorerProps> = ({ onEncounter }) => {
                   <img src={trainerEncounter.sprite} alt="trainer" className="w-48 h-48 relative z-10 drop-shadow-2xl" />
                 </div>
                 <div className="text-center">
-                  <h3 className="font-black text-xl uppercase italic">L'allenatore {trainerEncounter.name} ti sfida!</h3>
-                  <p className="text-xs font-bold text-gray-500 italic">"{trainerEncounter.quote}"</p>
+                  <h3 className={`font-black text-xl uppercase italic ${isNight || isSunset ? 'text-white' : 'text-slate-900'}`}>L'allenatore {trainerEncounter.name} ti sfida!</h3>
+                  <p className={`text-xs font-bold italic ${isNight || isSunset ? 'text-white/60' : 'text-gray-500'}`}>"{trainerEncounter.quote}"</p>
                 </div>
                 <button 
                   onClick={startBattle}
@@ -328,8 +344,8 @@ export const ZoneExplorer: React.FC<ZoneExplorerProps> = ({ onEncounter }) => {
                       <span>Creatura della Notte</span>
                     </div>
                   )}
-                  <h3 className="font-black text-2xl uppercase italic">Un {encounter.name} selvatico!</h3>
-                  <p className="text-sm font-bold text-gray-500">Livello {encounter.level}</p>
+                  <h3 className={`font-black text-2xl uppercase italic ${isNight || isSunset ? 'text-white' : 'text-slate-900'}`}>Un {encounter.name} selvatico!</h3>
+                  <p className={`text-sm font-bold ${isNight || isSunset ? 'text-white/60' : 'text-gray-500'}`}>Livello {encounter.level}</p>
                 </div>
                 <button 
                   onClick={startBattle}
@@ -343,7 +359,7 @@ export const ZoneExplorer: React.FC<ZoneExplorerProps> = ({ onEncounter }) => {
                 key="idle"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
-                className="text-center text-gray-400"
+                className={`text-center ${isNight || isSunset ? 'text-white/40' : 'text-gray-400'}`}
               >
                 <p>Tutto tranquillo...</p>
                 <p className="text-xs">Tocca il tasto sotto per cercare Pokémon</p>
@@ -356,9 +372,15 @@ export const ZoneExplorer: React.FC<ZoneExplorerProps> = ({ onEncounter }) => {
         {!encounter && !trainerEncounter && !activeEvent && !isExploring && (
           <button
             onClick={explore}
-            className="w-full max-w-xs bg-white py-6 rounded-3xl border-b-8 border-gray-200 shadow-xl flex flex-col items-center gap-2 active:translate-y-1 active:border-b-4 transition-all"
+            className={`w-full max-w-xs py-6 rounded-3xl border-b-8 shadow-xl flex flex-col items-center gap-2 active:translate-y-1 active:border-b-4 transition-all ${
+              isNight 
+                ? 'bg-slate-800 border-slate-950 text-white' 
+                : isSunset 
+                  ? 'bg-orange-900 border-orange-950 text-white' 
+                  : 'bg-white border-gray-200 text-slate-900'
+            }`}
           >
-            <Footprints className="w-10 h-10 text-gray-700" />
+            <Footprints className={`w-10 h-10 ${isNight || isSunset ? 'text-white' : 'text-gray-700'}`} />
             <span className="font-black text-xl uppercase tracking-tighter">Cammina</span>
           </button>
         )}
@@ -372,7 +394,9 @@ export const ZoneExplorer: React.FC<ZoneExplorerProps> = ({ onEncounter }) => {
               setTrainerEncounter(null);
               setActiveEvent(null);
             }}
-            className="mt-12 text-gray-500 font-bold text-sm underline hover:text-gray-700 transition-colors"
+            className={`mt-12 font-bold text-sm underline transition-colors ${
+              isNight || isSunset ? 'text-white/60 hover:text-white' : 'text-gray-500 hover:text-gray-700'
+            }`}
           >
             Scappa via correndo
           </motion.button>

@@ -250,9 +250,10 @@ function GameContent() {
       const box = prev.player.box.map(p => 
         p.instanceId === evolvedPokemon.instanceId ? evolvedPokemon : p
       );
+      const pokedex = { ...prev.player.pokedex, [evolvedPokemon.id]: 'caught' as const };
       return {
         ...prev,
-        player: { ...prev.player, team, box }
+        player: { ...prev.player, team, box, pokedex }
       };
     });
     setShowEvolution(null);

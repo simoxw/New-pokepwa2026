@@ -1,7 +1,7 @@
 import React from 'react';
 import { useGame } from '../contexts/GameContext';
 import { ChevronLeft, Package, User } from 'lucide-react';
-import { Pokemon, Item, Move } from '../types/game';
+import { Pokemon, Item, Move, TYPE_COLORS, TYPE_TRANSLATIONS } from '../types/game';
 import { calculateStats, fetchMoveData } from '../lib/pokeapi';
 import { canEvolve } from '../lib/evolution';
 import { TMSelectionModal } from './TMSelectionModal';
@@ -16,7 +16,12 @@ export const Inventory: React.FC<{
   const [tmPokemon, setTmPokemon] = React.useState<Pokemon | null>(null);
 
   const isUsableItem = (item: Item) => {
-    return item.type === 'healing' || item.id === 'caramella-rara' || item.id === 'tm-universal';
+    const nameLower = item.name.toLowerCase();
+    return item.type === 'healing' || 
+           nameLower === 'caramella rara' || 
+           nameLower === 'mt universale' || 
+           item.id === 'caramella-rara' || 
+           item.id === 'tm-universal';
   };
 
   const applyItemToPokemon = async (pokemonInstanceId: string) => {
@@ -151,20 +156,36 @@ export const Inventory: React.FC<{
   const handleSellItem = (item: Item) => {
     if (item.count <= 0) return;
     
-    const sellPrice = item.id === 'pepita' ? 5000 : 100; // Default sell price if needed, but primarily for nugget
+    const nameLower = item.name.toLowerCase();
+    const sellPrice = (nameLower === 'pepita' || item.id === 'pepita') ? 5000 : 100;
     
-    if (confirm(`Vuoi vendere 1 ${item.name} per $${sellPrice}?`)) {
-      setState(prev => ({
+    setState(prev => {
+      // Find the specific item in the current inventory to ensure we have the latest state
+      const inventory = [...prev.player.inventory];
+      // Match by ID primarily, as it's the unique identifier in the list rendering
+      const itemIndex = inventory.findIndex(i => i.id === item.id);
+      
+      if (itemIndex === -1) return prev;
+
+      const updatedInventory = [...inventory];
+      const currentItem = updatedInventory[itemIndex];
+      
+      if (currentItem.count <= 0) return prev;
+
+      updatedInventory[itemIndex] = {
+        ...currentItem,
+        count: currentItem.count - 1
+      };
+
+      return {
         ...prev,
         player: {
           ...prev.player,
           money: prev.player.money + sellPrice,
-          inventory: prev.player.inventory.map(i => 
-            i.id === item.id ? { ...i, count: i.count - 1 } : i
-          )
+          inventory: updatedInventory
         }
-      }));
-    }
+      };
+    });
   };
 
   const handleTmMoveSelected = (selectedMove: Move) => {
@@ -230,50 +251,60 @@ export const Inventory: React.FC<{
             <p>Lo zaino è vuoto.</p>
           </div>
         ) : (
-          state.player.inventory.filter(i => i.count > 0).map((item) => (
-            <div 
-              key={item.id} 
-              onClick={() => isUsableItem(item) && setUsingItem(item)}
-              className={`bg-gray-50 p-4 rounded-2xl flex items-center justify-between border-2 border-transparent transition-all active:scale-[0.98] ${
-                isUsableItem(item) ? 'hover:border-blue-500 cursor-pointer' : 'opacity-60'
-              }`}
-            >
-              <div className="flex items-center gap-4">
-                <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center text-2xl">
-                  {item.id.includes('ball') ? (
-                    item.id === 'master-ball' ? '🟣' : 
-                    item.id === 'ultra-ball' ? '💎' : 
-                    item.id === 'mega-ball' ? '🔵' : '🔴'
-                  ) : (
-                    item.id === 'caramella-rara' ? '🍬' : 
-                    item.id === 'tm-universal' ? '💿' :
-                    item.id === 'revitalizzante' ? '✨' :
-                    item.id === 'revitalizzante-max' ? '🌟' : '💊'
+          state.player.inventory.filter(i => i.count > 0).map((item) => {
+            const isUsable = isUsableItem(item);
+            const isNugget = item.name.toLowerCase() === 'pepita' || item.id === 'pepita';
+            
+            return (
+              <div 
+                key={item.id} 
+                onClick={() => isUsable && setUsingItem(item)}
+                className={`bg-gray-50 p-4 rounded-2xl flex items-center justify-between border-2 border-transparent transition-all active:scale-[0.98] ${
+                  isUsable ? 'hover:border-blue-500 cursor-pointer' : (isNugget ? 'cursor-default' : 'opacity-60')
+                }`}
+              >
+                <div className="flex items-center gap-4">
+                  <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center text-2xl">
+                    {(() => {
+                      const name = item.name.toLowerCase();
+                      if (name.includes('ball')) {
+                        if (name.includes('master')) return '🟣';
+                        if (name.includes('ultra')) return '💎';
+                        if (name.includes('mega')) return '🔵';
+                        return '🔴';
+                      }
+                      if (name === 'pepita') return '💰';
+                      if (name === 'caramella rara') return '🍬';
+                      if (name === 'mt universale') return '💿';
+                      if (name.includes('revitalizzante max')) return '🌟';
+                      if (name.includes('revitalizzante')) return '✨';
+                      return '💊';
+                    })()}
+                  </div>
+                  <div>
+                    <h4 className="font-bold text-sm uppercase">{item.name}</h4>
+                    <p className="text-[10px] text-gray-500">{item.description}</p>
+                  </div>
+                </div>
+                <div className="flex flex-col items-end gap-2">
+                  <div className="bg-blue-600 text-white px-3 py-1 rounded-full font-black text-xs">
+                    x{item.count}
+                  </div>
+                  {isNugget && (
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        handleSellItem(item);
+                      }}
+                      className="bg-emerald-500 text-white px-4 py-2 rounded-xl font-black text-[11px] uppercase hover:bg-emerald-600 active:scale-90 shadow-md transition-all cursor-pointer"
+                    >
+                      Vendi
+                    </button>
                   )}
                 </div>
-                <div>
-                  <h4 className="font-bold text-sm uppercase">{item.name}</h4>
-                  <p className="text-[10px] text-gray-500">{item.description}</p>
-                </div>
               </div>
-              <div className="flex flex-col items-end gap-2">
-                <div className="bg-blue-600 text-white px-3 py-1 rounded-full font-black text-xs">
-                  x{item.count}
-                </div>
-                {item.id === 'pepita' && (
-                  <button
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleSellItem(item);
-                    }}
-                    className="bg-emerald-500 text-white px-3 py-1 rounded-lg font-bold text-[10px] uppercase hover:bg-emerald-600 active:scale-95 transition-all"
-                  >
-                    Vendi
-                  </button>
-                )}
-              </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
 
@@ -296,7 +327,21 @@ export const Inventory: React.FC<{
                   <img src={pokemon.sprites.front} alt={pokemon.name} className="w-full h-full object-contain" />
                 </div>
                 <div className="flex-1">
-                  <h4 className="font-black text-sm uppercase">{pokemon.name}</h4>
+                  <div className="flex items-center gap-2 mb-1">
+                    <h4 className="font-black text-sm uppercase leading-none">{pokemon.name}</h4>
+                    <div className="flex gap-1">
+                      {pokemon.types.map(t => {
+                        const typeLower = t.toLowerCase();
+                        const colorClass = TYPE_COLORS[typeLower] || 'bg-slate-500';
+                        const typeLabel = TYPE_TRANSLATIONS[typeLower] || typeLower.toUpperCase();
+                        return (
+                          <span key={t} className={`${colorClass} text-[7px] font-black text-white px-1 py-0.5 rounded shadow-xs uppercase tracking-wider`}>
+                            {typeLabel}
+                          </span>
+                        );
+                      })}
+                    </div>
+                  </div>
                   <div className="flex items-center justify-between mt-1">
                     <span className="text-[10px] font-bold text-gray-400">Liv. {pokemon.level}</span>
                     <span className="text-[10px] font-black text-gray-800">{pokemon.hp}/{pokemon.maxHp} PS</span>

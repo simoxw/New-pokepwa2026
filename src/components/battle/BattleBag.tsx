@@ -28,8 +28,16 @@ export const BattleBag: React.FC<BattleBagProps> = ({
       return;
     }
 
-    // Rare candy cannot be used in battle
-    if (item.id === 'caramella-rara') {
+    const nameLower = item.name.toLowerCase();
+    const isDisabled = 
+      item.id === 'caramella-rara' || 
+      nameLower === 'caramella rara' ||
+      item.id === 'pepita' || 
+      nameLower === 'pepita' ||
+      item.id === 'tm-universal' || 
+      nameLower === 'mt universale';
+
+    if (isDisabled) {
       return;
     }
 
@@ -133,15 +141,22 @@ export const BattleBag: React.FC<BattleBagProps> = ({
               ) : (
                 bagItems.map((item) => {
                   const isBall = item.type === 'capture';
-                  const isCandy = item.id === 'caramella-rara';
+                  const nameLower = item.name.toLowerCase();
+                  const isDisabled = 
+                    item.id === 'caramella-rara' || 
+                    nameLower === 'caramella rara' ||
+                    item.id === 'pepita' || 
+                    nameLower === 'pepita' ||
+                    item.id === 'tm-universal' || 
+                    nameLower === 'mt universale';
 
                   return (
                     <button
                       key={item.id}
-                      disabled={isCandy}
+                      disabled={isDisabled}
                       onClick={() => handleItemClick(item)}
                       className={`w-full flex items-center gap-3.5 p-3.5 bg-white rounded-2xl border-2 border-transparent transition-all text-left select-none ${
-                        isCandy 
+                        isDisabled 
                           ? 'opacity-40 cursor-not-allowed' 
                           : 'hover:border-blue-500 active:scale-[0.98] cursor-pointer'
                       }`}
@@ -151,8 +166,12 @@ export const BattleBag: React.FC<BattleBagProps> = ({
                           item.id === 'master-ball' ? '🟣' : 
                           item.id === 'ultra-ball' ? '💎' : 
                           item.id === 'mega-ball' ? '🔵' : '🔴'
-                        ) : isCandy ? (
+                        ) : (nameLower === 'caramella rara' || item.id === 'caramella-rara') ? (
                           '🍬'
+                        ) : (nameLower === 'pepita' || item.id === 'pepita') ? (
+                          '💰'
+                        ) : (nameLower === 'mt universale' || item.id === 'tm-universal') ? (
+                          '💿'
                         ) : item.id.includes('revitalizzante') ? (
                           '✨'
                         ) : (
@@ -167,7 +186,7 @@ export const BattleBag: React.FC<BattleBagProps> = ({
                           </span>
                         </div>
                         <p className="text-[11px] text-slate-500 font-medium leading-tight mt-0.5">
-                          {isCandy ? 'Non utilizzabile durante la lotta.' : item.description}
+                          {isDisabled ? 'Non utilizzabile durante la lotta.' : item.description}
                         </p>
                       </div>
                     </button>

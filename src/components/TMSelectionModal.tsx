@@ -76,8 +76,20 @@ export const TMSelectionModal: React.FC<TMSelectionModalProps> = ({
                 <span>MT Universale</span>
                 <Sparkles className="w-4 h-4 text-yellow-300" />
               </h3>
-              <p className="text-xs font-semibold text-purple-200">
+              <p className="text-xs font-semibold text-purple-200 flex items-center gap-1.5 flex-wrap">
                 Insegna una mossa a <span className="text-white font-bold">{pokemon.nickname || pokemon.name}</span>
+                <span className="flex gap-1">
+                  {pokemon.types.map(t => {
+                    const typeLower = t.toLowerCase();
+                    const colorClass = TYPE_COLORS[typeLower] || 'bg-slate-500';
+                    const typeLabel = TYPE_TRANSLATIONS[typeLower] || typeLower.toUpperCase();
+                    return (
+                      <span key={t} className={`${colorClass} text-[7px] font-black text-white px-1 py-0.5 rounded shadow-xs uppercase tracking-wider border border-white/20`}>
+                        {typeLabel}
+                      </span>
+                    );
+                  })}
+                </span>
               </p>
             </div>
           </div>
