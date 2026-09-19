@@ -146,7 +146,27 @@ export const Settings: React.FC<{ onBack: () => void, onProfile: () => void }> =
           break;
         case 'badges':
           newState.player.badges = BADGES.map(b => b.id);
+          if ((newState.player.leagueVictories || 0) < 1) {
+            newState.player.leagueVictories = 1;
+          }
           break;
+        case 'shiny':
+          if (newState.player.team.length > 0) {
+            newState.player.team[0] = {
+              ...newState.player.team[0],
+              isShiny: true
+            };
+          }
+          break;
+        case 'pokedex': {
+          const newPokedex: Record<number, 'seen' | 'caught'> = { ...newState.player.pokedex };
+          // Register all major Pokemon IDs up to 1025 as caught
+          for (let i = 1; i <= 1025; i++) {
+            newPokedex[i] = 'caught';
+          }
+          newState.player.pokedex = newPokedex;
+          break;
+        }
         case 'lvl100':
           if (newState.player.team.length > 0) {
             const p = newState.player.team[0];
@@ -513,12 +533,14 @@ export const Settings: React.FC<{ onBack: () => void, onProfile: () => void }> =
           </div>
           <div className="flex-1 overflow-y-auto p-6 space-y-4">
             {[
-              { id: 'money', label: 'Soldi Infiniti', icon: '💰' },
+              { id: 'money', label: '999.999 PokéDollari', icon: '💰' },
               { id: 'masterball', label: '50 Master Ball', icon: '💎' },
               { id: 'rare-candy', label: '99 Caramelle Rare', icon: '💊' },
               { id: 'heal', label: 'Cura Totale Team', icon: '🏥' },
-              { id: 'badges', label: 'Sblocca Tutte Zone', icon: '🎖️' },
-              { id: 'lvl100', label: 'Livello 100 (1° Pkmn)', icon: '⚡' },
+              { id: 'badges', label: 'Sblocca Aree & Post-Game', icon: '🎖️' },
+              { id: 'lvl100', label: 'Livello 100 (1° Pokémon)', icon: '⚡' },
+              { id: 'shiny', label: 'Rendi 1° Pokémon Shiny ✨', icon: '✨' },
+              { id: 'pokedex', label: 'Completa Pokédex (1025)', icon: '📖' },
             ].map(cheat => (
               <button
                 key={cheat.id}
