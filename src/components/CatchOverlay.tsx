@@ -40,15 +40,15 @@ export const CatchOverlay: React.FC<CatchOverlayProps> = ({ target, ball, onResu
     }
     setQuality(q);
 
-    // Ball modifier
-    const ballMult = ball.id === 'master-ball' ? 999 : ball.id === 'ultra-ball' ? 3.5 : ball.id === 'mega-ball' ? 2.2 : 1.5;
+    // Ball modifier (slightly reduced base multipliers for a more balanced capture challenge)
+    const ballMult = ball.id === 'master-ball' ? 999 : ball.id === 'ultra-ball' ? 2.6 : ball.id === 'mega-ball' ? 1.8 : 1.2;
     
     // HP factor (the target's HP percentage)
     // Formula refined: at 100% HP factor is 1/3, at low HP it approaches 1.
     const hpFactor = (3 * target.maxHp - 2 * target.hp) / (3 * target.maxHp);
     
     // Final chance calculation
-    const baseProb = 0.6; 
+    const baseProb = 0.42; 
     const catchChance = baseProb * ballMult * q.mult * hpFactor;
     
     // Master Ball is always 100%, others max out at 100% too now to avoid "unfair" escapes
