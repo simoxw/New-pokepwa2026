@@ -639,6 +639,10 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
 
     const playerFirst = turnWinner === 'player';
 
+    // Local live state tracking for volatile conditions during the multi-phase turn
+    let livePlayerVolatile: VolatileStatus = { ...playerVolatile };
+    let liveEnemyVolatile: VolatileStatus = { ...enemyVolatile };
+
     // Helper for executing an individual combatant's attack within this turn
     const runCombatantAttack = async (
       attackerIsPlayer: boolean,
@@ -654,10 +658,30 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     }> => {
       const attacker = attackerIsPlayer ? playerActive : enemy;
       const move = attackerIsPlayer ? activePlayerMove : enemyMove;
-      const attackerVolatile = attackerIsPlayer ? playerVolatile : enemyVolatile;
-      const setAttackerVolatile = attackerIsPlayer ? setPlayerVolatile : setEnemyVolatile;
-      const defenderVolatile = attackerIsPlayer ? enemyVolatile : playerVolatile;
-      const setDefenderVolatile = attackerIsPlayer ? setEnemyVolatile : setPlayerVolatile;
+      
+      const attackerVolatile = attackerIsPlayer ? livePlayerVolatile : liveEnemyVolatile;
+      const defenderVolatile = attackerIsPlayer ? liveEnemyVolatile : livePlayerVolatile;
+
+      const setAttackerVolatile = (updater: React.SetStateAction<VolatileStatus>) => {
+        if (attackerIsPlayer) {
+          livePlayerVolatile = typeof updater === 'function' ? updater(livePlayerVolatile) : updater;
+          setPlayerVolatile(livePlayerVolatile);
+        } else {
+          liveEnemyVolatile = typeof updater === 'function' ? updater(liveEnemyVolatile) : updater;
+          setEnemyVolatile(liveEnemyVolatile);
+        }
+      };
+
+      const setDefenderVolatile = (updater: React.SetStateAction<VolatileStatus>) => {
+        if (attackerIsPlayer) {
+          liveEnemyVolatile = typeof updater === 'function' ? updater(liveEnemyVolatile) : updater;
+          setEnemyVolatile(liveEnemyVolatile);
+        } else {
+          livePlayerVolatile = typeof updater === 'function' ? updater(livePlayerVolatile) : updater;
+          setPlayerVolatile(livePlayerVolatile);
+        }
+      };
+
       const attackerStatus = attackerIsPlayer ? playerStatus : enemyStatus;
       const setAttackerStatus = attackerIsPlayer ? setPlayerStatus : setEnemyStatus;
       const defenderStatus = attackerIsPlayer ? enemyStatus : playerStatus;
@@ -677,7 +701,13 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       const flinch = checkFlinch(attacker, attackerVolatile.isFlinched);
       if (!flinch.canAct) {
         addLog(flinch.msg!);
-        setAttackerVolatile(prev => ({ ...prev, isFlinched: false }));
+        setAttackerVolatile(prev => ({ 
+          ...prev, 
+          isFlinched: false, 
+          charging: false, 
+          chargingState: undefined, 
+          lockedMove: undefined 
+        }));
         await new Promise(r => setTimeout(r, 700));
         return { nextPlayerHp: cPlayerHp, nextEnemyHp: cEnemyHp, stopped: false };
       }
@@ -697,6 +727,12 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       }
       if (!moveCheck.canMove) {
         if (moveCheck.msg) addLog(moveCheck.msg);
+        setAttackerVolatile(prev => ({ 
+          ...prev, 
+          charging: false, 
+          chargingState: undefined, 
+          lockedMove: undefined 
+        }));
         await new Promise(r => setTimeout(r, 700));
         return { nextPlayerHp: cPlayerHp, nextEnemyHp: cEnemyHp, stopped: false };
       }
@@ -707,7 +743,11 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       // 3. Confusion Check
       if (attackerVolatile.confusionTurns && attackerVolatile.confusionTurns > 0) {
         const conf = checkConfusion(attacker, attackerVolatile.confusionTurns);
-        setAttackerVolatile(prev => ({ ...prev, confusionTurns: conf.newTurns }));
+        setAttackerVolatile(prev => ({ 
+          ...prev, 
+          confusionTurns: conf.newTurns,
+          ...(conf.hurtSelf ? { charging: false, chargingState: undefined, lockedMove: undefined } : {})
+        }));
         if (conf.msg) addLog(conf.msg);
 
         if (conf.hurtSelf && conf.damage) {
@@ -909,6 +949,44 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     playerStages, playerStatus, enemy, enemyStages, enemyStatus, playerVolatile, 
     enemyVolatile, deductPlayerPp, deductEnemyPp, handleWin, 
     handlePlayerFaint, handleStatusEndTurn, addLog, playerHp, enemyHp
+  ]);
+
+  // Auto-trigger locked / multi-turn moves on Turn 2 (e.g. Volo, Fossa, Sub, Solarraggio, Iper Raggio ricarica)
+  useEffect(() => {
+    if (
+      !isAnimating &&
+      !battleResult &&
+      !postBattleData &&
+      !catchBall &&
+      !showSwitch &&
+      !showBag &&
+      !showRansomModal &&
+      playerHp > 0 &&
+      enemyHp > 0 &&
+      Boolean(playerVolatile.lockedMove || playerVolatile.charging || playerVolatile.recharging)
+    ) {
+      const timer = setTimeout(() => {
+        const moveToRun = playerVolatile.lockedMove || playerMoves[0] || STRUGGLE_MOVE;
+        handleMove(moveToRun);
+      }, 700);
+
+      return () => clearTimeout(timer);
+    }
+  }, [
+    isAnimating,
+    battleResult,
+    postBattleData,
+    catchBall,
+    showSwitch,
+    showBag,
+    showRansomModal,
+    playerHp,
+    enemyHp,
+    playerVolatile.lockedMove,
+    playerVolatile.charging,
+    playerVolatile.recharging,
+    handleMove,
+    playerMoves
   ]);
 
   // Escape Handler (Formula-based for wild encounters; blocked for trainers)
@@ -1218,7 +1296,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
           onBag={() => setShowBag(true)} 
           onEscape={handleEscape}
           onSwitch={() => setShowSwitch(true)}
-          disabled={isAnimating}
+          disabled={isAnimating || Boolean(playerVolatile.lockedMove || playerVolatile.charging || playerVolatile.recharging)}
           enemyTypes={enemy.types}
           encryptedMoveIndex={encryptedMoveIndex}
           onEncryptedMoveClick={() => setShowRansomModal(true)}
