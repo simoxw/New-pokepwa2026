@@ -3,6 +3,7 @@ import { motion, AnimatePresence } from 'motion/react';
 import { Pokemon, Move, TYPE_COLORS } from '../types/game';
 import { Shield, Sword, Zap, Heart, Star, MapPin } from 'lucide-react';
 import { MoveInfoModal } from './battle/MoveInfoModal';
+import { getNatureDetails } from '../lib/pokeapi';
 
 interface PokemonDetailsProps {
   pokemon: Pokemon;
@@ -57,6 +58,10 @@ export const PokemonDetails: React.FC<PokemonDetailsProps> = ({
     isLongPressActiveRef.current = false;
   };
 
+  const totalIv = (pokemon.ivs?.hp ?? 0) + (pokemon.ivs?.attack ?? 0) + (pokemon.ivs?.defense ?? 0) + (pokemon.ivs?.spAtk ?? 0) + (pokemon.ivs?.spDef ?? 0) + (pokemon.ivs?.speed ?? 0);
+  const totalEv = (pokemon.evs?.hp || 0) + (pokemon.evs?.attack || 0) + (pokemon.evs?.defense || 0) + (pokemon.evs?.spAtk || 0) + (pokemon.evs?.spDef || 0) + (pokemon.evs?.speed || 0);
+  const natureDetails = getNatureDetails(pokemon.nature);
+
   return (
     <div className="fixed inset-0 z-[100] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
       <MoveInfoModal 
@@ -109,7 +114,7 @@ export const PokemonDetails: React.FC<PokemonDetailsProps> = ({
           <div className="grid grid-cols-2 gap-4">
             <InfoItem icon={<Star className="text-yellow-500" />} label="Livello" value={pokemon.level} />
             <InfoItem icon={<MapPin className="text-red-500" />} label="Catturato" value={pokemon.caughtLocation || 'Erba Alta'} />
-            <InfoItem icon={<Heart className="text-emerald-500" />} label="Natura" value={pokemon.nature || 'Docile'} />
+            <InfoItem icon={<Heart className="text-emerald-500" />} label="Natura" value={natureDetails.name} subValue={natureDetails.mod} />
             <InfoItem icon={<Zap className="text-blue-500" />} label="Shiny" value={pokemon.isShiny ? '✨ Sì' : 'No'} />
           </div>
 
@@ -130,7 +135,9 @@ export const PokemonDetails: React.FC<PokemonDetailsProps> = ({
           <div className="grid grid-cols-2 gap-4">
             {/* Stats */}
             <div className="space-y-3 bg-slate-50 border border-slate-100 p-4 rounded-3xl shadow-sm">
-              <h4 className="font-black text-xs uppercase text-slate-500 tracking-widest">Statistiche</h4>
+              <div className="flex items-center h-5">
+                <h4 className="font-black text-xs uppercase text-slate-500 tracking-widest whitespace-nowrap">Statistiche</h4>
+              </div>
               <StatBar label="HP" current={pokemon.hp} max={pokemon.maxHp} color="bg-emerald-500" isHp />
               <StatBar label="ATT" current={pokemon.stats?.attack || 0} max={200} color="bg-red-500" />
               <StatBar label="DIF" current={pokemon.stats?.defense || 0} max={200} color="bg-blue-500" />
@@ -141,7 +148,12 @@ export const PokemonDetails: React.FC<PokemonDetailsProps> = ({
 
             {/* IVs & EVs */}
             <div className="space-y-3 bg-slate-50 border border-slate-100 p-4 rounded-3xl shadow-sm">
-              <h4 className="font-black text-xs uppercase text-slate-500 tracking-widest">IV / EV</h4>
+              <div className="flex items-center justify-between h-5 gap-1 whitespace-nowrap overflow-hidden">
+                <h4 className="font-black text-xs uppercase text-slate-500 tracking-widest whitespace-nowrap shrink-0">IV / EV</h4>
+                <span className="whitespace-nowrap shrink-0 text-[10px] font-mono font-bold text-indigo-600 bg-indigo-50 px-2 py-0.5 rounded-full border border-indigo-100/80">
+                  {totalIv} / {totalEv}
+                </span>
+              </div>
               <div className="space-y-3 text-[10px] font-black">
                 <div className="flex items-center gap-2">
                   <span className="w-9 text-slate-700">HP</span>
@@ -226,7 +238,7 @@ export const PokemonDetails: React.FC<PokemonDetailsProps> = ({
   );
 };
 
-const InfoItem = ({ icon, label, value }: { icon: React.ReactNode, label: string, value: string | number }) => (
+const InfoItem = ({ icon, label, value, subValue }: { icon: React.ReactNode, label: string, value: string | number, subValue?: string }) => (
   <div className="flex items-center gap-2 bg-slate-50 p-2.5 rounded-2xl border border-slate-100">
     <div className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center text-sm shrink-0 border border-slate-100">
       {icon}
@@ -234,6 +246,9 @@ const InfoItem = ({ icon, label, value }: { icon: React.ReactNode, label: string
     <div className="min-w-0">
       <p className="text-[10px] text-slate-500 font-bold uppercase leading-none">{label}</p>
       <p className="text-xs font-black uppercase text-slate-800 truncate mt-0.5">{value}</p>
+      {subValue && (
+        <p className="text-[9px] font-bold text-emerald-600 font-mono leading-none mt-0.5">{subValue}</p>
+      )}
     </div>
   </div>
 );

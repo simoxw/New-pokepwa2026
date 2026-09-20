@@ -435,7 +435,7 @@ export async function getBaseStats(id: number) {
   }
 }
 
-const NATURE_EFFECTS: Record<string, { plus?: string, minus?: string }> = {
+export const NATURE_EFFECTS: Record<string, { plus?: string, minus?: string }> = {
   'Decisa': { plus: 'attack', minus: 'spAtk' },
   'Audace': { plus: 'attack', minus: 'speed' },
   'Scaltra': { plus: 'defense', minus: 'spAtk' },
@@ -446,7 +446,45 @@ const NATURE_EFFECTS: Record<string, { plus?: string, minus?: string }> = {
   'Vivace': { plus: 'spDef', minus: 'speed' },
   'Timida': { plus: 'speed', minus: 'attack' },
   'Allegra': { plus: 'speed', minus: 'spAtk' },
+  'Adamant': { plus: 'attack', minus: 'spAtk' },
+  'Brave': { plus: 'attack', minus: 'speed' },
+  'Impish': { plus: 'defense', minus: 'spAtk' },
+  'Relaxed': { plus: 'defense', minus: 'speed' },
+  'Modest': { plus: 'spAtk', minus: 'attack' },
+  'Mild': { plus: 'spAtk', minus: 'defense' },
+  'Calm': { plus: 'spDef', minus: 'attack' },
+  'Sassy': { plus: 'spDef', minus: 'speed' },
+  'Timid': { plus: 'speed', minus: 'attack' },
+  'Jolly': { plus: 'speed', minus: 'spAtk' },
+  'Naive': { plus: 'speed', minus: 'spDef' },
+  'Hasty': { plus: 'speed', minus: 'defense' },
 };
+
+const STAT_SHORT_LABELS: Record<string, string> = {
+  attack: 'ATT',
+  defense: 'DIF',
+  spAtk: 'S.ATT',
+  spDef: 'S.DIF',
+  speed: 'VEL',
+};
+
+export function getNatureDetails(nature?: string): { name: string; mod?: string } {
+  if (!nature) return { name: 'Docile' };
+  const effect = NATURE_EFFECTS[nature];
+  if (!effect || !effect.plus || !effect.minus) return { name: nature };
+  const plusLabel = STAT_SHORT_LABELS[effect.plus] || effect.plus;
+  const minusLabel = STAT_SHORT_LABELS[effect.minus] || effect.minus;
+  return {
+    name: nature,
+    mod: `+${plusLabel} / -${minusLabel}`
+  };
+}
+
+export function getNatureDisplayString(nature?: string): string {
+  const details = getNatureDetails(nature);
+  if (!details.mod) return details.name;
+  return `${details.name} (${details.mod})`;
+}
 
 export function calculateStats(
   baseStats: { hp: number; attack: number; defense: number; spAtk: number; spDef: number; speed: number },

@@ -10,7 +10,7 @@ import { PokemonDetails } from './PokemonDetails';
 import { ALL_TYPES, GENERATIONS, getTypeVisual } from './pokedex/pokedexConstants';
 import { playMenuClick, playFaint } from '../lib/sound';
 
-type SortKey = 'recent' | 'level_desc' | 'level_asc' | 'pokedex' | 'name' | 'stats';
+type SortKey = 'recent' | 'level_desc' | 'level_asc' | 'pokedex' | 'name' | 'stats' | 'iv_desc' | 'iv_asc';
 
 export const Box: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { state, setState } = useGame();
@@ -48,6 +48,16 @@ export const Box: React.FC<{ onBack: () => void }> = ({ onBack }) => {
            (p.stats.spDef || 0) + 
            (p.stats.speed || 0) + 
            (p.maxHp || 0);
+  };
+
+  // Helper to calculate total IVs sum
+  const calculateTotalIvs = (p: Pokemon) => {
+    return (p.ivs?.hp ?? 0) + 
+           (p.ivs?.attack ?? 0) + 
+           (p.ivs?.defense ?? 0) + 
+           (p.ivs?.spAtk ?? 0) + 
+           (p.ivs?.spDef ?? 0) + 
+           (p.ivs?.speed ?? 0);
   };
 
   // Count active filters
@@ -129,6 +139,10 @@ export const Box: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           return a.name.localeCompare(b.name);
         case 'stats':
           return calculateTotalStats(b) - calculateTotalStats(a);
+        case 'iv_desc':
+          return calculateTotalIvs(b) - calculateTotalIvs(a);
+        case 'iv_asc':
+          return calculateTotalIvs(a) - calculateTotalIvs(b);
         case 'recent':
         default:
           return (b.caughtAt || 0) - (a.caughtAt || 0);
@@ -419,6 +433,8 @@ export const Box: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               className="appearance-none bg-slate-800 border border-slate-700 text-slate-200 text-xs font-bold rounded-xl pl-7 pr-3 py-1.5 focus:outline-none focus:border-indigo-500 cursor-pointer"
             >
               <option value="recent">🕒 Recenti</option>
+              <option value="iv_desc">🌟 IV più alte</option>
+              <option value="iv_asc">📉 IV più basse</option>
               <option value="level_desc">⬆️ Livello (Max)</option>
               <option value="level_asc">⬇️ Livello (Min)</option>
               <option value="pokedex">🔢 # Pokédex</option>
