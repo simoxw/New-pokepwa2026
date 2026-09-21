@@ -117,11 +117,13 @@ export const SPECIAL_EVOLUTIONS: Record<number, { nextId: number; level: number;
   10172: { nextId: 862, level: 35, name: 'Obstagoon', branches: [] },
   10173: { nextId: 864, level: 38, name: 'Cursola', branches: [] },
   10174: { nextId: 10175, level: 35, name: 'Darmanitan di Galar', branches: [] },
+  10176: { nextId: 867, level: 34, name: 'Runerigus', branches: [] },
   10229: { nextId: 10230, level: 22, name: 'Arcanine di Hisui', branches: [] },
   10231: { nextId: 10232, level: 22, name: 'Electrode di Hisui', branches: [] },
   10234: { nextId: 904, level: 28, name: 'Overqwil', branches: [] },
   10235: { nextId: 903, level: 32, name: 'Sneasler', branches: [] },
   10238: { nextId: 10239, level: 30, name: 'Zoroark di Hisui', branches: [] },
+  10241: { nextId: 10242, level: 50, name: 'Goodra di Hisui', branches: [] },
   10253: { nextId: 980, level: 20, name: 'Clodsire', branches: [] }
 };
 

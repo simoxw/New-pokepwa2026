@@ -106,11 +106,13 @@ async function runEvolutionTests() {
   await testCase('Linoone di Galar ➔ Obstagoon', 10172, 35, 862, 'Obstagoon');
   await testCase('Corsola di Galar ➔ Cursola', 10173, 38, 864, 'Cursola');
   await testCase('Darumaka di Galar ➔ Darmanitan di Galar', 10174, 35, 10175, 'Darmanitan di Galar');
+  await testCase('Yamask di Galar ➔ Runerigus', 10176, 34, 867, 'Runerigus');
   await testCase('Growlithe di Hisui ➔ Arcanine di Hisui', 10229, 22, 10230, 'Arcanine di Hisui');
   await testCase('Voltorb di Hisui ➔ Electrode di Hisui', 10231, 22, 10232, 'Electrode di Hisui');
   await testCase('Qwilfish di Hisui ➔ Overqwil', 10234, 28, 904, 'Overqwil');
   await testCase('Sneasel di Hisui ➔ Sneasler', 10235, 32, 903, 'Sneasler');
   await testCase('Zorua di Hisui ➔ Zoroark di Hisui', 10238, 30, 10239, 'Zoroark di Hisui');
+  await testCase('Sliggoo di Hisui ➔ Goodra di Hisui', 10241, 50, 10242, 'Goodra di Hisui');
   await testCase('Wooper di Paldea ➔ Clodsire', 10253, 20, 980, 'Clodsire');
 
   console.log(`\n📊 EVOLUTION TEST SUMMARY: ${passed} PASSED, ${failed} FAILED.`);

@@ -21,13 +21,13 @@ export const GENERATIONS: GenerationInfo[] = [
 ];
 
 export const REGIONAL_POKEMON_IDS = [
-  // Alola
+  // Alola (18)
   10091, 10092, 10100, 10101, 10102, 10103, 10104, 10105, 10106, 10107, 10108, 10109, 10110, 10111, 10112, 10113, 10114, 10115,
-  // Galar
-  10161, 863, 10163, 10164, 10165, 10166, 10167, 865, 10171, 10172, 862, 10173, 864, 10174, 10175, 10178,
-  // Hisui
-  10229, 10230, 10231, 10232, 10234, 904, 10235, 903, 10238, 10239,
-  // Paldea
+  // Galar (19)
+  10161, 863, 10163, 10164, 10165, 10166, 10167, 865, 10171, 10172, 862, 10173, 864, 10174, 10175, 10176, 867, 10178, 10179,
+  // Hisui (14)
+  10229, 10230, 10231, 10232, 10234, 904, 10235, 903, 10238, 10239, 10240, 10241, 10242, 10243,
+  // Paldea (3)
   10253, 980, 10250
 ];
 
@@ -37,7 +37,7 @@ export function isRegionalPokemon(id: number, name?: string): boolean {
   if (name) {
     const n = name.toLowerCase();
     if (n.includes('di alola') || n.includes('di galar') || n.includes('di hisui') || n.includes('di paldea')) return true;
-    if (['perrserker', "sirfetch'd", 'obstagoon', 'cursola', 'overqwil', 'sneasler', 'clodsire'].includes(n)) return true;
+    if (['perrserker', "sirfetch'd", 'obstagoon', 'cursola', 'runerigus', 'overqwil', 'sneasler', 'clodsire'].includes(n)) return true;
   }
   return false;
 }

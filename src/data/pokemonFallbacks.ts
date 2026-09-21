@@ -190,7 +190,10 @@ export const POKEMON_FALLBACKS: Record<number, FallbackPokemonInfo> = {
   864: { name: 'Cursola', types: ['ghost'], baseStats: { hp: 60, attack: 95, defense: 50, spAtk: 145, spDef: 130, speed: 30 }, moves: ['shadow-ball', 'power-gem', 'giga-drain', 'strength-sap'] },
   10174: { name: 'Darumaka di Galar', types: ['ice'], baseStats: { hp: 70, attack: 90, defense: 45, spAtk: 15, spDef: 45, speed: 50 }, moves: ['powder-snow', 'tackle', 'icicle-spear', 'bite'] },
   10175: { name: 'Darmanitan di Galar', types: ['ice'], baseStats: { hp: 105, attack: 140, defense: 55, spAtk: 30, spDef: 55, speed: 95 }, moves: ['icicle-crash', 'flare-blitz', 'earthquake', 'u-turn'] },
+  10176: { name: 'Yamask di Galar', types: ['ground', 'ghost'], baseStats: { hp: 38, attack: 55, defense: 85, spAtk: 30, spDef: 65, speed: 30 }, moves: ['astonish', 'night-shade', 'bulldoze', 'haze'] },
+  867: { name: 'Runerigus', types: ['ground', 'ghost'], baseStats: { hp: 58, attack: 95, defense: 145, spAtk: 50, spDef: 105, speed: 30 }, moves: ['shadow-claw', 'earthquake', 'rock-slide', 'iron-defense'] },
   10178: { name: 'Weezing di Galar', types: ['poison', 'fairy'], baseStats: { hp: 65, attack: 90, defense: 120, spAtk: 85, spDef: 70, speed: 60 }, moves: ['sludge-bomb', 'strange-steam', 'will-o-wisp', 'defog'] },
+  10179: { name: 'Stunfisk di Galar', types: ['ground', 'steel'], baseStats: { hp: 109, attack: 81, defense: 99, spAtk: 66, spDef: 84, speed: 32 }, moves: ['snap-trap', 'mud-shot', 'iron-defense', 'foul-play'] },
 
   // Forme Regionali - Hisui
   10229: { name: 'Growlithe di Hisui', types: ['fire', 'rock'], baseStats: { hp: 60, attack: 75, defense: 45, spAtk: 65, spDef: 50, speed: 55 }, moves: ['ember', 'rock-throw', 'bite', 'roar'] },
@@ -203,6 +206,10 @@ export const POKEMON_FALLBACKS: Record<number, FallbackPokemonInfo> = {
   903: { name: 'Sneasler', types: ['fighting', 'poison'], baseStats: { hp: 80, attack: 130, defense: 60, spAtk: 40, spDef: 80, speed: 120 }, moves: ['dire-claw', 'close-combat', 'drain-punch', 'swords-dance'] },
   10238: { name: 'Zorua di Hisui', types: ['normal', 'ghost'], baseStats: { hp: 35, attack: 60, defense: 40, spAtk: 85, spDef: 40, speed: 70 }, moves: ['scratch', 'shadow-sneak', 'swift', 'nasty-plot'] },
   10239: { name: 'Zoroark di Hisui', types: ['normal', 'ghost'], baseStats: { hp: 55, attack: 100, defense: 60, spAtk: 125, spDef: 60, speed: 110 }, moves: ['bitter-malice', 'hyper-voice', 'shadow-ball', 'nasty-plot'] },
+  10240: { name: 'Braviary di Hisui', types: ['psychic', 'flying'], baseStats: { hp: 110, attack: 83, defense: 70, spAtk: 112, spDef: 70, speed: 65 }, moves: ['esper-wing', 'hurricane', 'psychic', 'roost'] },
+  10241: { name: 'Sliggoo di Hisui', types: ['steel', 'dragon'], baseStats: { hp: 58, attack: 75, defense: 83, spAtk: 83, spDef: 113, speed: 40 }, moves: ['dragon-breath', 'iron-head', 'water-pulse', 'acid-armor'] },
+  10242: { name: 'Goodra di Hisui', types: ['steel', 'dragon'], baseStats: { hp: 80, attack: 100, defense: 100, spAtk: 110, spDef: 150, speed: 60 }, moves: ['shelter', 'flash-cannon', 'dragon-pulse', 'hydro-pump'] },
+  10243: { name: 'Avalugg di Hisui', types: ['ice', 'rock'], baseStats: { hp: 95, attack: 127, defense: 184, spAtk: 34, spDef: 36, speed: 38 }, moves: ['mountain-gale', 'rock-slide', 'avalanche', 'iron-defense'] },
 
   // Forme Regionali - Paldea
   10253: { name: 'Wooper di Paldea', types: ['poison', 'ground'], baseStats: { hp: 55, attack: 45, defense: 45, spAtk: 25, spDef: 25, speed: 15 }, moves: ['poison-tail', 'mud-shot', 'tackle', 'yawn'] },

@@ -311,6 +311,7 @@ export interface PokedexIndexItem {
 }
 
 export const REGIONAL_INDEX_ITEMS: PokedexIndexItem[] = [
+  // Alola (18)
   { id: 10091, name: 'Rattata di Alola', formattedId: '#10091' },
   { id: 10092, name: 'Raticate di Alola', formattedId: '#10092' },
   { id: 10100, name: 'Raichu di Alola', formattedId: '#10100' },
@@ -329,28 +330,45 @@ export const REGIONAL_INDEX_ITEMS: PokedexIndexItem[] = [
   { id: 10113, name: 'Muk di Alola', formattedId: '#10113' },
   { id: 10114, name: 'Exeggutor di Alola', formattedId: '#10114' },
   { id: 10115, name: 'Marowak di Alola', formattedId: '#10115' },
+  // Galar (19)
   { id: 10161, name: 'Meowth di Galar', formattedId: '#10161' },
+  { id: 863, name: 'Perrserker', formattedId: '#0863' },
   { id: 10163, name: 'Ponyta di Galar', formattedId: '#10163' },
   { id: 10164, name: 'Rapidash di Galar', formattedId: '#10164' },
   { id: 10165, name: 'Slowpoke di Galar', formattedId: '#10165' },
   { id: 10166, name: 'Slowbro di Galar', formattedId: '#10166' },
   { id: 10167, name: "Farfetch'd di Galar", formattedId: '#10167' },
+  { id: 865, name: "Sirfetch'd", formattedId: '#0865' },
   { id: 10171, name: 'Zigzagoon di Galar', formattedId: '#10171' },
   { id: 10172, name: 'Linoone di Galar', formattedId: '#10172' },
+  { id: 862, name: 'Obstagoon', formattedId: '#0862' },
   { id: 10173, name: 'Corsola di Galar', formattedId: '#10173' },
+  { id: 864, name: 'Cursola', formattedId: '#0864' },
   { id: 10174, name: 'Darumaka di Galar', formattedId: '#10174' },
   { id: 10175, name: 'Darmanitan di Galar', formattedId: '#10175' },
+  { id: 10176, name: 'Yamask di Galar', formattedId: '#10176' },
+  { id: 867, name: 'Runerigus', formattedId: '#0867' },
   { id: 10178, name: 'Weezing di Galar', formattedId: '#10178' },
+  { id: 10179, name: 'Stunfisk di Galar', formattedId: '#10179' },
+  // Hisui (14)
   { id: 10229, name: 'Growlithe di Hisui', formattedId: '#10229' },
   { id: 10230, name: 'Arcanine di Hisui', formattedId: '#10230' },
   { id: 10231, name: 'Voltorb di Hisui', formattedId: '#10231' },
   { id: 10232, name: 'Electrode di Hisui', formattedId: '#10232' },
   { id: 10234, name: 'Qwilfish di Hisui', formattedId: '#10234' },
+  { id: 904, name: 'Overqwil', formattedId: '#0904' },
   { id: 10235, name: 'Sneasel di Hisui', formattedId: '#10235' },
+  { id: 903, name: 'Sneasler', formattedId: '#0903' },
   { id: 10238, name: 'Zorua di Hisui', formattedId: '#10238' },
   { id: 10239, name: 'Zoroark di Hisui', formattedId: '#10239' },
-  { id: 10250, name: 'Tauros di Paldea', formattedId: '#10250' },
-  { id: 10253, name: 'Wooper di Paldea', formattedId: '#10253' }
+  { id: 10240, name: 'Braviary di Hisui', formattedId: '#10240' },
+  { id: 10241, name: 'Sliggoo di Hisui', formattedId: '#10241' },
+  { id: 10242, name: 'Goodra di Hisui', formattedId: '#10242' },
+  { id: 10243, name: 'Avalugg di Hisui', formattedId: '#10243' },
+  // Paldea (3)
+  { id: 10253, name: 'Wooper di Paldea', formattedId: '#10253' },
+  { id: 980, name: 'Clodsire', formattedId: '#0980' },
+  { id: 10250, name: 'Tauros di Paldea', formattedId: '#10250' }
 ];
 
 let INDEX_CACHE: PokedexIndexItem[] | null = null;
@@ -362,12 +380,21 @@ export async function fetchPokedexIndex(): Promise<PokedexIndexItem[]> {
 
   // Try IndexedDB (with localStorage migration) first
   try {
-    const saved = await getStorageItem<PokedexIndexItem[]>('pokepwa_pokedex_index_v2');
+    const saved = await getStorageItem<PokedexIndexItem[]>('pokepwa_pokedex_index_v4');
     if (saved && Array.isArray(saved) && saved.length >= 1000) {
       INDEX_CACHE = saved;
       return saved;
     }
   } catch {}
+
+  const deduplicateIndex = (list: PokedexIndexItem[]): PokedexIndexItem[] => {
+    const seen = new Set<number>();
+    return list.filter(item => {
+      if (seen.has(item.id)) return false;
+      seen.add(item.id);
+      return true;
+    });
+  };
 
   try {
     const res = await fetch('https://pokeapi.co/api/v2/pokemon?limit=1025');
@@ -386,9 +413,9 @@ export async function fetchPokedexIndex(): Promise<PokedexIndexItem[]> {
           };
         });
 
-        const fullItems = [...items, ...REGIONAL_INDEX_ITEMS];
+        const fullItems = deduplicateIndex([...items, ...REGIONAL_INDEX_ITEMS]);
         INDEX_CACHE = fullItems;
-        setStorageItem('pokepwa_pokedex_index_v2', fullItems).catch(() => {});
+        setStorageItem('pokepwa_pokedex_index_v4', fullItems).catch(() => {});
         return fullItems;
       }
     }
@@ -405,7 +432,7 @@ export async function fetchPokedexIndex(): Promise<PokedexIndexItem[]> {
       formattedId: `#${id.toString().padStart(3, '0')}`
     };
   });
-  const fullList = [...fallbackList, ...REGIONAL_INDEX_ITEMS];
+  const fullList = deduplicateIndex([...fallbackList, ...REGIONAL_INDEX_ITEMS]);
   INDEX_CACHE = fullList;
   return fullList;
 }
