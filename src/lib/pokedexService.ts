@@ -310,6 +310,49 @@ export interface PokedexIndexItem {
   formattedId: string;
 }
 
+export const REGIONAL_INDEX_ITEMS: PokedexIndexItem[] = [
+  { id: 10091, name: 'Rattata di Alola', formattedId: '#10091' },
+  { id: 10092, name: 'Raticate di Alola', formattedId: '#10092' },
+  { id: 10100, name: 'Raichu di Alola', formattedId: '#10100' },
+  { id: 10101, name: 'Sandshrew di Alola', formattedId: '#10101' },
+  { id: 10102, name: 'Sandslash di Alola', formattedId: '#10102' },
+  { id: 10103, name: 'Vulpix di Alola', formattedId: '#10103' },
+  { id: 10104, name: 'Ninetales di Alola', formattedId: '#10104' },
+  { id: 10105, name: 'Diglett di Alola', formattedId: '#10105' },
+  { id: 10106, name: 'Dugtrio di Alola', formattedId: '#10106' },
+  { id: 10107, name: 'Meowth di Alola', formattedId: '#10107' },
+  { id: 10108, name: 'Persian di Alola', formattedId: '#10108' },
+  { id: 10109, name: 'Geodude di Alola', formattedId: '#10109' },
+  { id: 10110, name: 'Graveler di Alola', formattedId: '#10110' },
+  { id: 10111, name: 'Golem di Alola', formattedId: '#10111' },
+  { id: 10112, name: 'Grimer di Alola', formattedId: '#10112' },
+  { id: 10113, name: 'Muk di Alola', formattedId: '#10113' },
+  { id: 10114, name: 'Exeggutor di Alola', formattedId: '#10114' },
+  { id: 10115, name: 'Marowak di Alola', formattedId: '#10115' },
+  { id: 10161, name: 'Meowth di Galar', formattedId: '#10161' },
+  { id: 10163, name: 'Ponyta di Galar', formattedId: '#10163' },
+  { id: 10164, name: 'Rapidash di Galar', formattedId: '#10164' },
+  { id: 10165, name: 'Slowpoke di Galar', formattedId: '#10165' },
+  { id: 10166, name: 'Slowbro di Galar', formattedId: '#10166' },
+  { id: 10167, name: "Farfetch'd di Galar", formattedId: '#10167' },
+  { id: 10171, name: 'Zigzagoon di Galar', formattedId: '#10171' },
+  { id: 10172, name: 'Linoone di Galar', formattedId: '#10172' },
+  { id: 10173, name: 'Corsola di Galar', formattedId: '#10173' },
+  { id: 10174, name: 'Darumaka di Galar', formattedId: '#10174' },
+  { id: 10175, name: 'Darmanitan di Galar', formattedId: '#10175' },
+  { id: 10178, name: 'Weezing di Galar', formattedId: '#10178' },
+  { id: 10229, name: 'Growlithe di Hisui', formattedId: '#10229' },
+  { id: 10230, name: 'Arcanine di Hisui', formattedId: '#10230' },
+  { id: 10231, name: 'Voltorb di Hisui', formattedId: '#10231' },
+  { id: 10232, name: 'Electrode di Hisui', formattedId: '#10232' },
+  { id: 10234, name: 'Qwilfish di Hisui', formattedId: '#10234' },
+  { id: 10235, name: 'Sneasel di Hisui', formattedId: '#10235' },
+  { id: 10238, name: 'Zorua di Hisui', formattedId: '#10238' },
+  { id: 10239, name: 'Zoroark di Hisui', formattedId: '#10239' },
+  { id: 10250, name: 'Tauros di Paldea', formattedId: '#10250' },
+  { id: 10253, name: 'Wooper di Paldea', formattedId: '#10253' }
+];
+
 let INDEX_CACHE: PokedexIndexItem[] | null = null;
 
 export async function fetchPokedexIndex(): Promise<PokedexIndexItem[]> {
@@ -319,7 +362,7 @@ export async function fetchPokedexIndex(): Promise<PokedexIndexItem[]> {
 
   // Try IndexedDB (with localStorage migration) first
   try {
-    const saved = await getStorageItem<PokedexIndexItem[]>('pokepwa_pokedex_index_v1');
+    const saved = await getStorageItem<PokedexIndexItem[]>('pokepwa_pokedex_index_v2');
     if (saved && Array.isArray(saved) && saved.length >= 1000) {
       INDEX_CACHE = saved;
       return saved;
@@ -343,16 +386,17 @@ export async function fetchPokedexIndex(): Promise<PokedexIndexItem[]> {
           };
         });
 
-        INDEX_CACHE = items;
-        setStorageItem('pokepwa_pokedex_index_v1', items).catch(() => {});
-        return items;
+        const fullItems = [...items, ...REGIONAL_INDEX_ITEMS];
+        INDEX_CACHE = fullItems;
+        setStorageItem('pokepwa_pokedex_index_v2', fullItems).catch(() => {});
+        return fullItems;
       }
     }
   } catch (e) {
     console.warn('PokéAPI index fetch failed, generating fallback list', e);
   }
 
-  // Fallback generation of 1025 entries
+  // Fallback generation of 1025 entries + regional items
   const fallbackList: PokedexIndexItem[] = Array.from({ length: 1025 }, (_, i) => {
     const id = i + 1;
     return {
@@ -361,7 +405,8 @@ export async function fetchPokedexIndex(): Promise<PokedexIndexItem[]> {
       formattedId: `#${id.toString().padStart(3, '0')}`
     };
   });
-  INDEX_CACHE = fallbackList;
-  return fallbackList;
+  const fullList = [...fallbackList, ...REGIONAL_INDEX_ITEMS];
+  INDEX_CACHE = fullList;
+  return fullList;
 }
 

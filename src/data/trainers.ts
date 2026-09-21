@@ -218,6 +218,42 @@ export const TRAINERS_DATA = {
     winQuote: 'La tua formula per la vittoria è mossa da un sincero affetto. Continua a perseguire il tuo ideale!',
     moneyReward: 20000,
     teamIds: [{ id: 571, level: 84 }, { id: 644, level: 85 }, { id: 643, level: 85 }, { id: 567, level: 82 }, { id: 565, level: 82 }, { id: 601, level: 81 }] // Zoroark, Zekrom, Reshiram, Archeops, Carracosta, Klinklang
+  },
+  'lorelei': {
+    name: 'Lorelei',
+    type: 'Superquattro Kanto',
+    sprite: 'https://play.pokemonshowdown.com/sprites/trainers/lorelei.png',
+    quote: 'Nessuno può sfuggire al freddo glaciale delle mie strategie! Il tuo team si gelerà sul posto!',
+    winQuote: 'Il tuo calore da combattimento ha sciolto anche il mio ghiaccio più resistente...',
+    moneyReward: 25000,
+    teamIds: [{ id: 131, level: 85 }, { id: 10104, level: 84 }, { id: 91, level: 83 }, { id: 124, level: 82 }, { id: 473, level: 83 }, { id: 471, level: 84 }] // Lapras, Ninetales Alola, Cloyster, Jynx, Mamoswine, Glaceon
+  },
+  'drake': {
+    name: 'Drake',
+    type: 'Superquattro Hoenn',
+    sprite: 'https://play.pokemonshowdown.com/sprites/trainers/drake.png',
+    quote: 'I Pokémon drago incarnano la vera essenza della forza indisciplinata. Dimostrami che sai domarla!',
+    winQuote: 'Impressionante! Hai la tempra e il coraggio di un vero capitano dei mari e dei draghi.',
+    moneyReward: 25000,
+    teamIds: [{ id: 373, level: 86 }, { id: 149, level: 85 }, { id: 330, level: 84 }, { id: 334, level: 83 }, { id: 230, level: 84 }, { id: 612, level: 85 }] // Salamence, Dragonite, Flygon, Altaria, Kingdra, Haxorus
+  },
+  'vera-may': {
+    name: 'Vera (May)',
+    type: 'Super Allenatrice',
+    sprite: 'https://play.pokemonshowdown.com/sprites/trainers/may.png',
+    quote: 'Ho esplorato ogni regione e fatto amicizia con compagni fortissimi! Prepariamo una lotta indimenticabile!',
+    winQuote: 'Siamo stati bravissimi tutti e due! Che lotta spettacolare, mi è piaciuta un sacco!',
+    moneyReward: 24000,
+    teamIds: [{ id: 257, level: 85 }, { id: 260, level: 84 }, { id: 254, level: 84 }, { id: 10100, level: 83 }, { id: 471, level: 83 }, { id: 286, level: 82 }] // Blaziken, Swampert, Sceptile, Raichu Alola, Glaceon, Breloom
+  },
+  'baldo-brandon': {
+    name: 'Baldo (Brandon)',
+    type: 'Asso Parco Lotta',
+    sprite: 'https://play.pokemonshowdown.com/sprites/trainers/brandon.png',
+    quote: 'Coltiva la perseveranza e supera ogni limite! I guardiani del Parco Lotta ti mettono alla prova!',
+    winQuote: 'Hai dimostrato un\'incrollabile determinazione! Hai conquistato tutta la mia ammirazione!',
+    moneyReward: 26000,
+    teamIds: [{ id: 377, level: 85 }, { id: 378, level: 85 }, { id: 379, level: 85 }, { id: 894, level: 86 }, { id: 895, level: 86 }, { id: 486, level: 86 }] // Regirock, Regice, Registeel, Regieleki, Regidrago, Regigigas
   }
 };
 

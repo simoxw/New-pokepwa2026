@@ -1,7 +1,7 @@
 import React, { useState, useEffect, useMemo } from 'react';
 import { useGame } from '../contexts/GameContext';
 import { fetchPokedexIndex, PokedexIndexItem } from '../lib/pokedexService';
-import { GENERATIONS, ALL_TYPES, getTypeVisual } from './pokedex/pokedexConstants';
+import { GENERATIONS, ALL_TYPES, getTypeVisual, isRegionalPokemon } from './pokedex/pokedexConstants';
 import { PokedexDetailModal } from './pokedex/PokedexDetailModal';
 import { PokedexTypeCalculatorModal } from './pokedex/PokedexTypeCalculatorModal';
 import { PokedexProgressModal, MILESTONES } from './pokedex/PokedexProgressModal';
@@ -82,10 +82,14 @@ export const Pokedex: React.FC<PokedexProps> = ({ onBack }) => {
 
     // Filter by Generation
     if (selectedGen > 0) {
-      const genObj = GENERATIONS.find(g => g.id === selectedGen);
-      if (genObj) {
-        const [start, end] = genObj.range;
-        result = result.filter(p => p.id >= start && p.id <= end);
+      if (selectedGen === 10) {
+        result = result.filter(p => isRegionalPokemon(p.id, p.name));
+      } else {
+        const genObj = GENERATIONS.find(g => g.id === selectedGen);
+        if (genObj) {
+          const [start, end] = genObj.range;
+          result = result.filter(p => p.id >= start && p.id <= end && !isRegionalPokemon(p.id, p.name));
+        }
       }
     }
 

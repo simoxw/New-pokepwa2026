@@ -100,3 +100,17 @@ In questo documento troverai l'elenco dei Pokémon che puoi incontrare in ogni z
 *Livello: 70 - 100* | **Accessibile dopo la Lega**
 *Il punto più profondo del database, dove risiedono i guardiani leggendari.*
 - **Pokémon**: Phione, Manaphy, Latias, Latios, Uxie, Mesprit, Azelf, Cresselia, Cosmog, Lunala, Keldeo, Meloetta, Hoopa Unbound, Regice, Registeel, Regidrago, Regieleki.
+
+## 🌴 Arcipelago Regionale (Post-Game)
+*Livello: 45 - 86* | **Accessibile dopo la Lega**
+*Un paradiso esotico tropicale sbloccato dopo la vittoria alla Lega. Sede esclusiva delle forme regionali e di 4 potenti allenatori campioni.*
+- **Forme Alola**: Rattata, Sandshrew, Vulpix, Diglett, Meowth, Geodude, Grimer, Exeggutor, Marowak, Raichu.
+- **Forme Galar**: Meowth, Ponyta, Slowpoke, Farfetch'd, Zigzagoon, Corsola, Darumaka, Weezing.
+- **Forme Hisui**: Growlithe, Voltorb, Qwilfish, Sneasel, Zorua.
+- **Forme Paldea**: Wooper, Tauros.
+- **Allenatori Speciali NPC**:
+  - **Lorelei** (Superquattro Kanto - Squadra Lv. 82-85): Lapras, Ninetales di Alola, Cloyster, Jynx, Mamoswine, Glaceon.
+  - **Drake** (Superquattro Hoenn - Squadra Lv. 83-86): Salamence, Dragonite, Flygon, Altaria, Kingdra, Haxorus.
+  - **Vera / May** (Super Allenatrice - Squadra Lv. 82-85): Blaziken, Swampert, Sceptile, Raichu di Alola, Glaceon, Breloom.
+  - **Baldo / Brandon** (Asso Parco Lotta - Squadra Lv. 83-86): Regirock, Regice, Registeel, Regieleki, Regidrago, Regigigas.
+

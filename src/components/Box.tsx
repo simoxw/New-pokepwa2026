@@ -7,7 +7,7 @@ import {
 } from 'lucide-react';
 import { Pokemon } from '../types/game';
 import { PokemonDetails } from './PokemonDetails';
-import { ALL_TYPES, GENERATIONS, getTypeVisual } from './pokedex/pokedexConstants';
+import { ALL_TYPES, GENERATIONS, getTypeVisual, isRegionalPokemon } from './pokedex/pokedexConstants';
 import { playMenuClick, playFaint } from '../lib/sound';
 
 type SortKey = 'recent' | 'level_desc' | 'level_asc' | 'pokedex' | 'name' | 'stats' | 'iv_desc' | 'iv_asc';
@@ -104,10 +104,14 @@ export const Box: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
     // 3. Generation Filter
     if (selectedGen > 0) {
-      const genObj = GENERATIONS.find(g => g.id === selectedGen);
-      if (genObj) {
-        const [start, end] = genObj.range;
-        result = result.filter(p => p.id >= start && p.id <= end);
+      if (selectedGen === 10) {
+        result = result.filter(p => isRegionalPokemon(p.id, p.name));
+      } else {
+        const genObj = GENERATIONS.find(g => g.id === selectedGen);
+        if (genObj) {
+          const [start, end] = genObj.range;
+          result = result.filter(p => p.id >= start && p.id <= end && !isRegionalPokemon(p.id, p.name));
+        }
       }
     }
 
@@ -504,6 +508,19 @@ export const Box: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           >
             <Heart className="w-3 h-3" />
             <span>Feriti / KO</span>
+          </button>
+
+          {/* Regionali Pill */}
+          <button
+            onClick={() => setSelectedGen(prev => (prev === 10 ? 0 : 10))}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${
+              selectedGen === 10
+                ? 'bg-teal-600 text-white border-teal-400 shadow-sm'
+                : 'bg-slate-800/80 text-teal-300/90 border-slate-700/60 hover:bg-slate-800'
+            }`}
+          >
+            <span>🌴</span>
+            <span>Regionali</span>
           </button>
         </div>
 

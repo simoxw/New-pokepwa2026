@@ -585,13 +585,16 @@ export async function fetchPokemonData(id: number, level: number, location: stri
     // Italian species name if available, without breaking if throttled
     let italianName = data.name ? data.name.charAt(0).toUpperCase() + data.name.slice(1) : `Pokémon #${id}`;
     let speciesData: any = null;
-    if (data.species?.url) {
+    const local = getFallbackPokemonData(id);
+
+    if (local && (id > 10000 || local.name.includes('di '))) {
+      italianName = local.name;
+    } else if (data.species?.url) {
       try {
         speciesData = await fetchWithCache(data.species.url);
         const itName = speciesData.names?.find((n: any) => n.language.name === 'it')?.name;
         if (itName) italianName = itName;
       } catch {
-        const local = getFallbackPokemonData(id);
         if (local && !local.name.startsWith('Pokémon #')) {
           italianName = local.name;
         }

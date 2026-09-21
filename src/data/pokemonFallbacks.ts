@@ -153,6 +153,61 @@ export const POKEMON_FALLBACKS: Record<number, FallbackPokemonInfo> = {
   1021: { name: 'Furiapulente', types: ['electric', 'dragon'], baseStats: { hp: 125, attack: 73, defense: 91, spAtk: 137, spDef: 89, speed: 75 }, moves: ['thunderclap', 'draco-meteor', 'thunderbolt', 'calm-mind'] },
   1022: { name: 'Massoferreo', types: ['rock', 'psychic'], baseStats: { hp: 90, attack: 120, defense: 80, spAtk: 68, spDef: 108, speed: 124 }, moves: ['mighty-cleave', 'zen-headbutt', 'close-combat', 'swords-dance'] },
   1023: { name: 'Capoferreo', types: ['steel', 'psychic'], baseStats: { hp: 90, attack: 72, defense: 100, spAtk: 122, spDef: 108, speed: 98 }, moves: ['tachyon-cutter', 'psychic', 'volt-switch', 'calm-mind'] },
+
+  // Forme Regionali - Alola
+  10091: { name: 'Rattata di Alola', types: ['dark', 'normal'], baseStats: { hp: 30, attack: 56, defense: 35, spAtk: 25, spDef: 35, speed: 72 }, moves: ['tackle', 'bite', 'quick-attack', 'crunch'] },
+  10092: { name: 'Raticate di Alola', types: ['dark', 'normal'], baseStats: { hp: 75, attack: 71, defense: 70, spAtk: 40, spDef: 80, speed: 77 }, moves: ['crunch', 'hyper-fang', 'double-edge', 'sucker-punch'] },
+  10100: { name: 'Raichu di Alola', types: ['electric', 'psychic'], baseStats: { hp: 60, attack: 85, defense: 50, spAtk: 95, spDef: 85, speed: 110 }, moves: ['thunderbolt', 'psychic', 'volt-switch', 'calm-mind'] },
+  10101: { name: 'Sandshrew di Alola', types: ['ice', 'steel'], baseStats: { hp: 50, attack: 75, defense: 90, spAtk: 10, spDef: 35, speed: 40 }, moves: ['scratch', 'icicle-spear', 'metal-claw', 'iron-defense'] },
+  10102: { name: 'Sandslash di Alola', types: ['ice', 'steel'], baseStats: { hp: 75, attack: 100, defense: 120, spAtk: 25, spDef: 65, speed: 65 }, moves: ['icicle-crash', 'iron-head', 'slash', 'swords-dance'] },
+  10103: { name: 'Vulpix di Alola', types: ['ice'], baseStats: { hp: 38, attack: 41, defense: 40, spAtk: 50, spDef: 65, speed: 65 }, moves: ['powder-snow', 'ice-beam', 'quick-attack', 'mist'] },
+  10104: { name: 'Ninetales di Alola', types: ['ice', 'fairy'], baseStats: { hp: 73, attack: 67, defense: 75, spAtk: 81, spDef: 100, speed: 109 }, moves: ['blizzard', 'moonblast', 'dazzling-gleam', 'aurora-veil'] },
+  10105: { name: 'Diglett di Alola', types: ['ground', 'steel'], baseStats: { hp: 10, attack: 55, defense: 30, spAtk: 35, spDef: 45, speed: 90 }, moves: ['scratch', 'mud-slap', 'metal-claw', 'sucker-punch'] },
+  10106: { name: 'Dugtrio di Alola', types: ['ground', 'steel'], baseStats: { hp: 35, attack: 100, defense: 60, spAtk: 50, spDef: 70, speed: 110 }, moves: ['earthquake', 'iron-head', 'slash', 'sucker-punch'] },
+  10107: { name: 'Meowth di Alola', types: ['dark'], baseStats: { hp: 40, attack: 35, defense: 35, spAtk: 50, spDef: 40, speed: 90 }, moves: ['scratch', 'bite', 'fake-out', 'dark-pulse'] },
+  10108: { name: 'Persian di Alola', types: ['dark'], baseStats: { hp: 65, attack: 60, defense: 60, spAtk: 75, spDef: 65, speed: 115 }, moves: ['dark-pulse', 'power-gem', 'nasty-plot', 'hyper-voice'] },
+  10109: { name: 'Geodude di Alola', types: ['rock', 'electric'], baseStats: { hp: 40, attack: 80, defense: 100, spAtk: 30, spDef: 30, speed: 20 }, moves: ['tackle', 'rock-throw', 'thunder-shock', 'charge'] },
+  10110: { name: 'Graveler di Alola', types: ['rock', 'electric'], baseStats: { hp: 55, attack: 95, defense: 115, spAtk: 45, spDef: 45, speed: 35 }, moves: ['rock-slide', 'spark', 'stealth-rock', 'double-edge'] },
+  10111: { name: 'Golem di Alola', types: ['rock', 'electric'], baseStats: { hp: 80, attack: 120, defense: 130, spAtk: 55, spDef: 65, speed: 45 }, moves: ['stone-edge', 'wild-charge', 'earthquake', 'heavy-slam'] },
+  10112: { name: 'Grimer di Alola', types: ['poison', 'dark'], baseStats: { hp: 80, attack: 80, defense: 50, spAtk: 40, spDef: 50, speed: 25 }, moves: ['pound', 'poison-gas', 'bite', 'acid-armor'] },
+  10113: { name: 'Muk di Alola', types: ['poison', 'dark'], baseStats: { hp: 105, attack: 105, defense: 75, spAtk: 65, spDef: 100, speed: 50 }, moves: ['gunk-shot', 'knock-off', 'crunch', 'minimize'] },
+  10114: { name: 'Exeggutor di Alola', types: ['grass', 'dragon'], baseStats: { hp: 95, attack: 105, defense: 85, spAtk: 125, spDef: 75, speed: 45 }, moves: ['dragon-hammer', 'seed-bomb', 'psychic', 'giga-drain'] },
+  10115: { name: 'Marowak di Alola', types: ['fire', 'ghost'], baseStats: { hp: 60, attack: 80, defense: 110, spAtk: 50, spDef: 80, speed: 45 }, moves: ['shadow-bone', 'flare-blitz', 'bonemerang', 'will-o-wisp'] },
+
+  // Forme Regionali - Galar
+  10161: { name: 'Meowth di Galar', types: ['steel'], baseStats: { hp: 50, attack: 65, defense: 55, spAtk: 40, spDef: 40, speed: 40 }, moves: ['fake-out', 'metal-claw', 'scratch', 'hone-claws'] },
+  863: { name: 'Perrserker', types: ['steel'], baseStats: { hp: 70, attack: 110, defense: 100, spAtk: 50, spDef: 60, speed: 50 }, moves: ['iron-head', 'close-combat', 'seed-bomb', 'swords-dance'] },
+  10163: { name: 'Ponyta di Galar', types: ['psychic'], baseStats: { hp: 50, attack: 85, defense: 55, spAtk: 65, spDef: 65, speed: 90 }, moves: ['tackle', 'confusion', 'fairy-wind', 'agility'] },
+  10164: { name: 'Rapidash di Galar', types: ['psychic', 'fairy'], baseStats: { hp: 65, attack: 100, defense: 70, spAtk: 80, spDef: 80, speed: 105 }, moves: ['psycho-cut', 'play-rough', 'megahorn', 'swords-dance'] },
+  10165: { name: 'Slowpoke di Galar', types: ['psychic'], baseStats: { hp: 90, attack: 65, defense: 65, spAtk: 40, spDef: 40, speed: 15 }, moves: ['tackle', 'confusion', 'yawn', 'water-gun'] },
+  10166: { name: 'Slowbro di Galar', types: ['poison', 'psychic'], baseStats: { hp: 95, attack: 100, defense: 95, spAtk: 100, spDef: 70, speed: 30 }, moves: ['shell-side-arm', 'psychic', 'sludge-bomb', 'nasty-plot'] },
+  10167: { name: "Farfetch'd di Galar", types: ['fighting'], baseStats: { hp: 52, attack: 95, defense: 55, spAtk: 58, spDef: 62, speed: 55 }, moves: ['peck', 'rock-smash', 'brick-break', 'detect'] },
+  865: { name: "Sirfetch'd", types: ['fighting'], baseStats: { hp: 62, attack: 135, defense: 95, spAtk: 68, spDef: 82, speed: 65 }, moves: ['meteor-assault', 'close-combat', 'leaf-blade', 'brave-bird'] },
+  10171: { name: 'Zigzagoon di Galar', types: ['dark', 'normal'], baseStats: { hp: 38, attack: 30, defense: 41, spAtk: 30, spDef: 41, speed: 60 }, moves: ['tackle', 'headbutt', 'snarl', 'scary-face'] },
+  10172: { name: 'Linoone di Galar', types: ['dark', 'normal'], baseStats: { hp: 78, attack: 70, defense: 61, spAtk: 50, spDef: 61, speed: 100 }, moves: ['night-slash', 'headbutt', 'take-down', 'hone-claws'] },
+  862: { name: 'Obstagoon', types: ['dark', 'normal'], baseStats: { hp: 93, attack: 90, defense: 101, spAtk: 60, spDef: 81, speed: 95 }, moves: ['obstruct', 'night-slash', 'double-edge', 'close-combat'] },
+  10173: { name: 'Corsola di Galar', types: ['ghost'], baseStats: { hp: 60, attack: 55, defense: 100, spAtk: 65, spDef: 100, speed: 30 }, moves: ['tackle', 'night-shade', 'will-o-wisp', 'strength-sap'] },
+  864: { name: 'Cursola', types: ['ghost'], baseStats: { hp: 60, attack: 95, defense: 50, spAtk: 145, spDef: 130, speed: 30 }, moves: ['shadow-ball', 'power-gem', 'giga-drain', 'strength-sap'] },
+  10174: { name: 'Darumaka di Galar', types: ['ice'], baseStats: { hp: 70, attack: 90, defense: 45, spAtk: 15, spDef: 45, speed: 50 }, moves: ['powder-snow', 'tackle', 'icicle-spear', 'bite'] },
+  10175: { name: 'Darmanitan di Galar', types: ['ice'], baseStats: { hp: 105, attack: 140, defense: 55, spAtk: 30, spDef: 55, speed: 95 }, moves: ['icicle-crash', 'flare-blitz', 'earthquake', 'u-turn'] },
+  10178: { name: 'Weezing di Galar', types: ['poison', 'fairy'], baseStats: { hp: 65, attack: 90, defense: 120, spAtk: 85, spDef: 70, speed: 60 }, moves: ['sludge-bomb', 'strange-steam', 'will-o-wisp', 'defog'] },
+
+  // Forme Regionali - Hisui
+  10229: { name: 'Growlithe di Hisui', types: ['fire', 'rock'], baseStats: { hp: 60, attack: 75, defense: 45, spAtk: 65, spDef: 50, speed: 55 }, moves: ['ember', 'rock-throw', 'bite', 'roar'] },
+  10230: { name: 'Arcanine di Hisui', types: ['fire', 'rock'], baseStats: { hp: 95, attack: 115, defense: 80, spAtk: 95, spDef: 80, speed: 90 }, moves: ['raging-fury', 'rock-slide', 'flare-blitz', 'extreme-speed'] },
+  10231: { name: 'Voltorb di Hisui', types: ['electric', 'grass'], baseStats: { hp: 40, attack: 30, defense: 50, spAtk: 55, spDef: 55, speed: 100 }, moves: ['thunder-shock', 'bullet-seed', 'tackle', 'screech'] },
+  10232: { name: 'Electrode di Hisui', types: ['electric', 'grass'], baseStats: { hp: 60, attack: 50, defense: 70, spAtk: 80, spDef: 80, speed: 150 }, moves: ['chloroblast', 'thunderbolt', 'energy-ball', 'volt-switch'] },
+  10234: { name: 'Qwilfish di Hisui', types: ['dark', 'poison'], baseStats: { hp: 65, attack: 95, defense: 85, spAtk: 55, spDef: 55, speed: 85 }, moves: ['poison-jab', 'bite', 'toxic-spikes', 'water-pulse'] },
+  904: { name: 'Overqwil', types: ['dark', 'poison'], baseStats: { hp: 85, attack: 115, defense: 95, spAtk: 65, spDef: 65, speed: 85 }, moves: ['barb-barrage', 'crunch', 'poison-jab', 'waterfall'] },
+  10235: { name: 'Sneasel di Hisui', types: ['fighting', 'poison'], baseStats: { hp: 55, attack: 95, defense: 55, spAtk: 35, spDef: 75, speed: 115 }, moves: ['poison-jab', 'brick-break', 'quick-attack', 'taunt'] },
+  903: { name: 'Sneasler', types: ['fighting', 'poison'], baseStats: { hp: 80, attack: 130, defense: 60, spAtk: 40, spDef: 80, speed: 120 }, moves: ['dire-claw', 'close-combat', 'drain-punch', 'swords-dance'] },
+  10238: { name: 'Zorua di Hisui', types: ['normal', 'ghost'], baseStats: { hp: 35, attack: 60, defense: 40, spAtk: 85, spDef: 40, speed: 70 }, moves: ['scratch', 'shadow-sneak', 'swift', 'nasty-plot'] },
+  10239: { name: 'Zoroark di Hisui', types: ['normal', 'ghost'], baseStats: { hp: 55, attack: 100, defense: 60, spAtk: 125, spDef: 60, speed: 110 }, moves: ['bitter-malice', 'hyper-voice', 'shadow-ball', 'nasty-plot'] },
+
+  // Forme Regionali - Paldea
+  10253: { name: 'Wooper di Paldea', types: ['poison', 'ground'], baseStats: { hp: 55, attack: 45, defense: 45, spAtk: 25, spDef: 25, speed: 15 }, moves: ['poison-tail', 'mud-shot', 'tackle', 'yawn'] },
+  980: { name: 'Clodsire', types: ['poison', 'ground'], baseStats: { hp: 130, attack: 75, defense: 60, spAtk: 45, spDef: 100, speed: 20 }, moves: ['earthquake', 'poison-jab', 'toxic', 'recover'] },
+  10250: { name: 'Tauros di Paldea', types: ['fighting'], baseStats: { hp: 75, attack: 110, defense: 105, spAtk: 30, spDef: 70, speed: 100 }, moves: ['raging-bull', 'close-combat', 'iron-head', 'bulk-up'] },
 };
 
 export function getFallbackPokemonData(id: number): FallbackPokemonInfo {

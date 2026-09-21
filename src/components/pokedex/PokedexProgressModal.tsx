@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useGame } from '../../contexts/GameContext';
-import { GENERATIONS } from './pokedexConstants';
+import { GENERATIONS, REGIONAL_POKEMON_IDS } from './pokedexConstants';
 import { X, Trophy, Gift, Check, CheckCircle2, Award } from 'lucide-react';
 import { playLevelUp, playMenuClick } from '../../lib/sound';
 
@@ -736,13 +736,23 @@ export const PokedexProgressModal: React.FC<PokedexProgressModalProps> = ({
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
               {GENERATIONS.filter(g => g.id > 0).map(gen => {
-                const [start, end] = gen.range;
-                const genTotal = end - start + 1;
+                let genTotal = 0;
                 let genCaught = 0;
-                for (let i = start; i <= end; i++) {
-                  if (pokedex[i] === 'caught') genCaught++;
+
+                if (gen.id === 10) {
+                  genTotal = REGIONAL_POKEMON_IDS.length;
+                  REGIONAL_POKEMON_IDS.forEach(id => {
+                    if (pokedex[id] === 'caught') genCaught++;
+                  });
+                } else {
+                  const [start, end] = gen.range;
+                  genTotal = end - start + 1;
+                  for (let i = start; i <= end; i++) {
+                    if (pokedex[i] === 'caught') genCaught++;
+                  }
                 }
-                const genPct = Math.round((genCaught / genTotal) * 100);
+
+                const genPct = genTotal > 0 ? Math.round((genCaught / genTotal) * 100) : 0;
 
                 return (
                   <button

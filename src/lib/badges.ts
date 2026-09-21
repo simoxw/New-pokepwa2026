@@ -93,7 +93,7 @@ export function isAreaUnlocked(areaId: string, playerBadges: string[], leagueVic
   }
 
   // The Post-Game Area Zero and new zones require beating the League at least once!
-  if (['area-zero', 'santuario-glitch', 'abisso-codice'].includes(areaId)) {
+  if (['area-zero', 'santuario-glitch', 'abisso-codice', 'arcipelago-regionale'].includes(areaId)) {
     return leagueVictories > 0;
   }
 

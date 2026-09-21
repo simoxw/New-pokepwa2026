@@ -43,7 +43,12 @@ Questo documento descrive le principali funzioni, algoritmi e metodi esportati n
 - **`useItemInBattle(item, targetPokemon, opponentPokemon, isWild)`**:  
   Gestisce la logica di consumo degli strumenti in lotta:
   - **Strumenti Curativi**: Ripristina PS fissi (Pozione, Superpozione, Iperpozione) o percentuali, o rimuove gli stati con Cura Totale.
-  - **Poké Ball**: Applica la formula di cattura ufficiale Pokémon:
+  - **Poké Ball**: Applica il moltiplicatore base bilanciato per la cattura:
+    - **Probabilità Base Generale**: 0.42
+    - **Poké Ball**: 1.0x
+    - **Mega Ball**: 1.6x
+    - **Ultra Ball**: 2.4x
+    - **Master Ball**: 100% (cattura sempre garantita)
     $$a = \frac{3 \times \text{HP}_{\max} - 2 \times \text{HP}_{\text{corr}}}{3 \times \text{HP}_{\max}} \times \text{CatchRate} \times \text{BallMultiplier} \times \text{StatusMultiplier}$$
     Se $a \ge 255$, la cattura è garantita al 100%. Altrimenti, calcola le 4 scosse della Poké Ball.
 
@@ -120,7 +125,7 @@ Questo documento descrive le principali funzioni, algoritmi e metodi esportati n
 ### `isAreaUnlocked(areaId, playerBadges, leagueVictories)`
 - **Progressione Lineare**: Implementa un sistema di sblocco sequenziale per le 10 zone principali del gioco. Ogni zona (tranne la prima) richiede il possesso della medaglia ottenuta nella zona precedente.
 - **Accesso alla Lega**: Il Datacenter della Lega Pokémon richiede obbligatoriamente il possesso di tutte le **10 Medaglie** dei Capipalestra.
-- **Post-Game (Area Zero)**: Le aree speciali (Area Zero, Santuario dei Glitch, Abisso del Codice) vengono sbloccate solo dopo aver ottenuto almeno una vittoria nella Lega Pokémon (`leagueVictories > 0`).
+- **Post-Game (Area Zero & Arcipelago Regionale)**: Le aree speciali (Area Zero, Santuario dei Glitch, Abisso del Codice, Arcipelago Regionale) vengono sbloccate solo dopo aver ottenuto almeno una vittoria nella Lega Pokémon (`leagueVictories > 0`).
 
 ### Sistema di Incontri (`/src/components/ZoneExplorer.tsx`)
 - **Pity System Capopalestra**: Se un giocatore si trova in una zona di cui non possiede ancora la medaglia, la probabilità di incontrare il Capopalestra aumenta di **8 volte** rispetto al normale, facilitando la progressione iniziale.

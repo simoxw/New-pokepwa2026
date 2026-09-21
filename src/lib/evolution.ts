@@ -98,7 +98,31 @@ export const SPECIAL_EVOLUTIONS: Record<number, { nextId: number; level: number;
       { nextId: 367, level: 20, name: 'Huntail' },
       { nextId: 368, level: 20, name: 'Gorebyss' }
     ]
-  }
+  },
+
+  // Regional Evolutions
+  10091: { nextId: 10092, level: 20, name: 'Raticate di Alola', branches: [] },
+  10101: { nextId: 10102, level: 22, name: 'Sandslash di Alola', branches: [] },
+  10103: { nextId: 10104, level: 22, name: 'Ninetales di Alola', branches: [] },
+  10105: { nextId: 10106, level: 26, name: 'Dugtrio di Alola', branches: [] },
+  10107: { nextId: 10108, level: 28, name: 'Persian di Alola', branches: [] },
+  10109: { nextId: 10110, level: 25, name: 'Graveler di Alola', branches: [] },
+  10110: { nextId: 10111, level: 36, name: 'Golem di Alola', branches: [] },
+  10112: { nextId: 10113, level: 38, name: 'Muk di Alola', branches: [] },
+  10161: { nextId: 863, level: 28, name: 'Perrserker', branches: [] },
+  10163: { nextId: 10164, level: 40, name: 'Rapidash di Galar', branches: [] },
+  10165: { nextId: 10166, level: 37, name: 'Slowbro di Galar', branches: [] },
+  10167: { nextId: 865, level: 28, name: "Sirfetch'd", branches: [] },
+  10171: { nextId: 10172, level: 20, name: 'Linoone di Galar', branches: [] },
+  10172: { nextId: 862, level: 35, name: 'Obstagoon', branches: [] },
+  10173: { nextId: 864, level: 38, name: 'Cursola', branches: [] },
+  10174: { nextId: 10175, level: 35, name: 'Darmanitan di Galar', branches: [] },
+  10229: { nextId: 10230, level: 22, name: 'Arcanine di Hisui', branches: [] },
+  10231: { nextId: 10232, level: 22, name: 'Electrode di Hisui', branches: [] },
+  10234: { nextId: 904, level: 28, name: 'Overqwil', branches: [] },
+  10235: { nextId: 903, level: 32, name: 'Sneasler', branches: [] },
+  10238: { nextId: 10239, level: 30, name: 'Zoroark di Hisui', branches: [] },
+  10253: { nextId: 980, level: 20, name: 'Clodsire', branches: [] }
 };
 
 /**

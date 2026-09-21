@@ -31,7 +31,7 @@ export const Hub: React.FC = () => {
   ];
 
   const goToZone = (zoneId: string) => {
-    const isPostGameZone = ['area-zero', 'santuario-glitch', 'abisso-codice'].includes(zoneId);
+    const isPostGameZone = ['area-zero', 'santuario-glitch', 'abisso-codice', 'arcipelago-regionale'].includes(zoneId);
     
     if (isPostGameZone && (state.player.leagueVictories || 0) < 1) {
       setDialogue(`⚠️ ACCESSO NEGATO: ${ZONES.find(z => z.id === zoneId)?.name || 'Questa zona'} è protetta da crittografia quantistica! Solo chi ha sconfitto la Lega Pokémon e conquistato il titolo di Campione può entrarvi.`);
@@ -382,7 +382,7 @@ export const Hub: React.FC = () => {
             </div>
             <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
               {ZONES.filter(z => z.id !== 'villaggio').map(zone => {
-                const isPostGame = ['area-zero', 'santuario-glitch', 'abisso-codice'].includes(zone.id);
+                const isPostGame = ['area-zero', 'santuario-glitch', 'abisso-codice', 'arcipelago-regionale'].includes(zone.id);
                 const isUnlocked = isAreaUnlocked(zone.id, state.player.badges, state.player.leagueVictories || 0);
                 const lockReason = isPostGame 
                   ? 'Accesso riservato: sconfiggi la Lega Pokémon per sbloccare!' 

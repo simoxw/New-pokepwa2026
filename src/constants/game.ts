@@ -789,6 +789,52 @@ export const ZONES: Zone[] = [
       { trainerId: 'n-harmonia', rarity: 15 },
     ],
   },
+  {
+    id: 'arcipelago-regionale',
+    name: 'Arcipelago Regionale (Post-Game)',
+    description: 'Un paradiso tropicale sbloccato dopo la Lega, dove prosperano le forme regionali di Alola, Galar, Hisui e Paldea!',
+    background: 'bg-teal-900',
+    spawnTable: [
+      // Forme Alola
+      { pokemonId: 10091, rarity: 8, minLevel: 45, maxLevel: 55 }, // Rattata Alola
+      { pokemonId: 10101, rarity: 6, minLevel: 45, maxLevel: 55 }, // Sandshrew Alola
+      { pokemonId: 10103, rarity: 6, minLevel: 45, maxLevel: 55 }, // Vulpix Alola
+      { pokemonId: 10105, rarity: 6, minLevel: 45, maxLevel: 55 }, // Diglett Alola
+      { pokemonId: 10107, rarity: 6, minLevel: 45, maxLevel: 55 }, // Meowth Alola
+      { pokemonId: 10109, rarity: 6, minLevel: 45, maxLevel: 55 }, // Geodude Alola
+      { pokemonId: 10112, rarity: 6, minLevel: 45, maxLevel: 55 }, // Grimer Alola
+      { pokemonId: 10114, rarity: 5, minLevel: 48, maxLevel: 58 }, // Exeggutor Alola
+      { pokemonId: 10115, rarity: 5, minLevel: 48, maxLevel: 58 }, // Marowak Alola
+      { pokemonId: 10100, rarity: 5, minLevel: 48, maxLevel: 58 }, // Raichu Alola
+      
+      // Forme Galar
+      { pokemonId: 10161, rarity: 6, minLevel: 45, maxLevel: 55 }, // Meowth Galar
+      { pokemonId: 10163, rarity: 6, minLevel: 45, maxLevel: 55 }, // Ponyta Galar
+      { pokemonId: 10165, rarity: 6, minLevel: 45, maxLevel: 55 }, // Slowpoke Galar
+      { pokemonId: 10167, rarity: 6, minLevel: 45, maxLevel: 55 }, // Farfetch'd Galar
+      { pokemonId: 10171, rarity: 7, minLevel: 45, maxLevel: 55 }, // Zigzagoon Galar
+      { pokemonId: 10173, rarity: 5, minLevel: 45, maxLevel: 55 }, // Corsola Galar
+      { pokemonId: 10174, rarity: 5, minLevel: 45, maxLevel: 55 }, // Darumaka Galar
+      { pokemonId: 10178, rarity: 5, minLevel: 48, maxLevel: 58 }, // Weezing Galar
+
+      // Forme Hisui
+      { pokemonId: 10229, rarity: 6, minLevel: 45, maxLevel: 55 }, // Growlithe Hisui
+      { pokemonId: 10231, rarity: 6, minLevel: 45, maxLevel: 55 }, // Voltorb Hisui
+      { pokemonId: 10234, rarity: 6, minLevel: 45, maxLevel: 55 }, // Qwilfish Hisui
+      { pokemonId: 10235, rarity: 6, minLevel: 45, maxLevel: 55 }, // Sneasel Hisui
+      { pokemonId: 10238, rarity: 5, minLevel: 45, maxLevel: 55 }, // Zorua Hisui
+
+      // Forme Paldea
+      { pokemonId: 10253, rarity: 7, minLevel: 45, maxLevel: 55 }, // Wooper Paldea
+      { pokemonId: 10250, rarity: 4, minLevel: 48, maxLevel: 58 }, // Tauros Paldea
+    ],
+    trainerTable: [
+      { trainerId: 'lorelei', rarity: 15 },
+      { trainerId: 'drake', rarity: 15 },
+      { trainerId: 'vera-may', rarity: 15 },
+      { trainerId: 'baldo-brandon', rarity: 15 },
+    ],
+  },
 ];
 
 export const CHARACTERS = {
