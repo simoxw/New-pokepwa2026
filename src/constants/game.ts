@@ -809,13 +809,13 @@ export const ZONES: Zone[] = [
       
       // Forme Galar
       { pokemonId: 10161, rarity: 6, minLevel: 45, maxLevel: 55 }, // Meowth Galar
-      { pokemonId: 10163, rarity: 6, minLevel: 45, maxLevel: 55 }, // Ponyta Galar
-      { pokemonId: 10165, rarity: 6, minLevel: 45, maxLevel: 55 }, // Slowpoke Galar
-      { pokemonId: 10167, rarity: 6, minLevel: 45, maxLevel: 55 }, // Farfetch'd Galar
-      { pokemonId: 10171, rarity: 7, minLevel: 45, maxLevel: 55 }, // Zigzagoon Galar
+      { pokemonId: 10162, rarity: 6, minLevel: 45, maxLevel: 55 }, // Ponyta Galar
+      { pokemonId: 10164, rarity: 6, minLevel: 45, maxLevel: 55 }, // Slowpoke Galar
+      { pokemonId: 10166, rarity: 6, minLevel: 45, maxLevel: 55 }, // Farfetch'd Galar
+      { pokemonId: 10174, rarity: 7, minLevel: 45, maxLevel: 55 }, // Zigzagoon Galar
       { pokemonId: 10173, rarity: 5, minLevel: 45, maxLevel: 55 }, // Corsola Galar
-      { pokemonId: 10174, rarity: 5, minLevel: 45, maxLevel: 55 }, // Darumaka Galar
-      { pokemonId: 10178, rarity: 5, minLevel: 48, maxLevel: 58 }, // Weezing Galar
+      { pokemonId: 10176, rarity: 5, minLevel: 45, maxLevel: 55 }, // Darumaka Galar
+      { pokemonId: 10167, rarity: 5, minLevel: 48, maxLevel: 58 }, // Weezing Galar
 
       // Forme Hisui
       { pokemonId: 10229, rarity: 6, minLevel: 45, maxLevel: 55 }, // Growlithe Hisui

@@ -333,23 +333,23 @@ export const REGIONAL_INDEX_ITEMS: PokedexIndexItem[] = [
   // Galar (19)
   { id: 10161, name: 'Meowth di Galar', formattedId: '#10161' },
   { id: 863, name: 'Perrserker', formattedId: '#0863' },
-  { id: 10163, name: 'Ponyta di Galar', formattedId: '#10163' },
-  { id: 10164, name: 'Rapidash di Galar', formattedId: '#10164' },
-  { id: 10165, name: 'Slowpoke di Galar', formattedId: '#10165' },
-  { id: 10166, name: 'Slowbro di Galar', formattedId: '#10166' },
-  { id: 10167, name: "Farfetch'd di Galar", formattedId: '#10167' },
+  { id: 10162, name: 'Ponyta di Galar', formattedId: '#10162' },
+  { id: 10163, name: 'Rapidash di Galar', formattedId: '#10163' },
+  { id: 10164, name: 'Slowpoke di Galar', formattedId: '#10164' },
+  { id: 10165, name: 'Slowbro di Galar', formattedId: '#10165' },
+  { id: 10166, name: "Farfetch'd di Galar", formattedId: '#10166' },
   { id: 865, name: "Sirfetch'd", formattedId: '#0865' },
-  { id: 10171, name: 'Zigzagoon di Galar', formattedId: '#10171' },
-  { id: 10172, name: 'Linoone di Galar', formattedId: '#10172' },
+  { id: 10174, name: 'Zigzagoon di Galar', formattedId: '#10174' },
+  { id: 10175, name: 'Linoone di Galar', formattedId: '#10175' },
   { id: 862, name: 'Obstagoon', formattedId: '#0862' },
   { id: 10173, name: 'Corsola di Galar', formattedId: '#10173' },
   { id: 864, name: 'Cursola', formattedId: '#0864' },
-  { id: 10174, name: 'Darumaka di Galar', formattedId: '#10174' },
-  { id: 10175, name: 'Darmanitan di Galar', formattedId: '#10175' },
-  { id: 10176, name: 'Yamask di Galar', formattedId: '#10176' },
+  { id: 10176, name: 'Darumaka di Galar', formattedId: '#10176' },
+  { id: 10177, name: 'Darmanitan di Galar', formattedId: '#10177' },
+  { id: 10179, name: 'Yamask di Galar', formattedId: '#10179' },
   { id: 867, name: 'Runerigus', formattedId: '#0867' },
-  { id: 10178, name: 'Weezing di Galar', formattedId: '#10178' },
-  { id: 10179, name: 'Stunfisk di Galar', formattedId: '#10179' },
+  { id: 10167, name: 'Weezing di Galar', formattedId: '#10167' },
+  { id: 10180, name: 'Stunfisk di Galar', formattedId: '#10180' },
   // Hisui (14)
   { id: 10229, name: 'Growlithe di Hisui', formattedId: '#10229' },
   { id: 10230, name: 'Arcanine di Hisui', formattedId: '#10230' },
@@ -380,7 +380,7 @@ export async function fetchPokedexIndex(): Promise<PokedexIndexItem[]> {
 
   // Try IndexedDB (with localStorage migration) first
   try {
-    const saved = await getStorageItem<PokedexIndexItem[]>('pokepwa_pokedex_index_v4');
+    const saved = await getStorageItem<PokedexIndexItem[]>('pokepwa_pokedex_index_v5');
     if (saved && Array.isArray(saved) && saved.length >= 1000) {
       INDEX_CACHE = saved;
       return saved;
@@ -415,7 +415,7 @@ export async function fetchPokedexIndex(): Promise<PokedexIndexItem[]> {
 
         const fullItems = deduplicateIndex([...items, ...REGIONAL_INDEX_ITEMS]);
         INDEX_CACHE = fullItems;
-        setStorageItem('pokepwa_pokedex_index_v4', fullItems).catch(() => {});
+        setStorageItem('pokepwa_pokedex_index_v5', fullItems).catch(() => {});
         return fullItems;
       }
     }
