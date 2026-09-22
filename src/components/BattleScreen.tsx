@@ -42,7 +42,11 @@ import {
 
 interface BattleScreenProps {
   enemy: Pokemon;
-  trainer?: Trainer;
+  trainer?: Trainer & { bossMutation?: any };
+  modifiers?: {
+    activeCards?: any[];
+    bossMutation?: any;
+  };
   onEnd: (
     result: 'win' | 'lose' | 'escape' | 'catch', 
     evolutionCandidate?: Pokemon, 
@@ -51,9 +55,25 @@ interface BattleScreenProps {
   ) => void;
 }
 
-export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy, trainer, onEnd }) => {
+export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy, trainer, modifiers, onEnd }) => {
   const { state, setState } = useGame();
   const playerActive = state.player.team[0];
+
+  const activeCards: any[] = modifiers?.activeCards || [];
+  const bossMutation = (trainer as any)?.bossMutation || modifiers?.bossMutation;
+
+  // Tower Card Multipliers
+  const towerAttackMult = activeCards.reduce((acc, c) => acc * (c.attackMultiplier || 1), 1);
+  const towerDefMult = activeCards.reduce((acc, c) => acc * (c.defenseMultiplier || 1), 1);
+  const towerSpeedMult = activeCards.reduce((acc, c) => acc * (c.speedMultiplier || 1), 1);
+  const towerIncomingDmgMult = activeCards.reduce((acc, c) => acc * (c.incomingDamageMultiplier || 1), 1);
+  const towerCritChanceBonus = activeCards.reduce((acc, c) => acc + (c.critChanceBonus || 0), 0);
+  const towerLifeStealPercent = activeCards.reduce((acc, c) => acc + (c.lifeStealPercent || 0), 0);
+  const towerDodgeChance = activeCards.reduce((acc, c) => acc + (c.dodgeChance || 0), 0);
+  const towerAccuracyPenalty = activeCards.reduce((acc, c) => acc + (c.accuracyPenaltyPercent || 0), 0);
+  const towerStartSelfDmgPercent = activeCards.reduce((acc, c) => acc + (c.startHpSelfDamagePercent || 0), 0);
+  const towerLowHpBonusCard = activeCards.find(c => c.lowHpBonus);
+  const towerLowHpBonus = towerLowHpBonusCard?.lowHpBonus || 1;
   
   // Guard against missing active pokemon
   if (!playerActive) {
@@ -69,6 +89,25 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     playBgm('battle');
     if (playerActive) playPokemonCry(playerActive.id);
     if (initialEnemy) setTimeout(() => playPokemonCry(initialEnemy.id), 500);
+
+    // Initial battle start notifications for Tower Modifiers & Boss Mutations
+    if (bossMutation) {
+      addLog(`⚠️ MUTAZIONE BOSS [${bossMutation.name.toUpperCase()}]: ${bossMutation.description}`);
+      if (bossMutation.type === 'corrotto') {
+        setPlayerStatus({ status: 'poisoned', duration: undefined });
+        addLog(`☣️ Boss Corrotto intossica il tuo Pokémon all'inizio del combattimento!`);
+      }
+    }
+
+    if (towerStartSelfDmgPercent > 0) {
+      const selfDmg = Math.max(1, Math.floor((playerActive.maxHp * towerStartSelfDmgPercent) / 100));
+      setPlayerHp(prev => {
+        const next = Math.max(1, prev - selfDmg);
+        addLog(`☣️ Fuga di Memoria infligge ${selfDmg} PS di danno al tuo Pokémon!`);
+        return next;
+      });
+    }
+
     return () => {
       playBgm('overworld');
     };
@@ -618,8 +657,8 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     );
 
     // Calculate effective speeds
-    const effPlayerSpeed = getEffectiveSpeed(playerActive.stats.speed, playerStages.speed ?? 0, playerStatus.status);
-    const effEnemySpeed = getEffectiveSpeed(enemy.stats.speed, enemyStages.speed ?? 0, enemyStatus.status);
+    const effPlayerSpeed = getEffectiveSpeed(playerActive.stats.speed, playerStages.speed ?? 0, playerStatus.status) * towerSpeedMult;
+    const effEnemySpeed = getEffectiveSpeed(enemy.stats.speed, enemyStages.speed ?? 0, enemyStatus.status) * (bossMutation?.type === 'overclocked' ? 1.15 : 1);
 
     // Determine Turn Order
     const turnWinner = determineTurnOrder(
@@ -823,6 +862,20 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       }
 
       // 6. Execute Move Action
+      const currentLowHpBonus = (cPlayerHp / playerActive.maxHp) < 0.35 ? towerLowHpBonus : 1;
+      const combatOptions = attackerIsPlayer ? {
+        attackMultiplier: towerAttackMult * currentLowHpBonus,
+        critChanceBonus: towerCritChanceBonus,
+        lifestealPercent: towerLifeStealPercent,
+        accuracyPenalty: towerAccuracyPenalty,
+        bossMutationType: bossMutation?.type
+      } : {
+        defenseMultiplier: towerDefMult,
+        incomingDamageMultiplier: towerIncomingDmgMult,
+        dodgeChance: towerDodgeChance,
+        bossMutationType: bossMutation?.type
+      };
+
       const actionRes = executeMoveAction(
         move,
         attacker,
@@ -845,7 +898,8 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
         setTargetHp,
         attackerIsPlayer,
         isFirst,
-        addLog
+        addLog,
+        combatOptions
       );
 
       // 7. Handle Recharge

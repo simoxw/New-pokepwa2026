@@ -39,6 +39,7 @@ export const BattleTower: React.FC<BattleTowerProps> = ({
 
   const [nextOpponent, setNextOpponent] = useState<Trainer | null>(null);
   const [cardChoices, setCardChoices] = useState<TowerCard[] | null>(null);
+  const [showRestNode, setShowRestNode] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGameOver, setIsGameOver] = useState(false);
 
@@ -77,21 +78,6 @@ export const BattleTower: React.FC<BattleTowerProps> = ({
         }));
       }
 
-      // If boss floor (multiple of 5), heal 50%
-      if (currentFloor % 5 === 0) {
-        setState(prev => ({
-          ...prev,
-          player: {
-            ...prev.player,
-            team: prev.player.team.map(p => {
-              if (p.hp <= 0) return p;
-              const healAmount = Math.floor(p.maxHp * 0.5);
-              return { ...p, hp: Math.min(p.maxHp, p.hp + healAmount) };
-            })
-          }
-        }));
-      }
-
       // Update Tower High Floor Record
       if (currentFloor > (state.player.towerHighFloor || 0)) {
         setState(prev => ({
@@ -103,9 +89,14 @@ export const BattleTower: React.FC<BattleTowerProps> = ({
         }));
       }
 
-      // Offer 3 cards for next floor
-      const choices = getRandomTowerCards(3, activeCards.map(c => c.id));
-      setCardChoices(choices);
+      // If boss floor (multiple of 5), show Mainframe Rest Node first!
+      if (currentFloor % 5 === 0) {
+        setShowRestNode(true);
+      } else {
+        // Offer 3 cards for next floor
+        const choices = getRandomTowerCards(3, activeCards.map(c => c.id));
+        setCardChoices(choices);
+      }
       onClearBattleResult?.();
 
     } else if (lastBattleResult === 'lose') {
@@ -282,9 +273,110 @@ export const BattleTower: React.FC<BattleTowerProps> = ({
           </div>
         </div>
 
+        {/* Modulo Ristoro Mainframe Overlay (Post Boss Floor) */}
+        <AnimatePresence>
+          {showRestNode && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              exit={{ opacity: 0, scale: 0.95 }}
+              className="bg-slate-900/98 border-2 border-amber-500/80 rounded-3xl p-5 shadow-2xl text-center backdrop-blur-md"
+            >
+              <div className="inline-flex p-3 rounded-full bg-amber-500/20 text-amber-400 mb-2">
+                <Heart className="w-7 h-7 animate-pulse" />
+              </div>
+              <h3 className="text-xl font-black uppercase tracking-tight text-white">
+                Modulo Ristoro Mainframe (Piano {currentFloor})
+              </h3>
+              <p className="text-xs text-amber-300 font-mono mb-4">
+                Hai sconfitto il Boss! Scegli la tua ricompensa speciale di stazione:
+              </p>
+
+              <div className="grid grid-cols-1 gap-3 text-left mb-4">
+                {/* Option 1: Ripristino Squadra */}
+                <button
+                  onClick={() => {
+                    setState(prev => ({
+                      ...prev,
+                      player: {
+                        ...prev.player,
+                        team: prev.player.team.map(p => fullyHealPokemon(p))
+                      }
+                    }));
+                    setShowRestNode(false);
+                    const choices = getRandomTowerCards(3, activeCards.map(c => c.id));
+                    setCardChoices(choices);
+                  }}
+                  className="bg-emerald-950/60 hover:bg-emerald-900/80 border-2 border-emerald-500/50 hover:border-emerald-400 rounded-2xl p-3.5 transition-all cursor-pointer flex items-center gap-3.5 group"
+                >
+                  <div className="text-3xl p-2 bg-emerald-500/20 rounded-xl shrink-0">
+                    💊
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="font-black text-sm text-emerald-300 block">
+                      Modulo Ripristino Squadra
+                    </span>
+                    <p className="text-xs text-emerald-100 mt-0.5 leading-snug">
+                      Ripristina la salute di tutti i Pokémon al 100% e rianima gli esausti.
+                    </p>
+                  </div>
+                </button>
+
+                {/* Option 2: Potenziamento Avanzato */}
+                <button
+                  onClick={() => {
+                    setShowRestNode(false);
+                    const highTierChoices = getRandomTowerCards(3, activeCards.map(c => c.id)).map(c => ({
+                      ...c,
+                      rarity: c.rarity === 'Comune' ? 'Raro' as const : c.rarity
+                    }));
+                    setCardChoices(highTierChoices);
+                  }}
+                  className="bg-cyan-950/60 hover:bg-cyan-900/80 border-2 border-cyan-500/50 hover:border-cyan-400 rounded-2xl p-3.5 transition-all cursor-pointer flex items-center gap-3.5 group"
+                >
+                  <div className="text-3xl p-2 bg-cyan-500/20 rounded-xl shrink-0">
+                    🎴
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="font-black text-sm text-cyan-300 block">
+                      Modifica di Grado Avanzato
+                    </span>
+                    <p className="text-xs text-cyan-100 mt-0.5 leading-snug">
+                      Ricevi una selezione di Carte Modificatori di alto grado per la tua run.
+                    </p>
+                  </div>
+                </button>
+
+                {/* Option 3: Taglia Mainframe */}
+                <button
+                  onClick={() => {
+                    setAccumulatedMoney(prev => prev + 5000);
+                    setShowRestNode(false);
+                    const choices = getRandomTowerCards(3, activeCards.map(c => c.id));
+                    setCardChoices(choices);
+                  }}
+                  className="bg-amber-950/60 hover:bg-amber-900/80 border-2 border-amber-500/50 hover:border-amber-400 rounded-2xl p-3.5 transition-all cursor-pointer flex items-center gap-3.5 group"
+                >
+                  <div className="text-3xl p-2 bg-amber-500/20 rounded-xl shrink-0">
+                    💰
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <span className="font-black text-sm text-amber-300 block">
+                      Bonus Taglia Mainframe
+                    </span>
+                    <p className="text-xs text-amber-100 mt-0.5 leading-snug">
+                      Incassa immediatamente +$5.000 PokéDollari nel montepremi della tua run.
+                    </p>
+                  </div>
+                </button>
+              </div>
+            </motion.div>
+          )}
+        </AnimatePresence>
+
         {/* Card Upgrade Choice Overlay (Roguelike Draft) */}
         <AnimatePresence>
-          {cardChoices && (
+          {!showRestNode && cardChoices && (
             <motion.div 
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
@@ -302,37 +394,48 @@ export const BattleTower: React.FC<BattleTowerProps> = ({
               </p>
 
               <div className="grid grid-cols-1 gap-3 text-left mb-4">
-                {cardChoices.map((card) => (
-                  <button
-                    key={card.id}
-                    onClick={() => handleSelectCard(card)}
-                    className="bg-slate-800/90 hover:bg-slate-700/90 border-2 border-white/10 hover:border-cyan-400 rounded-2xl p-3.5 transition-all active:scale-98 cursor-pointer flex items-center gap-3.5 group"
-                  >
-                    <div className="text-3xl p-2 bg-white/5 rounded-xl shrink-0 group-hover:scale-110 transition-transform">
-                      {card.icon}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-center justify-between">
-                        <span className="font-black text-sm text-white group-hover:text-cyan-300 transition-colors">
-                          {card.name}
-                        </span>
-                        <span className="text-[9px] uppercase font-black px-2 py-0.5 rounded-full bg-cyan-500/20 text-cyan-300">
-                          {card.rarity}
-                        </span>
+                {cardChoices.map((card) => {
+                  const isCursed = card.rarity === 'Maledetto';
+                  return (
+                    <button
+                      key={card.id}
+                      onClick={() => handleSelectCard(card)}
+                      className={`border-2 rounded-2xl p-3.5 transition-all active:scale-98 cursor-pointer flex items-center gap-3.5 group ${
+                        isCursed 
+                          ? 'bg-purple-950/70 hover:bg-purple-900/80 border-purple-500/80 hover:border-red-500' 
+                          : 'bg-slate-800/90 hover:bg-slate-700/90 border-white/10 hover:border-cyan-400'
+                      }`}
+                    >
+                      <div className="text-3xl p-2 bg-white/5 rounded-xl shrink-0 group-hover:scale-110 transition-transform">
+                        {card.icon}
                       </div>
-                      <p className="text-xs text-gray-300 mt-1 leading-snug">
-                        {card.description}
-                      </p>
-                    </div>
-                  </button>
-                ))}
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between">
+                          <span className={`font-black text-sm transition-colors ${
+                            isCursed ? 'text-purple-300 group-hover:text-red-400' : 'text-white group-hover:text-cyan-300'
+                          }`}>
+                            {card.name}
+                          </span>
+                          <span className={`text-[9px] uppercase font-black px-2 py-0.5 rounded-full ${
+                            isCursed ? 'bg-purple-900/80 text-purple-200 border border-purple-500/50' : 'bg-cyan-500/20 text-cyan-300'
+                          }`}>
+                            {card.rarity}
+                          </span>
+                        </div>
+                        <p className="text-xs text-gray-300 mt-1 leading-snug">
+                          {card.description}
+                        </p>
+                      </div>
+                    </button>
+                  );
+                })}
               </div>
             </motion.div>
           )}
         </AnimatePresence>
 
         {/* Next Opponent Card */}
-        {!cardChoices && !isGameOver && nextOpponent && (
+        {!showRestNode && !cardChoices && !isGameOver && nextOpponent && (
           <div className="bg-slate-900 border border-white/10 rounded-3xl p-4 sm:p-5 shadow-xl">
             <div className="flex items-center gap-3 mb-3">
               <img 
@@ -352,6 +455,21 @@ export const BattleTower: React.FC<BattleTowerProps> = ({
                 </p>
               </div>
             </div>
+
+            {/* Boss Mutation Card Banner if present */}
+            {(nextOpponent as any).bossMutation && (
+              <div className="bg-gradient-to-r from-red-950/80 to-amber-950/80 border border-amber-500/50 rounded-2xl p-3 mb-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="text-base">⚠️</span>
+                  <span className="font-black text-xs uppercase text-amber-300 font-mono">
+                    MUTAZIONE BOSS: {(nextOpponent as any).bossMutation.name}
+                  </span>
+                </div>
+                <p className="text-[11px] text-amber-100/90 leading-tight">
+                  {(nextOpponent as any).bossMutation.description}
+                </p>
+              </div>
+            )}
 
             <div className="bg-black/40 border border-white/5 rounded-2xl p-3 mb-4">
               <p className="text-xs text-gray-300 italic font-mono">

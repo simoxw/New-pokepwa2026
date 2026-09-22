@@ -98,6 +98,7 @@ function GameContent() {
   const [showMoveLearning, setShowMoveLearning] = useState<{ pokemon: Pokemon, move: Move } | null>(null);
   const [currentScreen, setCurrentScreen] = useState<'game' | 'pokedex' | 'inventory' | 'team' | 'box' | 'trade' | 'local-battle' | 'settings' | 'badgecase' | 'shop' | 'profile' | 'quests' | 'sfidofono' | 'league' | 'tower'>('game');
   const [lastTowerBattleResult, setLastTowerBattleResult] = useState<'win' | 'lose' | null>(null);
+  const [activeBattleModifiers, setActiveBattleModifiers] = useState<any>(null);
 
   useEffect(() => {
     if (state.player.team.length === 0) {
@@ -321,9 +322,10 @@ function GameContent() {
           onBack={() => setCurrentScreen('game')} 
           lastBattleResult={lastTowerBattleResult}
           onClearBattleResult={() => setLastTowerBattleResult(null)}
-          onStartBattle={(trainer) => {
+          onStartBattle={(trainer, modifiers) => {
             setActiveTrainer(trainer);
             setActiveBattle(trainer.team[0]);
+            setActiveBattleModifiers(modifiers);
           }}
         />
       )}
@@ -332,7 +334,11 @@ function GameContent() {
         <BattleScreen 
           enemy={activeBattle} 
           trainer={activeTrainer}
-          onEnd={handleBattleEnd} 
+          modifiers={activeBattleModifiers}
+          onEnd={(result, evoCandidate, moveCandidate, ballUsed) => {
+            setActiveBattleModifiers(null);
+            handleBattleEnd(result, evoCandidate, moveCandidate, ballUsed);
+          }} 
         />
       )}
 

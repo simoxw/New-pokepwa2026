@@ -13,6 +13,11 @@ export interface CalculateDamageOptions {
   isCrit?: boolean;
   attackerStages?: Partial<BattleStages>;
   targetStages?: Partial<BattleStages>;
+  critChanceBonus?: number;
+  attackMultiplier?: number;
+  defenseMultiplier?: number;
+  incomingDamageMultiplier?: number;
+  bossMutationType?: 'corazzato' | 'overclocked' | 'vampirico' | 'corrotto';
 }
 
 export function getStageMultiplier(stage: number = 0): number {
@@ -77,14 +82,22 @@ export function calculateDamage(
     ? (options.targetStages?.spDef ?? 0) 
     : (options.targetStages?.defense ?? 0);
 
-  const isCrit = options.isCrit ?? Math.random() < 0.0625; // 1/16 default
+  const critThreshold = 0.0625 + (options.critChanceBonus ? options.critChanceBonus / 100 : 0);
+  const isCrit = options.isCrit ?? Math.random() < critThreshold;
 
   // In standard Pokemon rules, critical hits ignore negative attacker stages and positive defender stages
   const effectiveAtkStage = isCrit ? Math.max(0, atkStage) : atkStage;
   const effectiveDefStage = isCrit ? Math.min(0, defStage) : defStage;
 
-  const rawA = isSpecial ? attackerStats.spAtk : attackerStats.attack;
-  const rawD = isSpecial ? targetStats.spDef : targetStats.defense;
+  let rawA = isSpecial ? attackerStats.spAtk : attackerStats.attack;
+  let rawD = isSpecial ? targetStats.spDef : targetStats.defense;
+
+  if (options.attackMultiplier) {
+    rawA = Math.floor(rawA * options.attackMultiplier);
+  }
+  if (options.defenseMultiplier) {
+    rawD = Math.floor(rawD * options.defenseMultiplier);
+  }
 
   const A = Math.max(1, Math.floor(rawA * getStageMultiplier(effectiveAtkStage)));
   const D = Math.max(1, Math.floor(rawD * getStageMultiplier(effectiveDefStage)));
@@ -110,6 +123,16 @@ export function calculateDamage(
 
   // 6. Apply Effectiveness
   baseDamage = Math.floor(baseDamage * effectiveness);
+
+  // 7. Extra Modifiers (Cursed Cards & Boss Mutations)
+  if (options.incomingDamageMultiplier) {
+    baseDamage = Math.floor(baseDamage * options.incomingDamageMultiplier);
+  }
+  if (options.bossMutationType === 'corazzato') {
+    baseDamage = Math.floor(baseDamage * 0.85); // -15% damage taken
+  } else if (options.bossMutationType === 'overclocked') {
+    baseDamage = Math.floor(baseDamage * 1.10); // +10% damage dealt by boss
+  }
 
   return {
     damage: Math.max(1, baseDamage),

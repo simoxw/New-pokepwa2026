@@ -1,6 +1,6 @@
 import React from 'react';
 import { Pokemon, Move, BattleStages, StatusCondition } from '../../types/game';
-import { calculateDamage, getAccuracyMultiplier } from './battleMath';
+import { calculateDamage, getAccuracyMultiplier, CalculateDamageOptions } from './battleMath';
 import { isImmuneToStatus, VolatileStatus } from './statusEffects';
 import { checkAbility } from './abilities';
 import { playProtect, playHit } from '../sound';
@@ -36,8 +36,27 @@ export function executeMoveAction(
   setTargetHp: React.Dispatch<React.SetStateAction<number>>,
   isPlayer: boolean,
   isFirstInTurn: boolean,
-  addLog: (msg: string) => void
+  addLog: (msg: string) => void,
+  options?: CalculateDamageOptions & {
+    lifestealPercent?: number;
+    dodgeChance?: number;
+    accuracyPenalty?: number;
+  }
 ): ExecuteMoveResult {
+  // Quantum Dodge Check
+  if (options?.dodgeChance && !isPlayer && Math.random() * 100 < options.dodgeChance) {
+    addLog(`${user.name} usa ${move.name}!`);
+    addLog(`🎲 Schivata Quantica! ${target.name} schiva completamente l'attacco!`);
+    return {
+      nextUserHp: userHp,
+      nextTargetHp: targetHp,
+      targetFainted: false,
+      userFainted: false,
+      nextUserStatus: userStatus,
+      nextTargetStatus: targetStatus
+    };
+  }
+
   addLog(`${user.name} usa ${move.name}!`);
 
   let curUserHp = userHp;
@@ -111,7 +130,10 @@ export function executeMoveAction(
   if (move.accuracy && move.accuracy < 100) {
     const accStage = (userStages.accuracy ?? 0) - (targetStages.evasion ?? 0);
     const accMultiplier = getAccuracyMultiplier(accStage);
-    const finalAccuracy = Math.min(100, Math.floor(move.accuracy * accMultiplier));
+    let finalAccuracy = Math.min(100, Math.floor(move.accuracy * accMultiplier));
+    if (isPlayer && options?.accuracyPenalty) {
+      finalAccuracy = Math.max(10, finalAccuracy - options.accuracyPenalty);
+    }
     if (Math.random() * 100 >= finalAccuracy) {
       addLog(`Ma il colpo di ${user.name} fallisce!`);
       return { 
@@ -263,7 +285,7 @@ export function executeMoveAction(
         { ...user, status: userStatus.status },
         { ...target, status: targetStatus.status },
         move,
-        { attackerStages: userStages, targetStages }
+        { attackerStages: userStages, targetStages, ...options }
       );
       const hitDmg = Math.max(1, Math.floor(res.damage * damageMult));
       curTargetHp = Math.max(0, curTargetHp - hitDmg);
@@ -291,7 +313,7 @@ export function executeMoveAction(
     { ...user, status: userStatus.status },
     { ...target, status: targetStatus.status },
     move,
-    { attackerStages: userStages, targetStages }
+    { attackerStages: userStages, targetStages, ...options }
   );
   const finalDamage = Math.floor(result.damage * damageMult);
 
@@ -316,6 +338,22 @@ export function executeMoveAction(
   // Subtract damage from defender
   curTargetHp = Math.max(0, curTargetHp - finalDamage);
   setTargetHp(curTargetHp);
+
+  // Card Lifesteal (Drenaggio di Pacchetti)
+  if (isPlayer && options?.lifestealPercent && finalDamage > 0 && curUserHp > 0) {
+    const lifestealHeal = Math.max(1, Math.floor((finalDamage * options.lifestealPercent) / 100));
+    curUserHp = Math.min(user.maxHp, curUserHp + lifestealHeal);
+    setUserHp(curUserHp);
+    addLog(`🩸 Drenaggio di Pacchetti rigenera ${lifestealHeal} PS a ${user.name}!`);
+  }
+
+  // Boss Vampirico mutation heal
+  if (!isPlayer && options?.bossMutationType === 'vampirico' && finalDamage > 0 && curUserHp > 0) {
+    const vampHeal = Math.max(1, Math.floor(finalDamage * 0.15));
+    curUserHp = Math.min(user.maxHp, curUserHp + vampHeal);
+    setUserHp(curUserHp);
+    addLog(`🩸 Boss Vampirico rigenera ${vampHeal} PS dall'attacco!`);
+  }
 
   // Ability check on target hit
   const onHitEffect = checkAbility(target, 'on_hit', { move, target: user });
