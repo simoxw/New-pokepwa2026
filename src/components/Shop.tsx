@@ -25,7 +25,7 @@ export const Shop: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const changeQty = (itemId: string, delta: number) => {
     setQuantities(prev => {
       const current = prev[itemId] || 1;
-      const next = Math.max(1, Math.min(99, current + delta));
+      const next = Math.max(1, Math.min(999, current + delta));
       return { ...prev, [itemId]: next };
     });
   };
@@ -64,8 +64,6 @@ export const Shop: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         }
       };
     });
-
-    setQuantities(prev => ({ ...prev, [shopItem.id]: 1 }));
   };
 
   return (
@@ -104,21 +102,37 @@ export const Shop: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               
               <div className="flex flex-col items-center gap-2 shrink-0">
                 {/* Quantity Control Box */}
-                <div className="flex items-center bg-white border-2 border-gray-200 rounded-xl px-2 py-0.5 shadow-sm">
+                <div className="flex items-center gap-1 bg-white border-2 border-gray-200 rounded-2xl p-1 shadow-sm shrink-0">
+                  <button 
+                    onClick={() => changeQty(item.id, -10)}
+                    className="w-7 h-7 flex items-center justify-center font-black text-gray-400 hover:bg-gray-100 rounded-lg text-[10px] hover:text-red-500 transition-colors"
+                    title="Diminuisci di 10"
+                  >
+                    -10
+                  </button>
                   <button 
                     onClick={() => changeQty(item.id, -1)}
-                    className="w-5 h-5 flex items-center justify-center font-black text-gray-500 hover:bg-gray-100 rounded-lg text-xs"
+                    className="w-7 h-7 flex items-center justify-center font-black text-gray-600 hover:bg-gray-100 rounded-lg text-sm hover:text-red-500 transition-colors"
+                    title="Diminuisci di 1"
                   >
                     -
                   </button>
-                  <span className="w-6 text-center font-black text-xs text-gray-700">
+                  <span className="w-8 text-center font-black text-xs text-gray-800">
                     {qty}
                   </span>
                   <button 
                     onClick={() => changeQty(item.id, 1)}
-                    className="w-5 h-5 flex items-center justify-center font-black text-gray-500 hover:bg-gray-100 rounded-lg text-xs"
+                    className="w-7 h-7 flex items-center justify-center font-black text-gray-600 hover:bg-gray-100 rounded-lg text-sm hover:text-green-500 transition-colors"
+                    title="Aumenta di 1"
                   >
                     +
+                  </button>
+                  <button 
+                    onClick={() => changeQty(item.id, 10)}
+                    className="w-7 h-7 flex items-center justify-center font-black text-gray-400 hover:bg-gray-100 rounded-lg text-[10px] hover:text-green-500 transition-colors"
+                    title="Aumenta di 10"
+                  >
+                    +10
                   </button>
                 </div>
                 
