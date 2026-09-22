@@ -83,6 +83,21 @@ Questo documento descrive le principali funzioni, algoritmi e metodi esportati n
 - **`fetchMoveData(moveNameOrUrl)`**:  
   Recupera le proprietà competitive della mossa (potenza, precisione, tipo, PP, classe di danno) con traduzione automatica in italiano.
 
+### `utils.ts` & Scambio Codici (`Trade.tsx`)
+- **`normalizePokemon(raw)`**:
+  Normalizza qualsiasi oggetto Pokémon proveniente da LocalStorage, N64 o Pokedesk.
+  - Sincronizza `pokemonId`, `id` e genera un `instanceId` univoco.
+  - Genera automaticamente gli sprite mancanti (`artwork`, `front`, `back`, `home`, `animated`) facendo riferimento alle repository ufficiali HD di PokéAPI.
+  - Normalizza la curva di esperienza convertendo i campi esterni `exp` nei campi nativi `experience` e `nextLevelExp` (calcolati secondo la formula della curva di crescita $N^3$).
+  - Mappa e arricchisce tutte le mosse importate tramite `getMoveByName` garantendo la presenza di tipo, categoria, potenza, precisione e PP.
+- **`decodePokemon(base64)`**:
+  Decodifica stringhe Base64 esterne con tolleranza avanzata agli errori.
+  - Gestisce l'assenza o l'errata formattazione del padding Base64 (`=`).
+  - **Riparazione Automatica JSON**: Tenta il ripristino di JSON incompleti o troncati (aggiungendo automaticamente virgolette o parentesi di chiusura mancanti).
+  - **Fallback Regex**: In caso di troncamenti severi, estrae tramite espressioni regolari ID specie, nome, livello e tipo del Pokémon per ricostruire un esemplare valido.
+- **`encodePokemon(pokemon)` / `decodeTeam(base64)` / `encodeTeam(team)`**:
+  Permettono la serializzazione e la deserializzazione sicura di singoli Pokémon o dell'intera squadra per le funzioni di scambio e Wonder Trade.
+
 ---
 
 ## 3. Crescita, Statistiche ed Evoluzione (`/src/lib/`)

@@ -98,6 +98,11 @@ Combina la fedeltà delle meccaniche competitive Pokémon ufficiali (formule mat
 
 ### 6. ⚙️ Impostazioni, Personalizzazione BGM & Menù Trucchi Protetto
 - **🔑 Menù Trucchi Protetto da PIN (`190693`)**: Accesso riservato al menù sviluppatore tramite codice PIN segreto. In caso di errore, viene mostrato un intervento comico e satirico del Prof. Scordarello.
+- **🔄 Sistema di Scambio e Import/Export Pokémon (Compatibile N64 & Pokedesk)**:
+  - Generazione di codici stringa Base64 per scambiare o esportare qualsiasi Pokémon.
+  - **Motore di Normalizzazione `normalizePokemon`**: Decodifica automatica di codici esterni (Pokedesk / N64).
+  - Ricostruzione automatica di artwork ufficiali HD, sprite frontali/posteriori, mosse tradotte, curva d'esperienza ($N^3$), `experience` e `nextLevelExp`.
+  - **Riparazione Automatica JSON (JSON Auto-Repair & Fallback Regex)**: Ripara in automatico codici parziali o troncati da copia-incolla imperfetti, garantendo importazioni senza bug o crash.
 - **🎵 Lettore BGM Personalizzato**: Caricamento di tracce musicali MP3/WAV personalizzate per la musica di sottofondo dell'Overworld e della Lotta.
 - **💾 Gestione Salvataggi e Export JSON**: Salvataggio automatico continuo in `localStorage`, export/import del file di salvataggio in formato JSON, e cancellazione sicura.
 
