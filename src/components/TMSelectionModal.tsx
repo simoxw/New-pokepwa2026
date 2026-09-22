@@ -40,6 +40,45 @@ export const TMSelectionModal: React.FC<TMSelectionModalProps> = ({
 
       setMoves(formatted);
       setLoading(false);
+
+      // Async background enrichment: Fetch official PokéAPI Italian names and types for all moves
+      const enrichBatch = async () => {
+        const BATCH_SIZE = 6;
+        for (let i = 0; i < rawMoves.length; i += BATCH_SIZE) {
+          if (!isMounted) break;
+          const chunk = rawMoves.slice(i, i + BATCH_SIZE);
+          const results = await Promise.all(
+            chunk.map(async (m) => {
+              try {
+                const moveDetails = await fetchMoveData(m.url || m.name);
+                return { name: m.name, displayName: moveDetails.name, moveDetails };
+              } catch {
+                return null;
+              }
+            })
+          );
+
+          if (!isMounted) break;
+          setMoves((prevMoves) => {
+            const nextMoves = [...prevMoves];
+            results.forEach((res) => {
+              if (res) {
+                const index = nextMoves.findIndex((item) => item.name === res.name);
+                if (index !== -1) {
+                  nextMoves[index] = {
+                    ...nextMoves[index],
+                    displayName: res.displayName,
+                    moveDetails: res.moveDetails,
+                  };
+                }
+              }
+            });
+            return nextMoves;
+          });
+        }
+      };
+
+      enrichBatch();
     }
     loadMoves();
     return () => { isMounted = false; };

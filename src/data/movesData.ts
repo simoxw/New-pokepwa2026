@@ -1311,6 +1311,671 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
     maxPp: 5,
     priority: 4,
     target: 'user'
+  },
+  'toxic': {
+    englishName: 'toxic',
+    name: 'Tossina',
+    type: 'poison',
+    category: 'status',
+    power: 0,
+    accuracy: 90,
+    pp: 10,
+    maxPp: 10,
+    target: 'selected-pokemon',
+    statusEffect: 'poisoned',
+    effectChance: 100
+  },
+  'will-o-wisp': {
+    englishName: 'will-o-wisp',
+    name: 'Fuocofatuo',
+    type: 'fire',
+    category: 'status',
+    power: 0,
+    accuracy: 85,
+    pp: 15,
+    maxPp: 15,
+    target: 'selected-pokemon',
+    statusEffect: 'burned',
+    effectChance: 100
+  },
+  'calm-mind': {
+    englishName: 'calm-mind',
+    name: 'Calmamente',
+    type: 'psychic',
+    category: 'status',
+    power: 0,
+    accuracy: 100,
+    pp: 20,
+    maxPp: 20,
+    target: 'user',
+    stat_changes: [{ change: 1, stat: { name: 'special-attack' } }, { change: 1, stat: { name: 'special-defense' } }]
+  },
+  'bulk-up': {
+    englishName: 'bulk-up',
+    name: 'Granfisico',
+    type: 'fighting',
+    category: 'status',
+    power: 0,
+    accuracy: 100,
+    pp: 20,
+    maxPp: 20,
+    target: 'user',
+    stat_changes: [{ change: 1, stat: { name: 'attack' } }, { change: 1, stat: { name: 'defense' } }]
+  },
+  'nasty-plot': {
+    englishName: 'nasty-plot',
+    name: 'Congiura',
+    type: 'dark',
+    category: 'status',
+    power: 0,
+    accuracy: 100,
+    pp: 20,
+    maxPp: 20,
+    target: 'user',
+    stat_changes: [{ change: 2, stat: { name: 'special-attack' } }]
+  },
+  'stealth-rock': {
+    englishName: 'stealth-rock',
+    name: 'Levitoroccia',
+    type: 'rock',
+    category: 'status',
+    power: 0,
+    accuracy: 100,
+    pp: 20,
+    maxPp: 20,
+    target: 'selected-pokemon'
+  },
+  'stone-edge': {
+    englishName: 'stone-edge',
+    name: 'Pietrataglio',
+    type: 'rock',
+    category: 'physical',
+    power: 100,
+    accuracy: 80,
+    pp: 5,
+    maxPp: 5
+  },
+  'close-combat': {
+    englishName: 'close-combat',
+    name: 'Zuffa',
+    type: 'fighting',
+    category: 'physical',
+    power: 120,
+    accuracy: 100,
+    pp: 5,
+    maxPp: 5,
+    stat_changes: [{ change: -1, stat: { name: 'defense' } }, { change: -1, stat: { name: 'special-defense' } }]
+  },
+  'outrage': {
+    englishName: 'outrage',
+    name: 'Oltraggio',
+    type: 'dragon',
+    category: 'physical',
+    power: 120,
+    accuracy: 100,
+    pp: 10,
+    maxPp: 10
+  },
+  'draco-meteor': {
+    englishName: 'draco-meteor',
+    name: 'Dragometeora',
+    type: 'dragon',
+    category: 'special',
+    power: 130,
+    accuracy: 90,
+    pp: 5,
+    maxPp: 5,
+    stat_changes: [{ change: -2, stat: { name: 'special-attack' } }]
+  },
+  'dragon-pulse': {
+    englishName: 'dragon-pulse',
+    name: 'Dragopulsar',
+    type: 'dragon',
+    category: 'special',
+    power: 85,
+    accuracy: 100,
+    pp: 10,
+    maxPp: 10
+  },
+  'moonblast': {
+    englishName: 'moonblast',
+    name: 'Forza Lunare',
+    type: 'fairy',
+    category: 'special',
+    power: 95,
+    accuracy: 100,
+    pp: 15,
+    maxPp: 15
+  },
+  'dazzling-gleam': {
+    englishName: 'dazzling-gleam',
+    name: 'Magibrillo',
+    type: 'fairy',
+    category: 'special',
+    power: 80,
+    accuracy: 100,
+    pp: 10,
+    maxPp: 10
+  },
+  'play-rough': {
+    englishName: 'play-rough',
+    name: 'Carineria',
+    type: 'fairy',
+    category: 'physical',
+    power: 90,
+    accuracy: 90,
+    pp: 10,
+    maxPp: 10
+  },
+  'scald': {
+    englishName: 'scald',
+    name: 'Idrovampata',
+    type: 'water',
+    category: 'special',
+    power: 80,
+    accuracy: 100,
+    pp: 15,
+    maxPp: 15,
+    statusEffect: 'burned',
+    effectChance: 30
+  },
+  'liquidation': {
+    englishName: 'liquidation',
+    name: 'Liquidazione',
+    type: 'water',
+    category: 'physical',
+    power: 85,
+    accuracy: 100,
+    pp: 10,
+    maxPp: 10
+  },
+  'leaf-blade': {
+    englishName: 'leaf-blade',
+    name: 'Lamafoglia',
+    type: 'grass',
+    category: 'physical',
+    power: 90,
+    accuracy: 100,
+    pp: 15,
+    maxPp: 15
+  },
+  'seed-bomb': {
+    englishName: 'seed-bomb',
+    name: 'Semebomba',
+    type: 'grass',
+    category: 'physical',
+    power: 80,
+    accuracy: 100,
+    pp: 15,
+    maxPp: 15
+  },
+  'wild-charge': {
+    englishName: 'wild-charge',
+    name: 'Sprizzalampo',
+    type: 'electric',
+    category: 'physical',
+    power: 90,
+    accuracy: 100,
+    pp: 15,
+    maxPp: 15,
+    recoil: 0.25
+  },
+  'focus-blast': {
+    englishName: 'focus-blast',
+    name: 'Focalcolpo',
+    type: 'fighting',
+    category: 'special',
+    power: 120,
+    accuracy: 70,
+    pp: 5,
+    maxPp: 5
+  },
+  'aura-sphere': {
+    englishName: 'aura-sphere',
+    name: 'Forzasfera',
+    type: 'fighting',
+    category: 'special',
+    power: 80,
+    accuracy: 100,
+    pp: 20,
+    maxPp: 20
+  },
+  'flash-cannon': {
+    englishName: 'flash-cannon',
+    name: 'Cannonlampo',
+    type: 'steel',
+    category: 'special',
+    power: 80,
+    accuracy: 100,
+    pp: 10,
+    maxPp: 10
+  },
+  'iron-tail': {
+    englishName: 'iron-tail',
+    name: 'Codadacciaio',
+    type: 'steel',
+    category: 'physical',
+    power: 100,
+    accuracy: 75,
+    pp: 15,
+    maxPp: 15
+  },
+  'zen-headbutt': {
+    englishName: 'zen-headbutt',
+    name: 'Cozzata Zen',
+    type: 'psychic',
+    category: 'physical',
+    power: 80,
+    accuracy: 90,
+    pp: 15,
+    maxPp: 15,
+    flinchChance: 20
+  },
+  'overheat': {
+    englishName: 'overheat',
+    name: 'Vampata',
+    type: 'fire',
+    category: 'special',
+    power: 130,
+    accuracy: 90,
+    pp: 5,
+    maxPp: 5,
+    stat_changes: [{ change: -2, stat: { name: 'special-attack' } }]
+  },
+  'venoshock': {
+    englishName: 'venoshock',
+    name: 'Velenoshock',
+    type: 'poison',
+    category: 'special',
+    power: 65,
+    accuracy: 100,
+    pp: 10,
+    maxPp: 10
+  },
+  'bug-buzz': {
+    englishName: 'bug-buzz',
+    name: 'Ronzio',
+    type: 'bug',
+    category: 'special',
+    power: 90,
+    accuracy: 100,
+    pp: 10,
+    maxPp: 10
+  },
+  'shadow-sneak': {
+    englishName: 'shadow-sneak',
+    name: 'Furtivombra',
+    type: 'ghost',
+    category: 'physical',
+    power: 40,
+    accuracy: 100,
+    pp: 30,
+    maxPp: 30,
+    priority: 1
+  },
+  'shadow-claw': {
+    englishName: 'shadow-claw',
+    name: 'Ombragartiglio',
+    type: 'ghost',
+    category: 'physical',
+    power: 70,
+    accuracy: 100,
+    pp: 15,
+    maxPp: 15
+  },
+  'giga-impact': {
+    englishName: 'giga-impact',
+    name: 'Giga Impatto',
+    type: 'normal',
+    category: 'physical',
+    power: 150,
+    accuracy: 90,
+    pp: 5,
+    maxPp: 5,
+    multiTurn: { type: 'recharge' }
+  },
+  'tri-attack': {
+    englishName: 'tri-attack',
+    name: 'Triplo Attacco',
+    type: 'normal',
+    category: 'special',
+    power: 80,
+    accuracy: 100,
+    pp: 10,
+    maxPp: 10
+  },
+  'facade': {
+    englishName: 'facade',
+    name: 'Facciata',
+    type: 'normal',
+    category: 'physical',
+    power: 70,
+    accuracy: 100,
+    pp: 20,
+    maxPp: 20
+  },
+  'substitute': {
+    englishName: 'substitute',
+    name: 'Sostituto',
+    type: 'normal',
+    category: 'status',
+    power: 0,
+    accuracy: 100,
+    pp: 10,
+    maxPp: 10,
+    target: 'user'
+  },
+  'rest': {
+    englishName: 'rest',
+    name: 'Riposo',
+    type: 'psychic',
+    category: 'status',
+    power: 0,
+    accuracy: 100,
+    pp: 10,
+    maxPp: 10,
+    target: 'user',
+    healing: 1.0,
+    statusEffect: 'sleep'
+  },
+  'roost': {
+    englishName: 'roost',
+    name: 'Trespolo',
+    type: 'flying',
+    category: 'status',
+    power: 0,
+    accuracy: 100,
+    pp: 10,
+    maxPp: 10,
+    target: 'user',
+    healing: 0.5
+  },
+  'synthesis': {
+    englishName: 'synthesis',
+    name: 'Sintesi',
+    type: 'grass',
+    category: 'status',
+    power: 0,
+    accuracy: 100,
+    pp: 5,
+    maxPp: 5,
+    target: 'user',
+    healing: 0.5
+  },
+  'earth-power': {
+    englishName: 'earth-power',
+    name: 'Geoforza',
+    type: 'ground',
+    category: 'special',
+    power: 90,
+    accuracy: 100,
+    pp: 10,
+    maxPp: 10
+  },
+  'rock-tomb': {
+    englishName: 'rock-tomb',
+    name: 'Rocciatomba',
+    type: 'rock',
+    category: 'physical',
+    power: 60,
+    accuracy: 95,
+    pp: 15,
+    maxPp: 15,
+    stat_changes: [{ change: -1, stat: { name: 'speed' } }]
+  },
+  'bulldoze': {
+    englishName: 'bulldoze',
+    name: 'Battiterra',
+    type: 'ground',
+    category: 'physical',
+    power: 60,
+    accuracy: 100,
+    pp: 20,
+    maxPp: 20,
+    stat_changes: [{ change: -1, stat: { name: 'speed' } }]
+  },
+  'extreme-speed': {
+    englishName: 'extreme-speed',
+    name: 'Extrarapido',
+    type: 'normal',
+    category: 'physical',
+    power: 80,
+    accuracy: 100,
+    pp: 5,
+    maxPp: 5,
+    priority: 2
+  },
+  'seismic-toss': {
+    englishName: 'seismic-toss',
+    name: 'Movim. Sismico',
+    type: 'fighting',
+    category: 'physical',
+    power: 45,
+    accuracy: 100,
+    pp: 20,
+    maxPp: 20
+  },
+  'strength': {
+    englishName: 'strength',
+    name: 'Forza',
+    type: 'normal',
+    category: 'physical',
+    power: 80,
+    accuracy: 100,
+    pp: 15,
+    maxPp: 15
+  },
+  'rock-smash': {
+    englishName: 'rock-smash',
+    name: 'Spaccaroccia',
+    type: 'fighting',
+    category: 'physical',
+    power: 40,
+    accuracy: 100,
+    pp: 15,
+    maxPp: 15,
+    stat_changes: [{ change: -1, stat: { name: 'defense' } }]
+  },
+  'counter': {
+    englishName: 'counter',
+    name: 'Contromossa',
+    type: 'fighting',
+    category: 'physical',
+    power: 50,
+    accuracy: 100,
+    pp: 20,
+    maxPp: 20,
+    priority: -1
+  },
+  'submission': {
+    englishName: 'submission',
+    name: 'Sottomissione',
+    type: 'fighting',
+    category: 'physical',
+    power: 80,
+    accuracy: 80,
+    pp: 20,
+    maxPp: 20,
+    recoil: 0.25
+  },
+  'mega-punch': {
+    englishName: 'mega-punch',
+    name: 'Megapugno',
+    type: 'normal',
+    category: 'physical',
+    power: 80,
+    accuracy: 85,
+    pp: 20,
+    maxPp: 20
+  },
+  'mega-kick': {
+    englishName: 'mega-kick',
+    name: 'Megacalcio',
+    type: 'normal',
+    category: 'physical',
+    power: 120,
+    accuracy: 75,
+    pp: 5,
+    maxPp: 5
+  },
+  'fire-spin': {
+    englishName: 'fire-spin',
+    name: 'Turbofuoco',
+    type: 'fire',
+    category: 'special',
+    power: 35,
+    accuracy: 85,
+    pp: 15,
+    maxPp: 15
+  },
+  'whirlpool': {
+    englishName: 'whirlpool',
+    name: 'Mulinello',
+    type: 'water',
+    category: 'special',
+    power: 35,
+    accuracy: 85,
+    pp: 15,
+    maxPp: 15
+  },
+  'rock-climb': {
+    englishName: 'rock-climb',
+    name: 'Scalata',
+    type: 'normal',
+    category: 'physical',
+    power: 90,
+    accuracy: 85,
+    pp: 20,
+    maxPp: 20
+  },
+  'flash': {
+    englishName: 'flash',
+    name: 'Flash',
+    type: 'normal',
+    category: 'status',
+    power: 0,
+    accuracy: 100,
+    pp: 20,
+    maxPp: 20,
+    target: 'selected-pokemon',
+    stat_changes: [{ change: -1, stat: { name: 'accuracy' } }]
+  },
+  'metronome': {
+    englishName: 'metronome',
+    name: 'Metronomo',
+    type: 'normal',
+    category: 'status',
+    power: 0,
+    accuracy: 100,
+    pp: 10,
+    maxPp: 10,
+    target: 'user'
+  },
+  'swift': {
+    englishName: 'swift',
+    name: 'Cometone',
+    type: 'normal',
+    category: 'special',
+    power: 60,
+    accuracy: 100,
+    pp: 20,
+    maxPp: 20
+  },
+  'rollout': {
+    englishName: 'rollout',
+    name: 'Rotolamento',
+    type: 'rock',
+    category: 'physical',
+    power: 30,
+    accuracy: 90,
+    pp: 20,
+    maxPp: 20
+  },
+  'fury-cutter': {
+    englishName: 'fury-cutter',
+    name: 'Tagliofuria',
+    type: 'bug',
+    category: 'physical',
+    power: 40,
+    accuracy: 95,
+    pp: 20,
+    maxPp: 20
+  },
+  'low-kick': {
+    englishName: 'low-kick',
+    name: 'Colpo Basso',
+    type: 'fighting',
+    category: 'physical',
+    power: 50,
+    accuracy: 100,
+    pp: 20,
+    maxPp: 20
+  },
+  'superpower': {
+    englishName: 'superpower',
+    name: 'Troppoforte',
+    type: 'fighting',
+    category: 'physical',
+    power: 120,
+    accuracy: 100,
+    pp: 5,
+    maxPp: 5,
+    stat_changes: [{ change: -1, stat: { name: 'attack' } }, { change: -1, stat: { name: 'defense' } }]
+  },
+  'hammer-arm': {
+    englishName: 'hammer-arm',
+    name: 'Mazzazucca',
+    type: 'fighting',
+    category: 'physical',
+    power: 100,
+    accuracy: 90,
+    pp: 10,
+    maxPp: 10,
+    stat_changes: [{ change: -1, stat: { name: 'speed' } }]
+  },
+  'focus-punch': {
+    englishName: 'focus-punch',
+    name: 'Centropugno',
+    type: 'fighting',
+    category: 'physical',
+    power: 150,
+    accuracy: 100,
+    pp: 20,
+    maxPp: 20,
+    priority: -3
+  },
+  'rain-dance': {
+    englishName: 'rain-dance',
+    name: 'Piovodanza',
+    type: 'water',
+    category: 'status',
+    power: 0,
+    accuracy: 100,
+    pp: 5,
+    maxPp: 5,
+    target: 'user'
+  },
+  'sunny-day': {
+    englishName: 'sunny-day',
+    name: 'Giornodisole',
+    type: 'fire',
+    category: 'status',
+    power: 0,
+    accuracy: 100,
+    pp: 5,
+    maxPp: 5,
+    target: 'user'
+  },
+  'sandstorm': {
+    englishName: 'sandstorm',
+    name: 'Terremoto',
+    type: 'rock',
+    category: 'status',
+    power: 0,
+    accuracy: 100,
+    pp: 10,
+    maxPp: 10,
+    target: 'user'
   }
 };
 
@@ -1376,10 +2041,11 @@ export function getMoveByName(rawName: string): Move {
     };
   }
 
-  // 2. Check if name matches an Italian translation or partial key
-  for (const [dbKey, move] of Object.entries(MOVES_DATABASE)) {
+  // 2. Check if name matches English name or Italian name exactly
+  for (const move of Object.values(MOVES_DATABASE)) {
     const normalizedItName = normalizeMoveKey(move.name);
-    if (normalizedItName === key || dbKey.includes(key) || key.includes(dbKey)) {
+    const normalizedEnName = normalizeMoveKey(move.englishName);
+    if (normalizedItName === key || normalizedEnName === key) {
       return {
         name: move.name,
         power: move.power,
