@@ -1262,7 +1262,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
               stages={enemyStages}
             />
             <img 
-              src={enemy.sprites.artwork} 
+              src={enemy?.sprites?.artwork || enemy?.sprites?.front || (enemy as any)?.spriteUrl} 
               alt={enemy.name} 
               className={`w-32 h-32 sm:w-44 sm:h-44 drop-shadow-2xl object-contain ml-auto ${enemy.isShiny ? 'relative' : ''}`} 
             />
@@ -1306,7 +1306,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
             className="relative"
           >
             <img 
-              src={playerActive.sprites.artwork} 
+              src={playerActive?.sprites?.artwork || playerActive?.sprites?.front || (playerActive as any)?.spriteUrl} 
               alt={playerActive.name} 
               className={`w-40 h-40 sm:w-52 sm:h-52 drop-shadow-2xl scale-x-[-1] object-contain ${playerActive.isShiny ? 'relative' : ''}`} 
             />
@@ -1438,7 +1438,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
                 onClick={() => handleSwitch(i)}
                 className={`w-full flex items-center gap-4 p-4 rounded-2xl border-4 transition-all ${i === 0 ? 'border-blue-500 bg-blue-500/20' : p.hp <= 0 ? 'opacity-50 border-gray-500 grayscale' : 'border-white bg-white active:scale-95'}`}
               >
-                <img src={p.sprites.front} alt="p" className="w-12 h-12 object-contain" />
+                <img src={p?.sprites?.front || (p as any)?.spriteUrl} alt="p" className="w-12 h-12 object-contain" />
                 <div className="flex-1 text-left">
                   <div className="flex justify-between items-center">
                     <span className={`font-black uppercase text-sm ${i === 0 ? 'text-white' : 'text-gray-800'}`}>{p.name}</span>

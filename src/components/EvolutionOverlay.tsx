@@ -42,7 +42,7 @@ export const EvolutionOverlay: React.FC<EvolutionOverlayProps> = ({ pokemon, onC
           >
             <h2 className="text-2xl font-black italic uppercase">Cosa?!</h2>
             <div className="w-44 h-44 mx-auto">
-              <img src={pokemon.sprites.artwork} alt={pokemon.name} className="w-full h-full object-contain" />
+              <img src={pokemon?.sprites?.artwork || pokemon?.sprites?.front || (pokemon as any)?.spriteUrl} alt={pokemon.name} className="w-full h-full object-contain" />
             </div>
             <p className="text-lg font-bold italic">Sembra che {pokemon.name} stia per evolversi!</p>
 
@@ -108,7 +108,7 @@ export const EvolutionOverlay: React.FC<EvolutionOverlayProps> = ({ pokemon, onC
               transition={{ duration: 4, times: [0, 0.2, 0.4, 0.6, 0.8, 1], repeat: 0 }}
               className="w-64 h-64"
             >
-               <img src={pokemon.sprites.artwork} alt="evolving" className="w-full h-full object-contain grayscale brightness-200" />
+               <img src={pokemon?.sprites?.artwork || pokemon?.sprites?.front || (pokemon as any)?.spriteUrl} alt="evolving" className="w-full h-full object-contain grayscale brightness-200" />
             </motion.div>
             <div className="absolute inset-0 flex items-center justify-center">
               <motion.div 
@@ -134,7 +134,7 @@ export const EvolutionOverlay: React.FC<EvolutionOverlayProps> = ({ pokemon, onC
                 className="absolute inset-0 bg-blue-500/20 blur-3xl rounded-full scale-150"
               />
               <div className="w-56 h-56 mx-auto relative z-10">
-                <img src={evolvedPokemon.sprites.artwork} alt={evolvedPokemon.name} className="w-full h-full object-contain" />
+                <img src={evolvedPokemon?.sprites?.artwork || evolvedPokemon?.sprites?.front || (evolvedPokemon as any)?.spriteUrl} alt={evolvedPokemon.name} className="w-full h-full object-contain" />
               </div>
             </div>
             <h2 className="text-3xl font-black italic uppercase italic">Evviva!</h2>

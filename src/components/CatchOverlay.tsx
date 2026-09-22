@@ -83,7 +83,7 @@ export const CatchOverlay: React.FC<CatchOverlayProps> = ({ target, ball, onResu
             <div className="relative">
               {/* Target Pokemon */}
               <div className="relative z-10 w-48 h-48 flex items-center justify-center">
-                <img src={target.sprites.artwork} alt={target.name} className="w-full h-full object-contain" />
+                <img src={target?.sprites?.artwork || target?.sprites?.front || (target as any)?.spriteUrl} alt={target.name} className="w-full h-full object-contain" />
               </div>
 
               {/* Aiming Ring Container (fixed size) */}

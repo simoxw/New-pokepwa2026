@@ -324,7 +324,7 @@ export const Inventory: React.FC<{
                 className="w-full bg-gray-50 p-4 rounded-3xl border-2 border-transparent active:border-blue-500 flex items-center gap-4 text-left transition-all"
               >
                 <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center">
-                  <img src={pokemon.sprites.front} alt={pokemon.name} className="w-full h-full object-contain" />
+                  <img src={pokemon?.sprites?.front || (pokemon as any)?.spriteUrl} alt={pokemon.name} className="w-full h-full object-contain" />
                 </div>
                 <div className="flex-1">
                   <div className="flex items-center gap-2 mb-1">

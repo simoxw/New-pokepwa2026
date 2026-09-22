@@ -73,7 +73,7 @@ export const Trade: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 onClick={() => handleExport(p)}
                 className={`flex-shrink-0 w-16 h-16 rounded-2xl border-2 transition-all ${selectedToExport?.instanceId === p.instanceId ? 'border-blue-500 bg-blue-50 scale-105' : 'border-gray-100 bg-gray-50'}`}
               >
-                <img src={p.sprites.front} alt="p" className="w-full h-full object-contain" />
+                <img src={p?.sprites?.front || (p as any)?.spriteUrl} alt="p" className="w-full h-full object-contain" />
               </button>
             ))}
           </div>

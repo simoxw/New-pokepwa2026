@@ -357,7 +357,7 @@ export const ZoneExplorer: React.FC<ZoneExplorerProps> = ({ onEncounter }) => {
                     transition={{ repeat: Infinity, duration: 2 }}
                     className="absolute inset-0 bg-yellow-400 blur-2xl opacity-20"
                   />
-                  <img src={encounter.sprites.artwork} alt={encounter.name} className="w-48 h-48 relative z-10" />
+                  <img src={encounter?.sprites?.artwork || encounter?.sprites?.front || (encounter as any)?.spriteUrl} alt={encounter.name} className="w-48 h-48 relative z-10" />
                 </div>
                 <div className="text-center">
                   {isNocturnal && (

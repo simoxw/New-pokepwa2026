@@ -34,7 +34,7 @@ export const LocalBattle: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         trainer={{
           name: 'Amico Sfidante',
           team: opponentTeam,
-          sprite: opponentTeam[0]?.sprites.front || ''
+          sprite: opponentTeam[0]?.sprites?.front || (opponentTeam[0] as any)?.spriteUrl || ''
         }}
         onEnd={() => {
           setIsFighting(false);

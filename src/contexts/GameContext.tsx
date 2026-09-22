@@ -29,11 +29,12 @@ function normalizeLoadedState(parsed: any): GameState {
     }
 
     const sprites = p.sprites || {};
+    const fallbackImg = p.spriteUrl || p.sprite || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id || 1}.png`;
     const baseSprites = {
-      front: sprites.front || p.sprite || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id}.png`,
-      back: sprites.back || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/${p.id}.png`,
-      artwork: sprites.artwork || p.sprite || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${p.id}.png`,
-      home: sprites.home || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${p.id}.png`,
+      front: sprites.front || fallbackImg,
+      back: sprites.back || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/${p.id || 1}.png`,
+      artwork: sprites.artwork || fallbackImg || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${p.id || 1}.png`,
+      home: sprites.home || fallbackImg || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${p.id || 1}.png`,
       animated: sprites.animated
     };
 

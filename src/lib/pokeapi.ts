@@ -768,8 +768,8 @@ export async function fetchPokemonData(id: number, level: number, location: stri
       artwork: isShiny ? (data.sprites?.other?.['official-artwork']?.front_shiny || defaultArtwork) : (data.sprites?.other?.['official-artwork']?.front_default || defaultArtwork),
       home: isShiny ? (data.sprites?.other?.home?.front_shiny || defaultArtwork) : (data.sprites?.other?.home?.front_default || defaultArtwork),
       animated: data.sprites?.other?.showdown?.front_default ? {
-        front: isShiny ? (data.sprites.other.showdown.front_shiny || data.sprites.other.showdown.front_default) : data.sprites.other.showdown.front_default,
-        back: isShiny ? (data.sprites.other.showdown.back_shiny || data.sprites.other.showdown.back_default) : data.sprites.other.showdown.back_default,
+        front: isShiny ? (data.sprites?.other?.showdown?.front_shiny || data.sprites?.other?.showdown?.front_default) : data.sprites?.other?.showdown?.front_default,
+        back: isShiny ? (data.sprites?.other?.showdown?.back_shiny || data.sprites?.other?.showdown?.back_default) : data.sprites?.other?.showdown?.back_default,
       } : {
         front: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${id}.gif`,
         back: `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/back/${id}.gif`

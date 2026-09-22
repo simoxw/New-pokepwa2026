@@ -370,7 +370,7 @@ export const LeagueHub: React.FC<LeagueHubProps> = ({ onBack, onOpenInventory, o
                   }`}
                 >
                   <img 
-                    src={poke.sprites.front} 
+                    src={poke?.sprites?.front || (poke as any)?.spriteUrl} 
                     alt={poke.name} 
                     className="w-10 h-10 object-contain shrink-0" 
                   />
@@ -432,7 +432,7 @@ export const LeagueHub: React.FC<LeagueHubProps> = ({ onBack, onOpenInventory, o
                 <div className="grid grid-cols-3 gap-2">
                   {state.player.team.map((poke, i) => (
                     <div key={`hof-${poke.instanceId || poke.id}-${i}`} className="bg-white/5 rounded-xl p-2 flex flex-col items-center border border-white/10">
-                      <img src={poke.sprites.front} alt={poke.name} className="w-12 h-12 object-contain" />
+                      <img src={poke?.sprites?.front || (poke as any)?.spriteUrl} alt={poke.name} className="w-12 h-12 object-contain" />
                       <span className="text-[10px] font-black uppercase text-amber-300 truncate w-full">
                         {poke.name}
                       </span>

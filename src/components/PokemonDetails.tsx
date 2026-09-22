@@ -132,7 +132,7 @@ export const PokemonDetails: React.FC<PokemonDetailsProps> = ({
               <motion.img 
                 initial={{ y: 20 }}
                 animate={{ y: 0 }}
-                src={pokemon.sprites.artwork || pokemon.sprites.front} 
+                src={pokemon?.sprites?.artwork || pokemon?.sprites?.front || (pokemon as any)?.spriteUrl} 
                 alt={pokemon.name} 
                 className="w-full h-full object-contain relative z-10 drop-shadow-[0_20px_50px_rgba(0,0,0,0.3)]" 
               />

@@ -533,7 +533,7 @@ export const BattleTower: React.FC<BattleTowerProps> = ({
                       : 'bg-black/40 border-white/10'
                   }`}
                 >
-                  <img src={poke.sprites.front} alt={poke.name} className="w-10 h-10 object-contain shrink-0" />
+                  <img src={poke?.sprites?.front || (poke as any)?.spriteUrl} alt={poke.name} className="w-10 h-10 object-contain shrink-0" />
                   <div className="flex-1 min-w-0">
                     <div className="flex justify-between items-baseline">
                       <span className="text-xs font-black uppercase text-white truncate">

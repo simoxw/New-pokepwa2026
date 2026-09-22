@@ -223,7 +223,7 @@ export const BattleBag: React.FC<BattleBagProps> = ({
                     }`}
                   >
                     <img 
-                      src={pokemon.sprites.front} 
+                      src={pokemon?.sprites?.front || (pokemon as any)?.spriteUrl} 
                       alt={pokemon.name} 
                       className={`w-14 h-14 object-contain shrink-0 ${currentHp <= 0 ? 'grayscale opacity-50' : ''}`}
                     />

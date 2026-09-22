@@ -79,7 +79,7 @@ export const StarterSelection: React.FC<{ onComplete: () => void }> = ({ onCompl
               onClick={() => selectStarter(p)}
               className="bg-white p-4 rounded-[2rem] border-4 border-white shadow-lg flex flex-col items-center gap-2 active:scale-95 transition-transform"
             >
-              <img src={p.sprites.artwork} alt={p.name} className="w-24 h-24 object-contain drop-shadow-lg" />
+              <img src={p?.sprites?.artwork || p?.sprites?.front || (p as any)?.spriteUrl} alt={p.name} className="w-24 h-24 object-contain drop-shadow-lg" />
               <div className="text-center">
                 <span className="block font-black uppercase text-xs">{p.name}</span>
                 <span className="text-[10px] text-gray-400 font-bold">Liv. 5</span>

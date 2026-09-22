@@ -103,7 +103,7 @@ export const PostBattleScreen: React.FC<PostBattleScreenProps> = ({ data, onCont
           <div className="bg-slate-800/80 border border-slate-700/80 rounded-2xl p-4 flex flex-col sm:flex-row items-center gap-4">
             <div className="relative shrink-0">
               <img
-                src={pokemon.sprites.artwork || pokemon.sprites.front}
+                src={pokemon?.sprites?.artwork || pokemon?.sprites?.front || (pokemon as any)?.spriteUrl}
                 alt={pokemon.name}
                 className="w-20 h-20 sm:w-24 sm:h-24 object-contain drop-shadow-lg"
               />
