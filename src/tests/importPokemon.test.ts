@@ -40,5 +40,22 @@ describe('Pokemon Import & Normalization', () => {
     expect(decoded?.id).toBe(86);
     expect(decoded?.sprites.artwork).toBe('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/86.png');
     expect(decoded?.sprites.front).toBe('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/86.png');
+    expect(decoded?.level).toBe(6);
+    expect(decoded?.experience).toBe(0);
+    expect(decoded?.nextLevelExp).toBe(127);
+  });
+
+  it('should normalize Pokedesk exp field into native experience and nextLevelExp', () => {
+    const pokedeskRaw = {
+      pokemonId: 86,
+      name: 'Seel',
+      level: 6,
+      exp: 216
+    };
+
+    const normalized = normalizePokemon(pokedeskRaw);
+    expect(normalized.level).toBe(6);
+    expect(normalized.experience).toBe(0);
+    expect(normalized.nextLevelExp).toBe(127); // 7^3 - 6^3 = 343 - 216 = 127
   });
 });

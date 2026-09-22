@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect, useState, useCallback, use
 import { GameState, INITIAL_STATE } from '../types/game';
 import { getStorageItem, setStorageItem } from '../lib/storage';
 import { SPECIAL_EVOLUTIONS } from '../lib/evolution';
+import { normalizePokemon } from '../lib/utils';
 
 interface GameContextType {
   state: GameState;
@@ -16,36 +17,24 @@ function normalizeLoadedState(parsed: any): GameState {
   const usedInstanceIds = new Set<string>();
 
   const migratePokemon = (p: any) => {
-    let instanceId = p.instanceId;
+    const normalized = normalizePokemon(p);
+    
+    let instanceId = normalized.instanceId;
     if (!instanceId || usedInstanceIds.has(instanceId)) {
-      instanceId = `${p.id || 'pkmn'}_${Math.random().toString(36).substring(2, 11)}_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
+      instanceId = `${normalized.id || 'pkmn'}_${Math.random().toString(36).substring(2, 11)}_${Date.now()}_${Math.floor(Math.random() * 10000)}`;
     }
     usedInstanceIds.add(instanceId);
 
     // Fix evolutionInfo if branches missing for multi-branch evolutions (like Eevee)
-    let evolutionInfo = p.evolutionInfo;
-    if (p.id && SPECIAL_EVOLUTIONS[p.id]) {
-      evolutionInfo = SPECIAL_EVOLUTIONS[p.id];
+    let evolutionInfo = normalized.evolutionInfo;
+    if (normalized.id && SPECIAL_EVOLUTIONS[normalized.id]) {
+      evolutionInfo = SPECIAL_EVOLUTIONS[normalized.id];
     }
 
-    const sprites = p.sprites || {};
-    const fallbackImg = p.spriteUrl || p.sprite || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.id || 1}.png`;
-    const baseSprites = {
-      front: sprites.front || fallbackImg,
-      back: sprites.back || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/${p.id || 1}.png`,
-      artwork: sprites.artwork || fallbackImg || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${p.id || 1}.png`,
-      home: sprites.home || fallbackImg || `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${p.id || 1}.png`,
-      animated: sprites.animated
-    };
-
     return {
-      ...p,
+      ...normalized,
       instanceId,
-      evolutionInfo: evolutionInfo || p.evolutionInfo,
-      sprites: baseSprites,
-      stats: p.stats || { attack: 50, defense: 50, spAtk: 50, spDef: 50, speed: 50 },
-      ivs: p.ivs || { hp: 15, attack: 15, defense: 15, spAtk: 15, spDef: 15, speed: 15 },
-      evs: p.evs || { hp: 0, attack: 0, defense: 0, spAtk: 0, spDef: 0, speed: 0 }
+      evolutionInfo: evolutionInfo || normalized.evolutionInfo
     };
   };
 

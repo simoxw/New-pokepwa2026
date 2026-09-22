@@ -50,12 +50,38 @@ export function normalizePokemon(raw: any): Pokemon {
     };
   });
 
+  // Experience & Level normalization (handles Pokedesk 'exp' vs native 'experience' & 'nextLevelExp')
+  const level = typeof raw.level === 'number' && raw.level > 0 ? raw.level : 5;
+  const getNextLevelExpNeeded = (lvl: number) => {
+    const currentTotal = Math.pow(lvl, 3);
+    const nextTotal = Math.pow(lvl + 1, 3);
+    return Math.floor(nextTotal - currentTotal);
+  };
+
+  const nextLevelExp = typeof raw.nextLevelExp === 'number' && raw.nextLevelExp > 0
+    ? raw.nextLevelExp
+    : getNextLevelExpNeeded(level);
+
+  let experience = 0;
+  if (typeof raw.experience === 'number' && !isNaN(raw.experience)) {
+    experience = raw.experience;
+  } else if (typeof raw.exp === 'number' && !isNaN(raw.exp)) {
+    const baseTotalForLevel = Math.pow(level, 3);
+    if (raw.exp >= baseTotalForLevel) {
+      experience = raw.exp - baseTotalForLevel;
+    } else {
+      experience = raw.exp;
+    }
+  }
+
   return {
     ...raw,
     id: pokemonId,
     instanceId: raw.instanceId || (typeof raw.id === 'string' && raw.id.length > 3 ? raw.id : `${pokemonId}_${Math.random().toString(36).substring(2, 11)}_${Date.now()}`),
     name: raw.name || 'Pokémon',
-    level: raw.level || 5,
+    level,
+    experience,
+    nextLevelExp,
     hp: typeof raw.hp === 'number' ? raw.hp : (raw.stats?.hp || raw.currentHp || 20),
     maxHp: typeof raw.maxHp === 'number' ? raw.maxHp : (raw.stats?.hp || raw.currentHp || 20),
     types: Array.isArray(raw.types) && raw.types.length > 0 ? raw.types : ['normal'],
