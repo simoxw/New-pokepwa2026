@@ -126,7 +126,26 @@ export const Team: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                       })}
                     </div>
                   </div>
-                  <span className="text-xs font-bold text-gray-400">Lv. {pokemon.level}</span>
+                  <div className="flex items-center gap-2 mt-0.5">
+                    <span className="text-xs font-bold text-gray-400">Lv. {pokemon.level}</span>
+                    {pokemon.status && (
+                      <span className={`text-[8px] font-black text-white px-2 py-0.5 rounded shadow-xs uppercase tracking-wider ${
+                        pokemon.status === 'poisoned' ? 'bg-purple-500' :
+                        pokemon.status === 'paralyzed' ? 'bg-amber-400 text-slate-900' :
+                        pokemon.status === 'sleep' ? 'bg-slate-400' :
+                        pokemon.status === 'burned' ? 'bg-red-500' :
+                        'bg-cyan-400 text-slate-900'
+                      }`}>
+                        {{
+                          poisoned: 'AVV',
+                          paralyzed: 'PAR',
+                          sleep: 'SON',
+                          burned: 'SCO',
+                          frozen: 'CON'
+                        }[pokemon.status] || pokemon.status.toUpperCase()}
+                      </span>
+                    )}
+                  </div>
                 </div>
               </div>
 

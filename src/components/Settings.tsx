@@ -176,7 +176,13 @@ export const Settings: React.FC<{ onBack: () => void, onProfile: () => void }> =
           break;
         }
         case 'heal':
-          newState.player.team = newState.player.team.map(p => ({ ...p, hp: p.maxHp }));
+          newState.player.team = newState.player.team.map(p => ({
+            ...p,
+            hp: p.maxHp,
+            status: undefined,
+            statusDuration: undefined,
+            moves: (p.moves || []).map(m => ({ ...m, pp: m.maxPp || m.pp || 35 }))
+          }));
           break;
         case 'badges':
           newState.player.badges = BADGES.map(b => b.id);

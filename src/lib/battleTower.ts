@@ -183,8 +183,8 @@ export const TOWER_CARDS_POOL: TowerCard[] = [
     name: 'Kernel Overclock [Corrotto]',
     rarity: 'cursed',
     icon: '💀',
-    description: '+18% Danno inflitto, ma subisci il +15% di danno da ogni mossa avversaria.',
-    attackMultiplier: 1.18,
+    description: '+25% Danno inflitto, ma subisci il +15% di danno da ogni mossa avversaria.',
+    attackMultiplier: 1.25,
     incomingDamageMultiplier: 1.15
   },
   {
@@ -192,8 +192,8 @@ export const TOWER_CARDS_POOL: TowerCard[] = [
     name: 'Fuga di Memoria [Corrotto]',
     rarity: 'cursed',
     icon: '☣️',
-    description: '+1.800 PokéDollari a piano, ma il tuo Pokémon in campo perde il 5% di PS ad inizio scontro.',
-    bonusMoney: 1800,
+    description: '+2.200 PokéDollari a piano, ma il tuo Pokémon in campo perde il 5% di PS ad inizio scontro.',
+    bonusMoney: 2200,
     startHpSelfDamagePercent: 5
   },
   {
@@ -201,8 +201,8 @@ export const TOWER_CARDS_POOL: TowerCard[] = [
     name: 'Bug Critico [Corrotto]',
     rarity: 'cursed',
     icon: '🎯',
-    description: '+15% Probabilità di Brutto Colpo, ma la precisione delle tue mosse scende del 10%.',
-    critChanceBonus: 15,
+    description: '+20% Probabilità di Brutto Colpo, ma la precisione delle tue mosse scende del 10%.',
+    critChanceBonus: 20,
     accuracyPenaltyPercent: 10
   }
 ];

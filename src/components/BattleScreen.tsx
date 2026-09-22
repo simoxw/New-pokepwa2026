@@ -1056,6 +1056,28 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     playerMoves
   ]);
 
+  const syncActivePokemonState = useCallback(() => {
+    setState(prev => {
+      const team = [...prev.player.team];
+      if (team[0]) {
+        team[0] = {
+          ...team[0],
+          hp: playerHp,
+          status: playerStatus.status,
+          statusDuration: playerStatus.duration,
+          moves: playerMoves
+        };
+      }
+      return {
+        ...prev,
+        player: {
+          ...prev.player,
+          team
+        }
+      };
+    });
+  }, [playerHp, playerStatus, playerMoves, setState]);
+
   // Escape Handler (Formula-based for wild encounters; blocked for trainers)
   const handleEscape = useCallback(async () => {
     if (isAnimating) return;
@@ -1083,6 +1105,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     if (result.success) {
       playEscape();
       await new Promise(r => setTimeout(r, 1200));
+      syncActivePokemonState();
       setBattleResult({ type: 'escape' });
     } else {
       await new Promise(r => setTimeout(r, 1000));
@@ -1093,7 +1116,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     isAnimating, trainer, getEffectiveSpeed, playerActive.stats.speed, 
     playerStages.speed, playerStatus.status, enemy.stats.speed, 
     enemyStages.speed, enemyStatus.status, escapeAttempts, addLog, 
-    triggerEnemySingleTurn, playerHp, enemyHp
+    triggerEnemySingleTurn, playerHp, enemyHp, syncActivePokemonState
   ]);
 
   // Switch Pokemon handler
@@ -1239,6 +1262,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
   // Capture result
   const handleCatchResult = async (success: boolean) => {
     if (success && catchBall) {
+      syncActivePokemonState();
       setBattleResult({ type: 'catch', ball: catchBall });
     } else {
       setCatchBall(null);

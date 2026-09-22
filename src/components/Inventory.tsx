@@ -104,14 +104,19 @@ export const Inventory: React.FC<{
 
     if (usingItem.id === 'cura-totale' || usingItem.id === 'full-heal') {
       pokemon.status = undefined;
+      pokemon.statusDuration = undefined;
     } else if (usingItem.id === 'antidoto') {
       pokemon.status = undefined;
+      pokemon.statusDuration = undefined;
     } else if (usingItem.id === 'antiparalisi') {
       pokemon.status = undefined;
+      pokemon.statusDuration = undefined;
     } else if (usingItem.id === 'antiscotto') {
       pokemon.status = undefined;
+      pokemon.statusDuration = undefined;
     } else if (usingItem.id === 'sveglia') {
       pokemon.status = undefined;
+      pokemon.statusDuration = undefined;
     } else if (usingItem.type === 'healing') {
       const isRevive = usingItem.id.includes('revitalizzante');
       
@@ -415,7 +420,13 @@ export const Inventory: React.FC<{
                       <div className="flex items-center gap-1.5 flex-wrap min-w-0">
                         <h4 className="font-black text-sm uppercase leading-none truncate">{pokemon.nickname || pokemon.name}</h4>
                         {statusLabel && (
-                          <span className="bg-purple-500 text-[8px] font-black text-white px-1.5 py-0.5 rounded-md shadow-sm uppercase tracking-tight shrink-0">
+                          <span className={`text-[8px] font-black text-white px-1.5 py-0.5 rounded-md shadow-sm uppercase tracking-tight shrink-0 ${
+                            pokemon.status === 'poisoned' ? 'bg-purple-500' :
+                            pokemon.status === 'paralyzed' ? 'bg-amber-400 text-slate-900' :
+                            pokemon.status === 'sleep' ? 'bg-slate-400' :
+                            pokemon.status === 'burned' ? 'bg-red-500' :
+                            'bg-cyan-400 text-slate-900'
+                          }`}>
                             {statusLabel}
                           </span>
                         )}
