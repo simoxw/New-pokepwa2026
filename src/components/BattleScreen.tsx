@@ -1269,6 +1269,12 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
               label={enemy.name} 
               level={enemy.level} 
               types={enemy.types}
+              isCaught={Boolean(
+                state.player?.pokedex?.[enemy.id] === 'caught' ||
+                state.player?.pokedex?.[Number(enemy.id)] === 'caught' ||
+                state.player?.team?.some(p => p.id === enemy.id) ||
+                state.player?.box?.some(p => p.id === enemy.id)
+              )}
               status={enemyStatus.status} 
               isConfused={Boolean(enemyVolatile.confusionTurns && enemyVolatile.confusionTurns > 0)}
               isShiny={enemy.isShiny}

@@ -147,6 +147,7 @@ export const ZONES: Zone[] = [
       { pokemonId: 390, rarity: 3, minLevel: 10, maxLevel: 12 }, // Chimchar
       { pokemonId: 133, rarity: 2, minLevel: 5, maxLevel: 10 }, // Eevee
       { pokemonId: 35, rarity: 3, minLevel: 8, maxLevel: 12 },  // Clefairy
+      { pokemonId: 23, rarity: 4, minLevel: 6, maxLevel: 11 },  // Ekans
       { pokemonId: 29, rarity: 4, minLevel: 6, maxLevel: 11 },  // Nidoran F
       { pokemonId: 32, rarity: 4, minLevel: 6, maxLevel: 11 },  // Nidoran M
       { pokemonId: 39, rarity: 4, minLevel: 8, maxLevel: 14 },  // Jigglypuff
@@ -289,6 +290,7 @@ export const ZONES: Zone[] = [
       { pokemonId: 776, rarity: 2, minLevel: 24, maxLevel: 32 },  // Turtonator
       { pokemonId: 838, rarity: 5, minLevel: 16, maxLevel: 22 },  // Sizzlipede
       { pokemonId: 837, rarity: 5, minLevel: 14, maxLevel: 20 },  // Rolycoly
+      { pokemonId: 485, rarity: 0.5, minLevel: 50, maxLevel: 60 }, // Heatran (Raro!)
       { pokemonId: 146, rarity: 0.5, minLevel: 50, maxLevel: 50 }, // Moltres (Raro!)
       { pokemonId: 244, rarity: 0.5, minLevel: 50, maxLevel: 50 }, // Entei (Raro!)
     ],
@@ -307,6 +309,7 @@ export const ZONES: Zone[] = [
       { pokemonId: 54, rarity: 8, minLevel: 8, maxLevel: 14 },   // Psyduck
       { pokemonId: 60, rarity: 8, minLevel: 8, maxLevel: 14 },   // Poliwag
       { pokemonId: 72, rarity: 7, minLevel: 10, maxLevel: 16 },  // Tentacool
+      { pokemonId: 79, rarity: 5, minLevel: 12, maxLevel: 18 },  // Slowpoke
       { pokemonId: 90, rarity: 6, minLevel: 12, maxLevel: 18 },  // Shellder
       { pokemonId: 98, rarity: 6, minLevel: 10, maxLevel: 15 },  // Krabby
       { pokemonId: 158, rarity: 5, minLevel: 10, maxLevel: 15 }, // Totodile
@@ -572,6 +575,9 @@ export const ZONES: Zone[] = [
       { pokemonId: 996, rarity: 3, minLevel: 28, maxLevel: 38 },  // Frigibax
       { pokemonId: 145, rarity: 0.5, minLevel: 50, maxLevel: 50 }, // Zapdos (Raro!)
       { pokemonId: 243, rarity: 0.5, minLevel: 50, maxLevel: 50 }, // Raikou (Raro!)
+      { pokemonId: 641, rarity: 0.3, minLevel: 60, maxLevel: 60 }, // Tornadus (Legendario!)
+      { pokemonId: 645, rarity: 0.3, minLevel: 60, maxLevel: 60 }, // Landorus (Legendario!)
+      { pokemonId: 896, rarity: 0.3, minLevel: 70, maxLevel: 70 }, // Glastrier (Legendario!)
       { pokemonId: 250, rarity: 0.2, minLevel: 60, maxLevel: 60 }, // Ho-Oh (Legendario!)
     ],
     trainerTable: [
@@ -737,6 +743,10 @@ export const ZONES: Zone[] = [
       { pokemonId: 801, rarity: 1, minLevel: 50, maxLevel: 60 }, // Magearna
       { pokemonId: 802, rarity: 1, minLevel: 50, maxLevel: 60 }, // Marshadow
       { pokemonId: 807, rarity: 1, minLevel: 50, maxLevel: 60 }, // Zeraora
+      { pokemonId: 786, rarity: 1, minLevel: 60, maxLevel: 70 }, // Tapu Lele
+      { pokemonId: 787, rarity: 1, minLevel: 60, maxLevel: 70 }, // Tapu Bulu
+      { pokemonId: 788, rarity: 1, minLevel: 60, maxLevel: 70 }, // Tapu Fini
+      { pokemonId: 893, rarity: 1, minLevel: 60, maxLevel: 70 }, // Zarude
       { pokemonId: 793, rarity: 2, minLevel: 60, maxLevel: 70 }, // Nihilego
       { pokemonId: 794, rarity: 2, minLevel: 60, maxLevel: 70 }, // Buzzwole
       { pokemonId: 795, rarity: 2, minLevel: 60, maxLevel: 70 }, // Pheromosa
@@ -750,6 +760,9 @@ export const ZONES: Zone[] = [
       { pokemonId: 891, rarity: 3, minLevel: 30, maxLevel: 40 }, // Kubfu
       { pokemonId: 898, rarity: 1, minLevel: 70, maxLevel: 80 }, // Calyrex
       { pokemonId: 905, rarity: 1, minLevel: 70, maxLevel: 80 }, // Enamorus
+      { pokemonId: 1014, rarity: 1, minLevel: 70, maxLevel: 80 }, // Okidogi
+      { pokemonId: 1015, rarity: 1, minLevel: 70, maxLevel: 80 }, // Munkidori
+      { pokemonId: 1016, rarity: 1, minLevel: 70, maxLevel: 80 }, // Fezandipiti
       { pokemonId: 1017, rarity: 1, minLevel: 70, maxLevel: 80 }, // Ogerpon
       { pokemonId: 1025, rarity: 0.5, minLevel: 80, maxLevel: 85 }, // Pecharunt
     ],
@@ -775,10 +788,16 @@ export const ZONES: Zone[] = [
       { pokemonId: 789, rarity: 3, minLevel: 10, maxLevel: 20 }, // Cosmog
       { pokemonId: 792, rarity: 1, minLevel: 60, maxLevel: 70 }, // Lunala
       { pokemonId: 647, rarity: 1, minLevel: 50, maxLevel: 60 }, // Keldeo
+      { pokemonId: 377, rarity: 2, minLevel: 40, maxLevel: 50 }, // Regirock
       { pokemonId: 378, rarity: 2, minLevel: 40, maxLevel: 50 }, // Regice
       { pokemonId: 379, rarity: 2, minLevel: 40, maxLevel: 50 }, // Registeel
+      { pokemonId: 486, rarity: 1, minLevel: 70, maxLevel: 70 }, // Regigigas
+      { pokemonId: 638, rarity: 1, minLevel: 50, maxLevel: 60 }, // Cobalion
+      { pokemonId: 639, rarity: 1, minLevel: 50, maxLevel: 60 }, // Terrakion
+      { pokemonId: 640, rarity: 1, minLevel: 50, maxLevel: 60 }, // Virizion
       { pokemonId: 894, rarity: 1, minLevel: 60, maxLevel: 70 }, // Regieleki
       { pokemonId: 895, rarity: 1, minLevel: 60, maxLevel: 70 }, // Regidrago
+      { pokemonId: 897, rarity: 1, minLevel: 70, maxLevel: 70 }, // Spectrier
       { pokemonId: 1001, rarity: 1, minLevel: 60, maxLevel: 70 }, // Wo-Chien
       { pokemonId: 1002, rarity: 1, minLevel: 60, maxLevel: 70 }, // Chien-Pao
       { pokemonId: 1003, rarity: 1, minLevel: 60, maxLevel: 70 }, // Ting-Lu

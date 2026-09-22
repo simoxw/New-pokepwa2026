@@ -128,6 +128,8 @@ export interface Move {
   multiTurn?: {
     type: 'charge' | 'recharge' | 'multi-hit' | 'trap' | 'locked-turns';
     turns?: number;
+    minHits?: number;
+    maxHits?: number;
     message?: string;
     chargeMessage?: string;
   };

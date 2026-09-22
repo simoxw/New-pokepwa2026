@@ -274,7 +274,15 @@ export function executeMoveAction(
 
   // Multi-hit handling
   if (move.multiTurn?.type === 'multi-hit') {
-    const hits = Math.random() < 0.375 ? 2 : Math.random() < 0.75 ? 3 : Math.random() < 0.875 ? 4 : 5;
+    const minH = move.multiTurn.minHits || 2;
+    const maxH = move.multiTurn.maxHits || (minH === 2 ? 5 : minH);
+    let hits = minH;
+    if (minH === maxH) {
+      hits = minH;
+    } else {
+      const r = Math.random();
+      hits = r < 0.375 ? 2 : r < 0.75 ? 3 : r < 0.875 ? 4 : 5;
+    }
     let actualHits = 0;
     let totalDamage = 0;
     let effectiveness = 1;

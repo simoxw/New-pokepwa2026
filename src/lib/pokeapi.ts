@@ -271,7 +271,7 @@ export function parseMoveObject(moveData: any, fallbackName?: string): Move {
   // Target
   let target = moveData.target?.name || (category === 'status' && (stat_changes.some(sc => sc.change > 0) || healing) ? 'user' : 'selected-pokemon');
 
-  // Two-turn charge or recharge
+  // Two-turn charge, recharge or multi-hit
   let multiTurn: Move['multiTurn'] = undefined;
   if (rawNameLower.includes('fly') || rawNameLower.includes('volo')) {
     multiTurn = { type: 'charge', chargeMessage: 'è volato alto nel cielo!' };
@@ -285,6 +285,44 @@ export function parseMoveObject(moveData: any, fallbackName?: string): Move {
     multiTurn = { type: 'charge', chargeMessage: 'assorbe la luce solare!' };
   } else if (rawNameLower.includes('hyper-beam') || rawNameLower.includes('iper-raggio') || rawNameLower.includes('giga-impact')) {
     multiTurn = { type: 'recharge' };
+  } else if (moveData.meta?.max_hits && moveData.meta.max_hits > 1) {
+    multiTurn = {
+      type: 'multi-hit',
+      minHits: moveData.meta.min_hits || 2,
+      maxHits: moveData.meta.max_hits || 5
+    };
+  } else if (
+    rawNameLower.includes('double-kick') || rawNameLower.includes('doppiocalcio') || rawNameLower.includes('doppio-calcio') ||
+    rawNameLower.includes('double-hit') || rawNameLower.includes('doppioschiaffo') || rawNameLower.includes('double-slap') ||
+    rawNameLower.includes('bonemerang') || rawNameLower.includes('ossomerang') ||
+    rawNameLower.includes('twineedle') || rawNameLower.includes('doppioago') ||
+    rawNameLower.includes('dual-wingbeat') || rawNameLower.includes('doppia-ala') ||
+    rawNameLower.includes('dragon-darts') || rawNameLower.includes('dardi-dragone') ||
+    rawNameLower.includes('bullet-seed') || rawNameLower.includes('semitraglia') ||
+    rawNameLower.includes('icicle-spear') || rawNameLower.includes('gelolancia') ||
+    rawNameLower.includes('rock-blast') || rawNameLower.includes('cadutamassi') ||
+    rawNameLower.includes('pin-missile') || rawNameLower.includes('spillo-fucile') || rawNameLower.includes('spillofucile') ||
+    rawNameLower.includes('fury-swipes') || rawNameLower.includes('sfuriate') ||
+    rawNameLower.includes('fury-attack') || rawNameLower.includes('furia') ||
+    rawNameLower.includes('comet-punch') || rawNameLower.includes('cometapugno') ||
+    rawNameLower.includes('spike-cannon') || rawNameLower.includes('sparaspine') ||
+    rawNameLower.includes('barrage') || rawNameLower.includes('attacco-pioggia') ||
+    rawNameLower.includes('arm-thrust') || rawNameLower.includes('sberletese') ||
+    rawNameLower.includes('tail-slap') || rawNameLower.includes('spazzasberla') ||
+    rawNameLower.includes('water-shuriken') || rawNameLower.includes('acqualame') ||
+    rawNameLower.includes('scale-shot') || rawNameLower.includes('squama-tiro') ||
+    rawNameLower.includes('population-bomb') || rawNameLower.includes('surging-strikes') || rawNameLower.includes('idroraffica')
+  ) {
+    const is2Hit = rawNameLower.includes('double-kick') || rawNameLower.includes('doppiocalcio') || rawNameLower.includes('doppio-calcio') ||
+      rawNameLower.includes('bonemerang') || rawNameLower.includes('ossomerang') ||
+      rawNameLower.includes('twineedle') || rawNameLower.includes('doppioago') ||
+      rawNameLower.includes('dual-wingbeat') || rawNameLower.includes('dragon-darts') || rawNameLower.includes('double-hit');
+    const is3Hit = rawNameLower.includes('surging-strikes') || rawNameLower.includes('idroraffica') || rawNameLower.includes('triple-axel');
+    multiTurn = {
+      type: 'multi-hit',
+      minHits: is2Hit ? 2 : is3Hit ? 3 : 2,
+      maxHits: is2Hit ? 2 : is3Hit ? 3 : 5
+    };
   }
 
   if (rawNameLower.includes('protect') || rawNameLower.includes('protezione') || rawNameLower.includes('detect') || rawNameLower.includes('individuazione')) {

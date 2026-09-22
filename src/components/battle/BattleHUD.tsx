@@ -8,6 +8,7 @@ interface HpBarProps {
   label: string;
   level: number;
   isPlayer?: boolean;
+  isCaught?: boolean;
   status?: string;
   isConfused?: boolean;
   isShiny?: boolean;
@@ -26,7 +27,7 @@ const STAT_DISPLAY_NAMES: Record<string, string> = {
   evasion: 'ELUS',
 };
 
-export const BattleHUD: React.FC<HpBarProps> = ({ current, max, label, level, isPlayer, status, isConfused, isShiny, team, stages, types }) => {
+export const BattleHUD: React.FC<HpBarProps> = ({ current, max, label, level, isPlayer, isCaught, status, isConfused, isShiny, team, stages, types }) => {
   const percent = Math.max(0, (current / max) * 100);
 
   const STATUS_COLORS: Record<string, string> = {
@@ -65,6 +66,15 @@ export const BattleHUD: React.FC<HpBarProps> = ({ current, max, label, level, is
       
       <div className="flex justify-between items-center mb-1">
         <div className="flex items-center gap-1.5 flex-wrap">
+          {!isPlayer && isCaught && (
+            <span 
+              title="Già registrato come catturato nel Pokédex" 
+              className="inline-flex items-center justify-center w-3.5 h-3.5 rounded-full border border-gray-700 bg-white overflow-hidden shadow-xs relative shrink-0"
+            >
+              <span className="absolute top-0 left-0 right-0 h-1/2 bg-red-600 border-b border-gray-800" />
+              <span className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-1.5 h-1.5 rounded-full bg-white border border-gray-800 z-10" />
+            </span>
+          )}
           <span className={`font-bold text-sm uppercase ${isPlayer ? 'text-blue-600' : ''}`}>{label}</span>
           {isShiny && <span className="text-yellow-500 text-xs">★</span>}
           {status && (
