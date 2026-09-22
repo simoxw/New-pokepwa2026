@@ -213,7 +213,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
   }, [battleResult, onEnd]);
 
   const addLog = useCallback((msg: string) => {
-    setLogs(prev => [msg, ...prev].slice(0, 5));
+    setLogs(prev => [msg, ...prev].slice(0, 6));
   }, []);
 
   // Compute effective speed for initiative and flee checks
@@ -1515,7 +1515,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
             <motion.div
               key={`${log}-${i}`}
               initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1 - i * 0.2, y: 0 }}
+              animate={{ opacity: Math.max(0.15, 1 - i * 0.16), y: 0 }}
               className={`text-[10px] sm:text-xs px-3 py-1 rounded-full mb-1 w-fit backdrop-blur-sm font-bold transition-all ${badgeStyle}`}
             >
               {isSuper ? (

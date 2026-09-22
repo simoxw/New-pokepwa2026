@@ -5,8 +5,7 @@
  * Provides authentic GameBoy/GBA style audio feedback.
  */
 
-import superEffectiveWav from '../assets/audio/super_effective.wav';
-import notVeryEffectiveWav from '../assets/audio/not_very_effective.wav';
+import { SUPER_EFFECTIVE_B64, NOT_VERY_EFFECTIVE_B64 } from '../assets/audioData';
 
 let audioCtx: AudioContext | null = null;
 let soundEnabled = true;
@@ -73,10 +72,8 @@ const audioElementsCache = new Map<string, HTMLAudioElement>();
 
 if (typeof window !== 'undefined') {
   setTimeout(() => {
-    const absSuper = getAbsoluteAssetUrl(superEffectiveWav);
-    const absNotVery = getAbsoluteAssetUrl(notVeryEffectiveWav);
-    loadAndDecodeAudio(absSuper).catch(() => {});
-    loadAndDecodeAudio(absNotVery).catch(() => {});
+    loadAndDecodeAudio(SUPER_EFFECTIVE_B64).catch(() => {});
+    loadAndDecodeAudio(NOT_VERY_EFFECTIVE_B64).catch(() => {});
   }, 100);
 }
 
@@ -133,18 +130,17 @@ export function unlockAudio() {
 
   // Pre-load and unlock audio elements & Web Audio buffers on touch gesture
   if (typeof window !== 'undefined') {
-    const defaultAssets = [superEffectiveWav, notVeryEffectiveWav];
+    const defaultAssets = [SUPER_EFFECTIVE_B64, NOT_VERY_EFFECTIVE_B64];
     defaultAssets.forEach(url => {
-      const absoluteUrl = getAbsoluteAssetUrl(url);
       // Pre-fetch & decode into Web Audio API buffer (works on mobile & GitHub Pages)
-      loadAndDecodeAudio(absoluteUrl).catch(() => {});
+      loadAndDecodeAudio(url).catch(() => {});
 
       try {
-        let audio = audioElementsCache.get(absoluteUrl);
+        let audio = audioElementsCache.get(url);
         if (!audio) {
-          audio = new Audio(absoluteUrl);
+          audio = new Audio(url);
           audio.preload = 'auto';
-          audioElementsCache.set(absoluteUrl, audio);
+          audioElementsCache.set(url, audio);
         }
         audio.volume = 0.001;
         const promise = audio.play();
@@ -346,26 +342,25 @@ export function playHit(effectiveness: 'super' | 'not_very' | 'normal' | 'crit')
 
   // Priority 2: Built-in project WAV audio files in public/audio/
   let targetWav: string | null = null;
-  if (effectiveness === 'super' || effectiveness === 'crit') {
-    targetWav = superEffectiveWav;
+  if (effectiveness === 'super') {
+    targetWav = SUPER_EFFECTIVE_B64;
   } else if (effectiveness === 'not_very') {
-    targetWav = notVeryEffectiveWav;
+    targetWav = NOT_VERY_EFFECTIVE_B64;
   }
 
   if (targetWav) {
-    const absoluteUrl = getAbsoluteAssetUrl(targetWav);
     // Priority 2A: Play via decoded Web Audio API buffer (immune to mobile async delays)
-    const buffer = audioBuffersCache.get(absoluteUrl);
+    const buffer = audioBuffersCache.get(targetWav);
     if (buffer) {
       playAudioBuffer(buffer, 0.9);
       return;
     }
 
     // Priority 2B: Fallback to HTMLAudioElement
-    playAudioUrl(absoluteUrl, 0.9);
+    playAudioUrl(targetWav, 0.9);
 
     // Trigger async load for next time if buffer wasn't ready
-    loadAndDecodeAudio(absoluteUrl).catch(() => {});
+    loadAndDecodeAudio(targetWav).catch(() => {});
   }
 
   // Normal hits and all synthesized fallback tones are completely silenced per user request
