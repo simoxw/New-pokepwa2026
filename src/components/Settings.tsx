@@ -2,25 +2,43 @@ import React, { useState, useEffect } from 'react';
 import { useGame } from '../contexts/GameContext';
 import { 
   ChevronLeft, Save, Trash2, RotateCcw, FileJson, Zap, User, 
-  RefreshCw, Smartphone, CheckCircle, Volume2, VolumeX, Database, Sparkles, Upload, Play, X, Music
+  RefreshCw, Smartphone, CheckCircle, Volume2, VolumeX, Database, Sparkles, Upload, Play, X, Music, Lock, Key
 } from 'lucide-react';
 import { exportGameState, validateGameState } from '../lib/utils';
 import { INITIAL_STATE, Pokemon } from '../types/game';
 import { BADGES } from '../lib/badges';
 import { calculateStats } from '../lib/pokeapi';
-import { isSoundEnabled, setSoundEnabled, playMenuClick, playLevelUp, getCustomBgm, setCustomBgm, playBgm } from '../lib/sound';
+import { isSoundEnabled, setSoundEnabled, playMenuClick, playLevelUp, playFaint, getCustomBgm, setCustomBgm, playBgm } from '../lib/sound';
 import { getStorageEstimate, removeStorageItem, setStorageItem } from '../lib/storage';
+import { SPRITES } from '../constants/sprites';
 
 export const Settings: React.FC<{ onBack: () => void, onProfile: () => void }> = ({ onBack, onProfile }) => {
   const { state, setState } = useGame();
 
   const [showConfirm, setShowConfirm] = React.useState(false);
   const [showCheats, setShowCheats] = React.useState(false);
+  const [showPasscodeModal, setShowPasscodeModal] = useState(false);
+  const [passcode, setPasscode] = useState('');
+  const [passcodeError, setPasscodeError] = useState<string | null>(null);
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateMsg, setUpdateMsg] = useState<string | null>(null);
   const [audioActive, setAudioActive] = useState(() => isSoundEnabled());
   const [bgmOverworld, setBgmOverworld] = useState<string | null>(() => getCustomBgm('overworld'));
   const [bgmBattle, setBgmBattle] = useState<string | null>(() => getCustomBgm('battle'));
+
+  const handleVerifyPasscode = (e?: React.FormEvent) => {
+    if (e) e.preventDefault();
+    if (passcode.trim() === '190693') {
+      try { playLevelUp(); } catch { /* ignore */ }
+      setPasscodeError(null);
+      setPasscode('');
+      setShowPasscodeModal(false);
+      setShowCheats(true);
+    } else {
+      try { playFaint(); } catch { /* ignore */ }
+      setPasscodeError("Ehi Allenatore! Ma dove hai la testa?! Questo codice è più sbagliato di un Magikarp che prova a usare Iper Raggio! Riprova con 19... ehm, volevo dire, trova il codice giusto!");
+    }
+  };
 
   const [storageInfo, setStorageInfo] = useState<{ usageMB: number; quotaMB: number; isIndexedDB: boolean }>({
     usageMB: 0.5,
@@ -495,10 +513,16 @@ export const Settings: React.FC<{ onBack: () => void, onProfile: () => void }> =
           </h3>
           
           <button 
-            onClick={() => setShowCheats(true)}
-            className="w-full bg-yellow-50 text-yellow-700 border-2 border-yellow-100 py-4 rounded-2xl font-black uppercase text-xs active:bg-yellow-500 active:text-white transition-all flex items-center justify-center gap-2"
+            onClick={() => {
+              try { playMenuClick(); } catch { /* ignore */ }
+              setShowPasscodeModal(true);
+              setPasscode('');
+              setPasscodeError(null);
+            }}
+            className="w-full bg-yellow-50 hover:bg-yellow-100 text-yellow-800 border-2 border-yellow-200 py-4 rounded-2xl font-black uppercase text-xs active:scale-98 transition-all flex items-center justify-center gap-2 cursor-pointer shadow-sm"
           >
-            Menù Trucchi
+            <Lock className="w-4 h-4 text-yellow-600" />
+            <span>Menù Trucchi</span>
           </button>
         </div>
 
@@ -523,6 +547,93 @@ export const Settings: React.FC<{ onBack: () => void, onProfile: () => void }> =
           <p className="text-[8px] text-gray-400 mt-1">Made with humor between friends</p>
         </div>
       </div>
+
+      {/* PASSCODE MODAL FOR CHEATS */}
+      {showPasscodeModal && (
+        <div className="fixed inset-0 z-50 bg-slate-950/80 backdrop-blur-md flex items-center justify-center p-5 text-center animate-in fade-in">
+          <div className="bg-slate-900 border-2 border-yellow-500/50 text-white rounded-3xl max-w-sm w-full p-6 space-y-4 shadow-2xl relative overflow-hidden">
+            <button 
+              onClick={() => {
+                setShowPasscodeModal(false);
+                setPasscodeError(null);
+                setPasscode('');
+              }}
+              className="absolute top-4 right-4 text-slate-400 hover:text-white p-1 rounded-full hover:bg-white/10"
+            >
+              <X className="w-5 h-5" />
+            </button>
+
+            <div className="w-16 h-16 mx-auto rounded-2xl bg-yellow-500/20 border border-yellow-400/40 flex items-center justify-center text-yellow-400 shadow-lg">
+              <Lock className="w-8 h-8" />
+            </div>
+
+            <div>
+              <h3 className="text-lg font-black uppercase text-amber-300 tracking-tight">
+                Codice Segreto Sviluppatore
+              </h3>
+              <p className="text-xs text-slate-300 font-medium mt-1">
+                Inserisci il codice PIN per accedere al Menù Trucchi:
+              </p>
+            </div>
+
+            <form onSubmit={handleVerifyPasscode} className="space-y-3">
+              <input 
+                type="password"
+                inputMode="numeric"
+                maxLength={8}
+                placeholder="Inserisci PIN..."
+                value={passcode}
+                onChange={(e) => {
+                  setPasscode(e.target.value);
+                  if (passcodeError) setPasscodeError(null);
+                }}
+                className="w-full bg-slate-950 border-2 border-slate-700 focus:border-yellow-400 text-center font-mono text-lg tracking-[0.3em] font-black text-white py-3 rounded-2xl focus:outline-none transition-all placeholder:tracking-normal placeholder:font-sans placeholder:text-xs placeholder:text-slate-500"
+                autoFocus
+              />
+
+              <div className="flex gap-2 pt-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setShowPasscodeModal(false);
+                    setPasscodeError(null);
+                    setPasscode('');
+                  }}
+                  className="flex-1 py-3 bg-slate-800 hover:bg-slate-700 text-slate-300 font-black uppercase text-xs rounded-xl transition-colors cursor-pointer"
+                >
+                  Annulla
+                </button>
+                <button
+                  type="submit"
+                  className="flex-1 py-3 bg-gradient-to-r from-yellow-500 to-amber-600 hover:from-yellow-400 hover:to-amber-500 text-slate-950 font-black uppercase text-xs rounded-xl transition-all shadow-md active:scale-95 cursor-pointer flex items-center justify-center gap-1.5"
+                >
+                  <Key className="w-4 h-4" />
+                  <span>Sblocca</span>
+                </button>
+              </div>
+            </form>
+
+            {/* Prof. Scordarello's Funny Error Message */}
+            {passcodeError && (
+              <div className="bg-amber-950/90 border border-amber-500/60 rounded-2xl p-3 flex items-start gap-3 text-left shadow-lg animate-in zoom-in-95">
+                <img 
+                  src={SPRITES.PROFESSOR} 
+                  alt="Prof. Scordarello" 
+                  className="w-12 h-12 object-contain bg-amber-500/20 rounded-xl p-1 border border-amber-400/40 shrink-0" 
+                />
+                <div className="flex-1 min-w-0">
+                  <span className="font-black text-[11px] text-amber-300 uppercase block tracking-wider">
+                    Prof. Scordarello
+                  </span>
+                  <p className="text-[11px] text-amber-100/95 leading-snug mt-0.5 italic font-medium">
+                    "{passcodeError}"
+                  </p>
+                </div>
+              </div>
+            )}
+          </div>
+        </div>
+      )}
 
       {/* Cheat Menu Modal */}
       {showCheats && (
