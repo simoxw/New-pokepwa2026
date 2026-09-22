@@ -5,8 +5,8 @@
  * Provides authentic GameBoy/GBA style audio feedback.
  */
 
-import superEffectiveWav from '../../public/audio/super_effective.wav';
-import notVeryEffectiveWav from '../../public/audio/not_very_effective.wav';
+import superEffectiveWav from '../assets/audio/super_effective.wav';
+import notVeryEffectiveWav from '../assets/audio/not_very_effective.wav';
 
 let audioCtx: AudioContext | null = null;
 let soundEnabled = true;
