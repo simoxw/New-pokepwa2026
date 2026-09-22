@@ -14,6 +14,8 @@ export const SPRITES = {
     PICNICKER: "https://play.pokemonshowdown.com/sprites/trainers/picnicker.png",
     BLACKBELT: "https://play.pokemonshowdown.com/sprites/trainers/blackbelt.png",
     BEAUTY: "https://play.pokemonshowdown.com/sprites/trainers/beauty.png",
-    BUG_CATCHER: "https://play.pokemonshowdown.com/sprites/trainers/bugcatcher.png"
+    BUG_CATCHER: "https://play.pokemonshowdown.com/sprites/trainers/bugcatcher.png",
+    LORELEI: "https://play.pokemonshowdown.com/sprites/trainers/lorelei-gen3.png",
+    DRAKE: "https://play.pokemonshowdown.com/sprites/trainers/drake-gen3.png"
   }
 };

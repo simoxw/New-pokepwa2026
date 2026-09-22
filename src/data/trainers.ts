@@ -222,7 +222,7 @@ export const TRAINERS_DATA = {
   'lorelei': {
     name: 'Lorelei',
     type: 'Superquattro Kanto',
-    sprite: 'https://play.pokemonshowdown.com/sprites/trainers/lorelei.png',
+    sprite: 'https://play.pokemonshowdown.com/sprites/trainers/lorelei-gen3.png',
     quote: 'Nessuno può sfuggire al freddo glaciale delle mie strategie! Il tuo team si gelerà sul posto!',
     winQuote: 'Il tuo calore da combattimento ha sciolto anche il mio ghiaccio più resistente...',
     moneyReward: 25000,
@@ -231,7 +231,7 @@ export const TRAINERS_DATA = {
   'drake': {
     name: 'Drake',
     type: 'Superquattro Hoenn',
-    sprite: 'https://play.pokemonshowdown.com/sprites/trainers/drake.png',
+    sprite: 'https://play.pokemonshowdown.com/sprites/trainers/drake-gen3.png',
     quote: 'I Pokémon drago incarnano la vera essenza della forza indisciplinata. Dimostrami che sai domarla!',
     winQuote: 'Impressionante! Hai la tempra e il coraggio di un vero capitano dei mari e dei draghi.',
     moneyReward: 25000,
