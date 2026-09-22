@@ -23,8 +23,24 @@ export const Settings: React.FC<{ onBack: () => void, onProfile: () => void }> =
   const [isUpdating, setIsUpdating] = useState(false);
   const [updateMsg, setUpdateMsg] = useState<string | null>(null);
   const [audioActive, setAudioActive] = useState(() => isSoundEnabled());
+  const [moveAnimsActive, setMoveAnimsActive] = useState(() => {
+    return state.settings?.moveAnimationsEnabled !== false;
+  });
   const [bgmOverworld, setBgmOverworld] = useState<string | null>(() => getCustomBgm('overworld'));
   const [bgmBattle, setBgmBattle] = useState<string | null>(() => getCustomBgm('battle'));
+
+  const handleToggleMoveAnims = () => {
+    const nextState = !moveAnimsActive;
+    setMoveAnimsActive(nextState);
+    setState(prev => ({
+      ...prev,
+      settings: {
+        ...prev.settings,
+        moveAnimationsEnabled: nextState
+      }
+    }));
+    if (audioActive) playMenuClick();
+  };
 
   const handleVerifyPasscode = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
@@ -301,8 +317,6 @@ export const Settings: React.FC<{ onBack: () => void, onProfile: () => void }> =
               </button>
             )}
           </div>
-
-          {/* Caricamento Musica di Sottofondo (BGM) */}
           <div className="bg-indigo-50/80 border-2 border-indigo-200 rounded-2xl p-4 space-y-4">
             <div>
               <p className="text-xs font-black text-indigo-900 uppercase flex items-center gap-1.5">
@@ -416,6 +430,30 @@ export const Settings: React.FC<{ onBack: () => void, onProfile: () => void }> =
                 )}
               </div>
             </div>
+          </div>
+        </div>
+
+        {/* Animazioni Mosse GBA */}
+        <div className="space-y-4">
+          <h3 className="font-black text-xs uppercase text-gray-400 tracking-widest flex items-center gap-2">
+            <Zap className="w-3.5 h-3.5 text-amber-500" /> Animazioni di Lotta
+          </h3>
+          
+          <div className="bg-amber-50/50 border-2 border-amber-200/80 rounded-2xl p-4 flex items-center justify-between">
+            <div>
+              <p className="text-xs font-black text-slate-800 uppercase">Animazioni Mosse (Stile GBA)</p>
+              <p className="text-[11px] text-slate-500 font-medium">Effetti visivi, fendenti, proiettili e bagliori</p>
+            </div>
+            <button
+              onClick={handleToggleMoveAnims}
+              className={`px-4 py-2 rounded-xl text-xs font-black uppercase transition-all shadow-sm ${
+                moveAnimsActive
+                  ? 'bg-amber-500 text-white shadow-amber-500/20 active:scale-95'
+                  : 'bg-slate-200 text-slate-600 active:scale-95'
+              }`}
+            >
+              {moveAnimsActive ? 'ATTIVE' : 'DISATTIVE'}
+            </button>
           </div>
         </div>
 

@@ -189,6 +189,11 @@ export interface GameState {
     unlockedTitles?: string[];
     towerHighFloor?: number;
   };
+  settings?: {
+    moveAnimationsEnabled?: boolean;
+    soundEnabled?: boolean;
+    musicEnabled?: boolean;
+  };
 }
 
 export interface Badge {

@@ -98,6 +98,10 @@ Combina la fedeltà delle meccaniche competitive Pokémon ufficiali (formule mat
 
 ### 6. ⚙️ Impostazioni, Personalizzazione BGM & Menù Trucchi Protetto
 - **🔑 Menù Trucchi Protetto da PIN (`190693`)**: Accesso riservato al menù sviluppatore tramite codice PIN segreto. In caso di errore, viene mostrato un intervento comico e satirico del Prof. Scordarello.
+- **⚡ Animazioni Mosse in Stile GBA (Attivabili / Disattivabili)**:
+  - Layer grafico isolato (`BattleFXLayer.tsx`) che riproduce fendenti, proiettili di fuoco/acqua, saette elettriche, bagliori e onde d'urto durante i turni di lotta.
+  - Sincronizzazione perfetta con la barra degli HP e i messaggi di log.
+  - Opzione toggle **ATTIVE/DISATTIVE** dedicata nelle Impostazioni per disabilitarle o riabilitarle istantaneamente in qualsiasi momento.
 - **🔄 Sistema di Scambio e Import/Export Pokémon (Compatibile N64 & Pokedesk)**:
   - Generazione di codici stringa Base64 per scambiare o esportare qualsiasi Pokémon.
   - **Motore di Normalizzazione `normalizePokemon`**: Decodifica automatica di codici esterni (Pokedesk / N64).

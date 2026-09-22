@@ -28,6 +28,7 @@ import { BattleBag } from './battle/BattleBag';
 import { getBadgeForBoss } from '../lib/badges';
 import { CatchOverlay } from './CatchOverlay';
 import { ZONES } from '../constants/game';
+import { BattleFXLayer, BattleFXData } from './BattleFXLayer';
 import { 
   playHit, 
   playFaint, 
@@ -178,6 +179,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     return initialLogs;
   });
   const [isAnimating, setIsAnimating] = useState(false);
+  const [fxData, setFxData] = useState<BattleFXData | null>(null);
 
   // Ransomware Superquattro Mini-Game
   const [encryptedMoveIndex, setEncryptedMoveIndex] = useState<number | null>(() => {
@@ -861,6 +863,17 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
         }));
       }
 
+      // Trigger GBA Move Animation
+      if (state.settings?.moveAnimationsEnabled !== false) {
+        setFxData({
+          moveName: move.name,
+          moveType: move.type || 'normal',
+          category: move.category,
+          targetSide: attackerIsPlayer ? 'opponent' : 'player'
+        });
+        await new Promise(r => setTimeout(r, 650));
+      }
+
       // 6. Execute Move Action
       const currentLowHpBonus = (cPlayerHp / playerActive.maxHp) < 0.35 ? towerLowHpBonus : 1;
       const combatOptions = attackerIsPlayer ? {
@@ -1240,6 +1253,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
 
   return (
     <div className={`fixed inset-0 z-[80] ${battleBg} overflow-y-auto`}>
+      <BattleFXLayer fxData={fxData} onComplete={() => setFxData(null)} />
       <div className="min-h-full flex flex-col p-3 pb-6 max-w-4xl mx-auto">
         {/* Enemy Side */}
         <div className="flex-1 flex flex-col items-end justify-start pt-8 pr-2 min-h-[140px]">

@@ -83,6 +83,12 @@ Questo documento descrive le principali funzioni, algoritmi e metodi esportati n
 - **`fetchMoveData(moveNameOrUrl)`**:  
   Recupera le proprietà competitive della mossa (potenza, precisione, tipo, PP, classe di danno) con traduzione automatica in italiano.
 
+### `BattleFXLayer.tsx` (Animazioni Mosse GBA)
+- **`BattleFXLayer`**:
+  - Renderizza un overlay grafico trasparente dinamico posizionato sopra l'arena di lotta.
+  - Genera effetti grafici tematici in base al tipo e alla categoria della mossa usata (fendenti luminosi, proiettili fiammeggianti, flussi d'acqua/ghiaccio, saette elettriche, onde psichiche, impatti fisici, aure di potenziamento).
+  - Sincronizzato con il ciclo di esecuzione dei turni (~650ms). Disattivabile all'istante dalle Impostazioni (`state.settings.moveAnimationsEnabled`).
+
 ### `utils.ts` & Scambio Codici (`Trade.tsx`)
 - **`normalizePokemon(raw)`**:
   Normalizza qualsiasi oggetto Pokémon proveniente da LocalStorage, N64 o Pokedesk.

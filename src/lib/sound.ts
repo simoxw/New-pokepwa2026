@@ -115,6 +115,23 @@ export function setSoundEnabled(enabled: boolean): void {
   try {
     localStorage.setItem('pokepwa_sound_enabled', String(enabled));
   } catch {}
+
+  if (!enabled) {
+    if (currentBgmAudio) {
+      currentBgmAudio.pause();
+      currentBgmAudio = null;
+      currentBgmType = null;
+    }
+    audioElementsCache.forEach((audio) => {
+      try {
+        audio.pause();
+        audio.currentTime = 0;
+      } catch {}
+    });
+    if (audioCtx && audioCtx.state === 'running') {
+      audioCtx.suspend().catch(() => {});
+    }
+  }
 }
 
 export function toggleSound(): boolean {
