@@ -1492,6 +1492,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       {/* Battle Event Logs */}
       <div className="absolute top-4 left-4 right-4 pointer-events-none flex flex-col items-start">
         {logs.map((log, i) => {
+          if (!log) return null;
           const lower = log.toLowerCase();
           const isSuper = lower.includes('superefficace') || lower.includes('super efficace');
           const isNotVery = lower.includes('non è molto efficace') || lower.includes('poco efficace');

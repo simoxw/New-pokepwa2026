@@ -40,28 +40,59 @@ export function getAssetUrl(relativePath: string): string {
   return cleanBase + cleanPath;
 }
 
+export function getAbsoluteAssetUrl(url: string): string {
+  if (typeof window === 'undefined') return url;
+  if (url.startsWith('data:') || url.startsWith('http://') || url.startsWith('https://')) {
+    return url;
+  }
+  
+  let pathname = window.location.pathname;
+  if (pathname.endsWith('.html')) {
+    const parts = pathname.split('/');
+    parts.pop();
+    pathname = parts.join('/') + '/';
+  }
+  if (!pathname.endsWith('/')) {
+    pathname += '/';
+  }
+  
+  let cleanUrl = url;
+  if (cleanUrl.startsWith('./')) {
+    cleanUrl = cleanUrl.substring(2);
+  } else if (cleanUrl.startsWith('/')) {
+    cleanUrl = cleanUrl.substring(1);
+  }
+  
+  const origin = window.location.origin;
+  return `${origin}${pathname}${cleanUrl}`;
+}
+
 let audioUnlocked = false;
 const audioBuffersCache = new Map<string, AudioBuffer>();
 const audioElementsCache = new Map<string, HTMLAudioElement>();
 
 if (typeof window !== 'undefined') {
   setTimeout(() => {
-    loadAndDecodeAudio(superEffectiveWav).catch(() => {});
-    loadAndDecodeAudio(notVeryEffectiveWav).catch(() => {});
+    const absSuper = getAbsoluteAssetUrl(superEffectiveWav);
+    const absNotVery = getAbsoluteAssetUrl(notVeryEffectiveWav);
+    loadAndDecodeAudio(absSuper).catch(() => {});
+    loadAndDecodeAudio(absNotVery).catch(() => {});
   }, 100);
 }
 
 export async function loadAndDecodeAudio(url: string): Promise<AudioBuffer | null> {
   const ctx = getAudioContext();
   if (!ctx) return null;
-  if (audioBuffersCache.has(url)) return audioBuffersCache.get(url)!;
+  
+  const absoluteUrl = getAbsoluteAssetUrl(url);
+  if (audioBuffersCache.has(absoluteUrl)) return audioBuffersCache.get(absoluteUrl)!;
 
   try {
-    const response = await fetch(url);
+    const response = await fetch(absoluteUrl);
     if (!response.ok) return null;
     const arrayBuffer = await response.arrayBuffer();
     const audioBuffer = await ctx.decodeAudioData(arrayBuffer);
-    audioBuffersCache.set(url, audioBuffer);
+    audioBuffersCache.set(absoluteUrl, audioBuffer);
     return audioBuffer;
   } catch {
     return null;
@@ -104,15 +135,16 @@ export function unlockAudio() {
   if (typeof window !== 'undefined') {
     const defaultAssets = [superEffectiveWav, notVeryEffectiveWav];
     defaultAssets.forEach(url => {
+      const absoluteUrl = getAbsoluteAssetUrl(url);
       // Pre-fetch & decode into Web Audio API buffer (works on mobile & GitHub Pages)
-      loadAndDecodeAudio(url).catch(() => {});
+      loadAndDecodeAudio(absoluteUrl).catch(() => {});
 
       try {
-        let audio = audioElementsCache.get(url);
+        let audio = audioElementsCache.get(absoluteUrl);
         if (!audio) {
-          audio = new Audio(url);
+          audio = new Audio(absoluteUrl);
           audio.preload = 'auto';
-          audioElementsCache.set(url, audio);
+          audioElementsCache.set(absoluteUrl, audio);
         }
         audio.volume = 0.001;
         const promise = audio.play();
@@ -141,11 +173,12 @@ if (typeof window !== 'undefined') {
 function playAudioUrl(urlOrBase64: string, volume: number = 0.9): boolean {
   if (!soundEnabled) return false;
   unlockAudio();
+  const absoluteUrl = getAbsoluteAssetUrl(urlOrBase64);
   try {
-    let audio = audioElementsCache.get(urlOrBase64);
+    let audio = audioElementsCache.get(absoluteUrl);
     if (!audio) {
-      audio = new Audio(urlOrBase64);
-      audioElementsCache.set(urlOrBase64, audio);
+      audio = new Audio(absoluteUrl);
+      audioElementsCache.set(absoluteUrl, audio);
     }
     audio.volume = volume;
     audio.currentTime = 0;
@@ -153,7 +186,7 @@ function playAudioUrl(urlOrBase64: string, volume: number = 0.9): boolean {
     if (playPromise !== undefined) {
       playPromise.catch(() => {
         // Fallback for mobile if cached instance failed
-        const freshAudio = new Audio(urlOrBase64);
+        const freshAudio = new Audio(absoluteUrl);
         freshAudio.volume = volume;
         freshAudio.play().catch(() => {});
       });
@@ -320,18 +353,19 @@ export function playHit(effectiveness: 'super' | 'not_very' | 'normal' | 'crit')
   }
 
   if (targetWav) {
+    const absoluteUrl = getAbsoluteAssetUrl(targetWav);
     // Priority 2A: Play via decoded Web Audio API buffer (immune to mobile async delays)
-    const buffer = audioBuffersCache.get(targetWav);
+    const buffer = audioBuffersCache.get(absoluteUrl);
     if (buffer) {
       playAudioBuffer(buffer, 0.9);
       return;
     }
 
     // Priority 2B: Fallback to HTMLAudioElement
-    playAudioUrl(targetWav, 0.9);
+    playAudioUrl(absoluteUrl, 0.9);
 
     // Trigger async load for next time if buffer wasn't ready
-    loadAndDecodeAudio(targetWav).catch(() => {});
+    loadAndDecodeAudio(absoluteUrl).catch(() => {});
   }
 
   // Normal hits and all synthesized fallback tones are completely silenced per user request
