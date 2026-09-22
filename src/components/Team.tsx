@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { useGame } from '../contexts/GameContext';
-import { ChevronLeft, Shield, Zap } from 'lucide-react';
+import { ChevronLeft, Shield, Zap, Star } from 'lucide-react';
 import { motion } from 'motion/react';
 import { PokemonDetails } from './PokemonDetails';
 import { Pokemon, TYPE_COLORS, TYPE_TRANSLATIONS } from '../types/game';
@@ -107,7 +107,12 @@ export const Team: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               <div className="flex justify-between items-start mb-2">
                 <div>
                   <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-black text-lg uppercase leading-none">{pokemon.name}</h3>
+                    <h3 className="font-black text-lg uppercase leading-none flex items-center gap-1">
+                      <span>{pokemon.nickname || pokemon.name}</span>
+                      {pokemon.isFavorite && (
+                        <Star className="w-4 h-4 text-amber-400 fill-amber-400 shrink-0 inline" />
+                      )}
+                    </h3>
                     <div className="flex gap-1">
                       {pokemon.types.map(t => {
                         const typeLower = t.toLowerCase();

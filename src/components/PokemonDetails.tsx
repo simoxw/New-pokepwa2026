@@ -4,6 +4,8 @@ import { Pokemon, Move, TYPE_COLORS } from '../types/game';
 import { Shield, Sword, Zap, Heart, Star, MapPin } from 'lucide-react';
 import { MoveInfoModal } from './battle/MoveInfoModal';
 import { getNatureDetails } from '../lib/pokeapi';
+import { useGame } from '../contexts/GameContext';
+import { playMenuClick } from '../lib/sound';
 
 interface PokemonDetailsProps {
   pokemon: Pokemon;
@@ -18,11 +20,35 @@ interface PokemonDetailsProps {
 export const PokemonDetails: React.FC<PokemonDetailsProps> = ({ 
   pokemon, onClose, onMoveUp, onMoveDown, onBox, onWithdraw, onRelease 
 }) => {
+  const { setState } = useGame();
+  const [isFavorite, setIsFavorite] = useState<boolean>(!!pokemon.isFavorite);
   const [inspectingMove, setInspectingMove] = useState<Move | null>(null);
   const [holdingMoveName, setHoldingMoveName] = useState<string | null>(null);
   const longPressTimerRef = useRef<NodeJS.Timeout | null>(null);
   const isLongPressActiveRef = useRef<boolean>(false);
   const pressStartTimeRef = useRef<number>(0);
+
+  const handleToggleFavorite = () => {
+    try { playMenuClick(); } catch { /* ignore */ }
+    const nextVal = !isFavorite;
+    setIsFavorite(nextVal);
+    pokemon.isFavorite = nextVal;
+
+    setState(prev => {
+      const matchTarget = (p: Pokemon) => 
+        p.instanceId 
+          ? p.instanceId === pokemon.instanceId 
+          : (p.id === pokemon.id && p.level === pokemon.level && p.caughtAt === pokemon.caughtAt);
+      return {
+        ...prev,
+        player: {
+          ...prev.player,
+          team: prev.player.team.map(p => matchTarget(p) ? { ...p, isFavorite: nextVal } : p),
+          box: prev.player.box.map(p => matchTarget(p) ? { ...p, isFavorite: nextVal } : p)
+        }
+      };
+    });
+  };
 
   const startPress = (move: Move) => {
     if (longPressTimerRef.current) {
@@ -75,10 +101,27 @@ export const PokemonDetails: React.FC<PokemonDetailsProps> = ({
       >
         {/* Header with high-quality Artwork */}
         <div className={`p-8 relative overflow-hidden flex-shrink-0 ${TYPE_COLORS[pokemon.types[0]] || 'bg-blue-500'}`}>
-          <div className="absolute top-0 right-0 p-4">
+          {/* Favorite Star Button (Top-Left) */}
+          <div className="absolute top-0 left-0 p-4 z-20">
+            <button 
+              onClick={handleToggleFavorite} 
+              className="text-white/80 hover:text-white p-2 rounded-full hover:bg-black/15 transition-all cursor-pointer group flex items-center justify-center"
+              title={isFavorite ? "Rimuovi dai Preferiti" : "Aggiungi ai Preferiti"}
+            >
+              <Star 
+                className={`w-7 h-7 transition-all group-active:scale-125 ${
+                  isFavorite 
+                    ? "text-amber-300 fill-amber-300 drop-shadow-[0_2px_10px_rgba(252,211,77,0.8)]" 
+                    : "text-white/80 hover:text-amber-300"
+                }`} 
+              />
+            </button>
+          </div>
+
+          <div className="absolute top-0 right-0 p-4 z-20">
             <button 
               onClick={onClose} 
-              className="text-white/80 hover:text-white text-2xl p-2 rounded-full hover:bg-black/10 transition-colors"
+              className="text-white/80 hover:text-white text-2xl p-2 rounded-full hover:bg-black/15 transition-colors cursor-pointer"
             >
               ✕
             </button>

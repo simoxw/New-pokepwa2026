@@ -64,6 +64,7 @@ export interface Pokemon {
     speed: number;
   };
   isShiny: boolean;
+  isFavorite?: boolean;
   status?: StatusCondition;
   statusDuration?: number;
   evolutionInfo?: {

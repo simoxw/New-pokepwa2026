@@ -328,7 +328,7 @@ export const BattleTower: React.FC<BattleTowerProps> = ({
                     setShowRestNode(false);
                     const highTierChoices = getRandomTowerCards(3, activeCards.map(c => c.id)).map(c => ({
                       ...c,
-                      rarity: c.rarity === 'Comune' ? 'Raro' as const : c.rarity
+                      rarity: c.rarity === 'common' ? 'rare' as const : c.rarity
                     }));
                     setCardChoices(highTierChoices);
                   }}
@@ -395,7 +395,7 @@ export const BattleTower: React.FC<BattleTowerProps> = ({
 
               <div className="grid grid-cols-1 gap-3 text-left mb-4">
                 {cardChoices.map((card) => {
-                  const isCursed = card.rarity === 'Maledetto';
+                  const isCursed = card.rarity === 'cursed';
                   return (
                     <button
                       key={card.id}

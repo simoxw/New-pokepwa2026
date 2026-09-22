@@ -1,7 +1,7 @@
 import React, { useState, useMemo } from 'react';
 import { useGame } from '../contexts/GameContext';
 import { 
-  ChevronLeft, Search, X, Sparkles, Zap, Heart, 
+  ChevronLeft, Search, X, Sparkles, Zap, Heart, Star,
   ArrowUpDown, SlidersHorizontal, RotateCcw, ShieldAlert,
   CheckSquare, Square, Trash2, Check, AlertTriangle
 } from 'lucide-react';
@@ -19,6 +19,7 @@ export const Box: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [search, setSearch] = useState('');
   const [selectedType, setSelectedType] = useState<string | null>(null);
   const [selectedGen, setSelectedGen] = useState<number>(0);
+  const [onlyFavorite, setOnlyFavorite] = useState<boolean>(false);
   const [onlyShiny, setOnlyShiny] = useState<boolean>(false);
   const [onlyCanEvolve, setOnlyCanEvolve] = useState<boolean>(false);
   const [onlyInjured, setOnlyInjured] = useState<boolean>(false);
@@ -64,6 +65,7 @@ export const Box: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const activeFiltersCount = (search ? 1 : 0) +
     (selectedType ? 1 : 0) +
     (selectedGen > 0 ? 1 : 0) +
+    (onlyFavorite ? 1 : 0) +
     (onlyShiny ? 1 : 0) +
     (onlyCanEvolve ? 1 : 0) +
     (onlyInjured ? 1 : 0) +
@@ -74,6 +76,7 @@ export const Box: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     setSearch('');
     setSelectedType(null);
     setSelectedGen(0);
+    setOnlyFavorite(false);
     setOnlyShiny(false);
     setOnlyCanEvolve(false);
     setOnlyInjured(false);
@@ -115,22 +118,27 @@ export const Box: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       }
     }
 
-    // 4. Shiny Only
+    // 4. Favorites Only
+    if (onlyFavorite) {
+      result = result.filter(p => p.isFavorite);
+    }
+
+    // 5. Shiny Only
     if (onlyShiny) {
       result = result.filter(p => p.isShiny);
     }
 
-    // 5. Can Evolve
+    // 6. Can Evolve
     if (onlyCanEvolve) {
       result = result.filter(p => p.evolutionInfo && p.level >= p.evolutionInfo.level);
     }
 
-    // 6. Injured / Low HP
+    // 7. Injured / Low HP
     if (onlyInjured) {
       result = result.filter(p => p.hp < p.maxHp || p.status);
     }
 
-    // 7. Sorting
+    // 8. Sorting
     result.sort((a, b) => {
       switch (sortBy) {
         case 'level_desc':
@@ -154,7 +162,7 @@ export const Box: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     });
 
     return result;
-  }, [state.player.box, search, selectedType, selectedGen, onlyShiny, onlyCanEvolve, onlyInjured, sortBy]);
+  }, [state.player.box, search, selectedType, selectedGen, onlyFavorite, onlyShiny, onlyCanEvolve, onlyInjured, sortBy]);
 
   // Safe Withdraw using unique instanceId
   const withdraw = (target: Pokemon) => {
@@ -279,9 +287,13 @@ export const Box: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     return selectedPokemonList.some(p => p.level >= 30);
   }, [selectedPokemonList]);
 
-  // Shiny counts in box
+  // Shiny & Favorites counts in box
   const shinyCountInBox = useMemo(() => {
     return state.player.box.filter(p => p.isShiny).length;
+  }, [state.player.box]);
+
+  const favoriteCountInBox = useMemo(() => {
+    return state.player.box.filter(p => p.isFavorite).length;
   }, [state.player.box]);
 
   const evolvableCountInBox = useMemo(() => {
@@ -455,18 +467,33 @@ export const Box: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           <button
             onClick={() => {
               setSelectedType(null);
+              setOnlyFavorite(false);
               setOnlyShiny(false);
               setOnlyCanEvolve(false);
               setOnlyInjured(false);
               setSelectedGen(0);
             }}
             className={`px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${
-              !selectedType && !onlyShiny && !onlyCanEvolve && !onlyInjured && selectedGen === 0
+              !selectedType && !onlyFavorite && !onlyShiny && !onlyCanEvolve && !onlyInjured && selectedGen === 0
                 ? 'bg-indigo-600 text-white border-indigo-400 shadow-sm'
                 : 'bg-slate-800/80 text-slate-400 border-slate-700/60 hover:bg-slate-800'
             }`}
           >
             Tutti ({state.player.box.length})
+          </button>
+
+          {/* Favorite Pill */}
+          <button
+            onClick={() => setOnlyFavorite(prev => !prev)}
+            className={`flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-bold whitespace-nowrap transition-all border ${
+              onlyFavorite
+                ? 'bg-amber-400 text-slate-950 border-amber-300 shadow-sm font-black'
+                : 'bg-slate-800/80 text-amber-300/90 border-slate-700/60 hover:bg-slate-800'
+            }`}
+          >
+            <Star className={`w-3.5 h-3.5 ${onlyFavorite ? 'fill-slate-950' : 'fill-amber-300'}`} />
+            <span>Preferiti</span>
+            {favoriteCountInBox > 0 && <span className="text-[10px] opacity-80">({favoriteCountInBox})</span>}
           </button>
 
           {/* Shiny Pill */}
@@ -912,6 +939,11 @@ const BoxPokemonCard: React.FC<BoxPokemonCardProps> = ({
         </span>
         
         <div className="flex items-center gap-1">
+          {pokemon.isFavorite && (
+            <span className="text-amber-300" title="Preferito!">
+              <Star className="w-3 h-3 fill-amber-300" />
+            </span>
+          )}
           {canEvolve && (
             <span className="text-emerald-400" title="Pronto a Evolversi!">
               <Zap className="w-3 h-3 fill-emerald-400" />
