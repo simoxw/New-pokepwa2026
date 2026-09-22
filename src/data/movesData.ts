@@ -2102,16 +2102,24 @@ export function getMoveByName(rawName: string): Move {
   // Attacking move fallback: ALWAYS has positive power and physical/special category!
   let inferredType = 'normal';
   if (key.includes('fire') || key.includes('fuoco') || key.includes('flame') || key.includes('braciere')) inferredType = 'fire';
-  else if (key.includes('water') || key.includes('acqua') || key.includes('hydro') || key.includes('bolla')) inferredType = 'water';
-  else if (key.includes('grass') || key.includes('erba') || key.includes('foglia') || key.includes('vine')) inferredType = 'grass';
-  else if (key.includes('electric') || key.includes('elettro') || key.includes('tuono') || key.includes('shock')) inferredType = 'electric';
-  else if (key.includes('ice') || key.includes('ghiaccio') || key.includes('gelo')) inferredType = 'ice';
-  else if (key.includes('psy') || key.includes('psico')) inferredType = 'psychic';
-  else if (key.includes('dark') || key.includes('buio') || key.includes('ombra')) inferredType = 'dark';
-  else if (key.includes('flying') || key.includes('ala') || key.includes('becc')) inferredType = 'flying';
-  else if (key.includes('poison') || key.includes('veleno')) inferredType = 'poison';
+  else if (key.includes('water') || key.includes('acqua') || key.includes('hydro') || key.includes('bolla') || key.includes('idro')) inferredType = 'water';
+  else if (key.includes('grass') || key.includes('erba') || key.includes('foglia') || key.includes('vine') || key.includes('leaf')) inferredType = 'grass';
+  else if (key.includes('electric') || key.includes('elettro') || key.includes('tuono') || key.includes('shock') || key.includes('thunder') || key.includes('spark')) inferredType = 'electric';
+  else if (key.includes('ice') || key.includes('ghiaccio') || key.includes('gelo') || key.includes('frost') || key.includes('freeze')) inferredType = 'ice';
+  else if (key.includes('psy') || key.includes('psico') || key.includes('mind')) inferredType = 'psychic';
+  else if (key.includes('dark') || key.includes('buio') || key.includes('ombra') || key.includes('shadow') || key.includes('neropulsar')) inferredType = 'dark';
+  else if (key.includes('flying') || key.includes('ala') || key.includes('becc') || key.includes('volo') || key.includes('aero') || key.includes('gust')) inferredType = 'flying';
+  else if (key.includes('poison') || key.includes('veleno') || key.includes('tossic') || key.includes('toxic') || key.includes('fango') || key.includes('sludge')) inferredType = 'poison';
+  else if (key.includes('dragon') || key.includes('drago')) inferredType = 'dragon';
+  else if (key.includes('steel') || key.includes('acciaio') || key.includes('metal') || key.includes('ferro') || key.includes('iron')) inferredType = 'steel';
+  else if (key.includes('fairy') || key.includes('folletto') || key.includes('pixie') || key.includes('charm') || key.includes('bacio') || key.includes('kiss')) inferredType = 'fairy';
+  else if (key.includes('rock') || key.includes('roccia') || key.includes('pietra') || key.includes('stone') || key.includes('cadutamassi')) inferredType = 'rock';
+  else if (key.includes('ground') || key.includes('terra') || key.includes('earth') || key.includes('fossa') || key.includes('sabbia') || key.includes('sand') || key.includes('mud') || key.includes('terremoto') || key.includes('earthquake')) inferredType = 'ground';
+  else if (key.includes('bug') || key.includes('coleottero') || key.includes('forbice') || key.includes('insect') || key.includes('insetto') || key.includes('pin-missile') || key.includes('tagliofuria')) inferredType = 'bug';
+  else if (key.includes('ghost') || key.includes('spettro') || key.includes('pauros') || key.includes('nightmare')) inferredType = 'ghost';
+  else if (key.includes('fighting') || key.includes('lotta') || key.includes('pugno') || key.includes('calcio') || key.includes('punch') || key.includes('kick') || key.includes('combatt')) inferredType = 'fighting';
 
-  const specialTypes = ['fire', 'water', 'grass', 'electric', 'ice', 'psychic', 'dark'];
+  const specialTypes = ['fire', 'water', 'grass', 'electric', 'ice', 'psychic', 'dark', 'dragon', 'fairy'];
   const category = specialTypes.includes(inferredType) ? 'special' : 'physical';
 
   return {

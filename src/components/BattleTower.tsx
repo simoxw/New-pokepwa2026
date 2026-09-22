@@ -21,19 +21,19 @@ export const BattleTower: React.FC<BattleTowerProps> = ({
 }) => {
   const { state, setState } = useGame();
 
-  // Run state persisted in sessionStorage for seamless return from BattleScreen
+  // Run state persisted in localStorage for seamless return from BattleScreen
   const [currentFloor, setCurrentFloor] = useState<number>(() => {
-    const saved = sessionStorage.getItem('pokepwa_tower_floor');
+    const saved = localStorage.getItem('pokepwa_tower_floor');
     return saved ? parseInt(saved, 10) : 1;
   });
 
   const [activeCards, setActiveCards] = useState<TowerCard[]>(() => {
-    const saved = sessionStorage.getItem('pokepwa_tower_cards');
+    const saved = localStorage.getItem('pokepwa_tower_cards');
     return saved ? JSON.parse(saved) : [];
   });
 
   const [accumulatedMoney, setAccumulatedMoney] = useState<number>(() => {
-    const saved = sessionStorage.getItem('pokepwa_tower_money');
+    const saved = localStorage.getItem('pokepwa_tower_money');
     return saved ? parseInt(saved, 10) : 0;
   });
 
@@ -43,11 +43,11 @@ export const BattleTower: React.FC<BattleTowerProps> = ({
   const [isGenerating, setIsGenerating] = useState(false);
   const [isGameOver, setIsGameOver] = useState(false);
 
-  // Sync to session storage
+  // Sync to local storage
   useEffect(() => {
-    sessionStorage.setItem('pokepwa_tower_floor', currentFloor.toString());
-    sessionStorage.setItem('pokepwa_tower_cards', JSON.stringify(activeCards));
-    sessionStorage.setItem('pokepwa_tower_money', accumulatedMoney.toString());
+    localStorage.setItem('pokepwa_tower_floor', currentFloor.toString());
+    localStorage.setItem('pokepwa_tower_cards', JSON.stringify(activeCards));
+    localStorage.setItem('pokepwa_tower_money', accumulatedMoney.toString());
   }, [currentFloor, activeCards, accumulatedMoney]);
 
   // Handle battle results returning from BattleScreen
@@ -147,9 +147,9 @@ export const BattleTower: React.FC<BattleTowerProps> = ({
         team: prev.player.team.map(p => fullyHealPokemon(p))
       }
     }));
-    sessionStorage.removeItem('pokepwa_tower_floor');
-    sessionStorage.removeItem('pokepwa_tower_cards');
-    sessionStorage.removeItem('pokepwa_tower_money');
+    localStorage.removeItem('pokepwa_tower_floor');
+    localStorage.removeItem('pokepwa_tower_cards');
+    localStorage.removeItem('pokepwa_tower_money');
     setCurrentFloor(1);
     setActiveCards([]);
     setAccumulatedMoney(0);
@@ -258,16 +258,33 @@ export const BattleTower: React.FC<BattleTowerProps> = ({
               </p>
             ) : (
               <div className="flex flex-wrap gap-1.5">
-                {activeCards.map((card, idx) => (
-                  <div 
-                    key={`${card.id}-${idx}`}
-                    className="bg-black/60 border border-emerald-500/40 rounded-xl px-2.5 py-1 flex items-center gap-1.5 text-xs text-emerald-200"
-                    title={card.description}
-                  >
-                    <span>{card.icon}</span>
-                    <span className="font-bold text-[11px]">{card.name}</span>
-                  </div>
-                ))}
+                {(() => {
+                  const grouped = activeCards.reduce((acc, card) => {
+                    const existing = acc.find(c => c.card.id === card.id);
+                    if (existing) {
+                      existing.count += 1;
+                    } else {
+                      acc.push({ card, count: 1 });
+                    }
+                    return acc;
+                  }, [] as { card: TowerCard; count: number }[]);
+
+                  return grouped.map(({ card, count }, idx) => (
+                    <div 
+                      key={`${card.id}-${idx}`}
+                      className="bg-black/60 border border-emerald-500/40 rounded-xl px-2.5 py-1 flex items-center gap-1.5 text-xs text-emerald-200"
+                      title={card.description}
+                    >
+                      <span>{card.icon}</span>
+                      <span className="font-bold text-[11px]">{card.name}</span>
+                      {count > 1 && (
+                        <span className="bg-emerald-500 text-black text-[9px] font-black px-1.5 py-0.5 rounded-md ml-0.5">
+                          x{count}
+                        </span>
+                      )}
+                    </div>
+                  ));
+                })()}
               </div>
             )}
           </div>

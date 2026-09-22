@@ -10,6 +10,7 @@ const SHOP_ITEMS = [
   { id: 'pozione', name: 'Pozione', price: 300, description: 'Ripristina 20 HP.', type: 'healing' as const, effectValue: 20, emoji: '💊' },
   { id: 'super-pozione', name: 'Super Pozione', price: 700, description: 'Ripristina 50 HP.', type: 'healing' as const, effectValue: 50, emoji: '🧪' },
   { id: 'iper-pozione', name: 'Iper Pozione', price: 1500, description: 'Ripristina 200 HP.', type: 'healing' as const, effectValue: 200, emoji: '🍶' },
+  { id: 'cura-totale', name: 'Cura Totale', price: 600, description: 'Risolve tutti i problemi di stato di un Pokémon.', type: 'healing' as const, emoji: '🟢' },
   { id: 'caramella-rara', name: 'Caramella Rara', price: 5000, description: 'Alza di un livello un Pokémon.', type: 'other' as const, emoji: '🍬' },
   { id: 'tm-universal', name: 'MT Universale', price: 2500, description: 'Scegli e insegna qualsiasi mossa al tuo Pokémon da PokéAPI!', type: 'other' as const, emoji: '💿' },
   { id: 'revitalizzante', name: 'Revitalizzante', price: 1500, description: 'Rianima un Pokémon (50% PS).', type: 'healing' as const, effectValue: 0.5, emoji: '✨' },
@@ -19,9 +20,19 @@ const SHOP_ITEMS = [
 
 export const Shop: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const { state, setState } = useGame();
+  const [quantities, setQuantities] = React.useState<Record<string, number>>({});
 
-  const buyItem = (shopItem: typeof SHOP_ITEMS[0]) => {
-    if (state.player.money < shopItem.price) {
+  const changeQty = (itemId: string, delta: number) => {
+    setQuantities(prev => {
+      const current = prev[itemId] || 1;
+      const next = Math.max(1, Math.min(99, current + delta));
+      return { ...prev, [itemId]: next };
+    });
+  };
+
+  const buyItem = (shopItem: typeof SHOP_ITEMS[0], qty: number = 1) => {
+    const totalPrice = shopItem.price * qty;
+    if (state.player.money < totalPrice) {
       alert("Non hai abbastanza soldi!");
       return;
     }
@@ -32,7 +43,7 @@ export const Shop: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       const itemIndex = inventory.findIndex(i => i.name.toLowerCase() === searchName);
 
       if (itemIndex > -1) {
-        inventory[itemIndex] = { ...inventory[itemIndex], count: inventory[itemIndex].count + 1 };
+        inventory[itemIndex] = { ...inventory[itemIndex], count: inventory[itemIndex].count + qty };
       } else {
         inventory.push({
           id: shopItem.id,
@@ -40,7 +51,7 @@ export const Shop: React.FC<{ onBack: () => void }> = ({ onBack }) => {
           description: shopItem.description,
           type: shopItem.type,
           effectValue: (shopItem as any).effectValue,
-          count: 1
+          count: qty
         });
       }
 
@@ -48,11 +59,13 @@ export const Shop: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         ...prev,
         player: {
           ...prev.player,
-          money: prev.player.money - shopItem.price,
+          money: prev.player.money - totalPrice,
           inventory
         }
       };
     });
+
+    setQuantities(prev => ({ ...prev, [shopItem.id]: 1 }));
   };
 
   return (
@@ -69,29 +82,56 @@ export const Shop: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       </div>
       
       <div className="flex-1 overflow-y-auto p-4 space-y-4">
-        {SHOP_ITEMS.map(item => (
-          <div key={item.id} className="bg-gray-50 p-4 rounded-3xl flex items-center justify-between border-b-4 border-gray-200 active:translate-y-1 active:border-b-0 transition-all">
-            <div className="flex items-center gap-4">
-              <div className="w-14 h-14 bg-white rounded-2xl shadow-sm flex items-center justify-center text-3xl">
-                {item.emoji}
-              </div>
-              <div>
-                <h4 className="font-black text-sm uppercase italic tracking-tight">{item.name}</h4>
-                <p className="text-[10px] text-gray-500 font-bold leading-none">{item.description}</p>
-                <div className="mt-1 flex items-center text-yellow-600">
-                  <DollarSign className="w-3 h-3" />
-                  <span className="text-sm font-black">{item.price}</span>
+        {SHOP_ITEMS.map(item => {
+          const qty = quantities[item.id] || 1;
+          const totalCost = item.price * qty;
+
+          return (
+            <div key={item.id} className="bg-gray-50 p-4 rounded-3xl flex items-center justify-between border-b-4 border-gray-200 transition-all gap-4">
+              <div className="flex items-center gap-4 min-w-0">
+                <div className="w-14 h-14 bg-white rounded-2xl shadow-sm flex items-center justify-center text-3xl shrink-0">
+                  {item.emoji}
+                </div>
+                <div className="min-w-0">
+                  <h4 className="font-black text-sm uppercase italic tracking-tight truncate">{item.name}</h4>
+                  <p className="text-[10px] text-gray-500 font-bold leading-normal">{item.description}</p>
+                  <div className="mt-1 flex items-center text-yellow-600">
+                    <DollarSign className="w-3 h-3" />
+                    <span className="text-sm font-black">{item.price} {qty > 1 && <span className="text-gray-400 font-medium text-[11px] ml-1">(tot. ${totalCost})</span>}</span>
+                  </div>
                 </div>
               </div>
+              
+              <div className="flex flex-col items-center gap-2 shrink-0">
+                {/* Quantity Control Box */}
+                <div className="flex items-center bg-white border-2 border-gray-200 rounded-xl px-2 py-0.5 shadow-sm">
+                  <button 
+                    onClick={() => changeQty(item.id, -1)}
+                    className="w-5 h-5 flex items-center justify-center font-black text-gray-500 hover:bg-gray-100 rounded-lg text-xs"
+                  >
+                    -
+                  </button>
+                  <span className="w-6 text-center font-black text-xs text-gray-700">
+                    {qty}
+                  </span>
+                  <button 
+                    onClick={() => changeQty(item.id, 1)}
+                    className="w-5 h-5 flex items-center justify-center font-black text-gray-500 hover:bg-gray-100 rounded-lg text-xs"
+                  >
+                    +
+                  </button>
+                </div>
+                
+                <button 
+                  onClick={() => buyItem(item, qty)}
+                  className="bg-blue-600 text-white px-4 py-2 rounded-2xl font-black text-xs uppercase tracking-tighter shadow-lg active:scale-95 transition-transform"
+                >
+                  Compra
+                </button>
+              </div>
             </div>
-            <button 
-              onClick={() => buyItem(item)}
-              className="bg-blue-600 text-white px-5 py-2 rounded-2xl font-black text-xs uppercase tracking-tighter shadow-lg active:scale-90 transition-transform"
-            >
-              Compra
-            </button>
-          </div>
-        ))}
+          );
+        })}
       </div>
       
       <div className="p-6 text-center">

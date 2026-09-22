@@ -21,7 +21,60 @@ export const Inventory: React.FC<{
            nameLower === 'caramella rara' || 
            nameLower === 'mt universale' || 
            item.id === 'caramella-rara' || 
-           item.id === 'tm-universal';
+           item.id === 'tm-universal' ||
+           item.id === 'cura-totale' ||
+           item.id === 'full-heal' ||
+           item.id === 'antidoto' ||
+           item.id === 'antiparalisi' ||
+           item.id === 'antiscotto' ||
+           item.id === 'sveglia';
+  };
+
+  const isPokemonEligibleForItem = (item: Item, p: Pokemon) => {
+    const id = item.id;
+    if (id === 'cura-totale' || id === 'full-heal') {
+      return Boolean(p.status);
+    }
+    if (id === 'antidoto') {
+      return p.status === 'poisoned';
+    }
+    if (id === 'antiparalisi') {
+      return p.status === 'paralyzed';
+    }
+    if (id === 'antiscotto') {
+      return p.status === 'burned';
+    }
+    if (id === 'sveglia') {
+      return p.status === 'sleep';
+    }
+    if (id.includes('revitalizzante')) {
+      return p.hp <= 0;
+    }
+    if (id.includes('pozione')) {
+      return p.hp > 0 && p.hp < p.maxHp;
+    }
+    if (id === 'caramella-rara') {
+      return p.level < 100;
+    }
+    return true;
+  };
+
+  const getIneligibilityReason = (item: Item, p: Pokemon) => {
+    const id = item.id;
+    if (id === 'cura-totale' || id === 'full-heal') {
+      if (!p.status) return 'In salute';
+    }
+    if (id === 'antidoto' && p.status !== 'poisoned') return 'Non avvelenato';
+    if (id === 'antiparalisi' && p.status !== 'paralyzed') return 'Non paralizzato';
+    if (id === 'antiscotto' && p.status !== 'burned') return 'Non scottato';
+    if (id === 'sveglia' && p.status !== 'sleep') return 'Sveglio';
+    if (id.includes('revitalizzante') && p.hp > 0) return 'Non esausto';
+    if (id.includes('pozione')) {
+      if (p.hp <= 0) return 'Esausto';
+      if (p.hp >= p.maxHp) return 'PS al massimo';
+    }
+    if (id === 'caramella-rara' && p.level >= 100) return 'Livello massimo';
+    return '';
   };
 
   const applyItemToPokemon = async (pokemonInstanceId: string) => {
@@ -44,7 +97,22 @@ export const Inventory: React.FC<{
     let pokemon = { ...state.player.team[teamIndex] };
     let newInventory = [...state.player.inventory];
 
-    if (usingItem.type === 'healing') {
+    if (!isPokemonEligibleForItem(usingItem, pokemon)) {
+      alert("Questo Pokémon non è idoneo per usare questo strumento!");
+      return;
+    }
+
+    if (usingItem.id === 'cura-totale' || usingItem.id === 'full-heal') {
+      pokemon.status = undefined;
+    } else if (usingItem.id === 'antidoto') {
+      pokemon.status = undefined;
+    } else if (usingItem.id === 'antiparalisi') {
+      pokemon.status = undefined;
+    } else if (usingItem.id === 'antiscotto') {
+      pokemon.status = undefined;
+    } else if (usingItem.id === 'sveglia') {
+      pokemon.status = undefined;
+    } else if (usingItem.type === 'healing') {
       const isRevive = usingItem.id.includes('revitalizzante');
       
       if (isRevive) {
@@ -317,46 +385,82 @@ export const Inventory: React.FC<{
           </div>
           <div className="flex-1 overflow-y-auto p-4 space-y-4">
             <p className="text-center text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">Seleziona un Pokémon</p>
-            {state.player.team.map((pokemon, i) => (
-              <button
-                key={`item-target-${pokemon.instanceId || pokemon.id}-${i}`}
-                onClick={() => applyItemToPokemon(pokemon.instanceId)}
-                className="w-full bg-gray-50 p-4 rounded-3xl border-2 border-transparent active:border-blue-500 flex items-center gap-4 text-left transition-all"
-              >
-                <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center">
-                  <img src={pokemon?.sprites?.front || (pokemon as any)?.spriteUrl} alt={pokemon.name} className="w-full h-full object-contain" />
-                </div>
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-black text-sm uppercase leading-none">{pokemon.name}</h4>
-                    <div className="flex gap-1 flex-wrap">
-                      {pokemon.types.map(t => {
-                        const typeLower = t.toLowerCase();
-                        const colorClass = TYPE_COLORS[typeLower] || 'bg-slate-500';
-                        const typeLabel = TYPE_TRANSLATIONS[typeLower] || typeLower.toUpperCase();
-                        return (
-                          <span key={t} className={`${colorClass} text-[9px] font-bold text-white px-2 py-0.5 rounded-full shadow-sm uppercase tracking-tight`}>
-                            {typeLabel}
+            {state.player.team.map((pokemon, i) => {
+              const isEligible = isPokemonEligibleForItem(usingItem, pokemon);
+              const reason = !isEligible ? getIneligibilityReason(usingItem, pokemon) : '';
+              const statusLabel = pokemon.status ? {
+                poisoned: 'AVV',
+                paralyzed: 'PAR',
+                sleep: 'SON',
+                burned: 'SCO',
+                frozen: 'CON'
+              }[pokemon.status] : null;
+
+              return (
+                <button
+                  key={`item-target-${pokemon.instanceId || pokemon.id}-${i}`}
+                  onClick={() => isEligible && applyItemToPokemon(pokemon.instanceId)}
+                  disabled={!isEligible}
+                  className={`w-full p-4 rounded-3xl border-2 flex items-center gap-4 text-left transition-all ${
+                    isEligible 
+                      ? 'bg-gray-50 border-transparent hover:border-blue-500 cursor-pointer active:scale-98' 
+                      : 'bg-gray-100/50 border-transparent opacity-40 cursor-not-allowed'
+                  }`}
+                >
+                  <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center shrink-0">
+                    <img src={pokemon?.sprites?.front || (pokemon as any)?.spriteUrl} alt={pokemon.name} className="w-full h-full object-contain" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center justify-between gap-2 mb-1">
+                      <div className="flex items-center gap-1.5 flex-wrap min-w-0">
+                        <h4 className="font-black text-sm uppercase leading-none truncate">{pokemon.nickname || pokemon.name}</h4>
+                        {statusLabel && (
+                          <span className="bg-purple-500 text-[8px] font-black text-white px-1.5 py-0.5 rounded-md shadow-sm uppercase tracking-tight shrink-0">
+                            {statusLabel}
                           </span>
-                        );
-                      })}
+                        )}
+                        {pokemon.hp <= 0 && (
+                          <span className="bg-red-500 text-[8px] font-black text-white px-1.5 py-0.5 rounded-md shadow-sm uppercase tracking-tight shrink-0">
+                            KO
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex gap-1 flex-wrap shrink-0">
+                        {pokemon.types.map(t => {
+                          const typeLower = t.toLowerCase();
+                          const colorClass = TYPE_COLORS[typeLower] || 'bg-slate-500';
+                          const typeLabel = TYPE_TRANSLATIONS[typeLower] || typeLower.toUpperCase();
+                          return (
+                            <span key={t} className={`${colorClass} text-[8px] font-bold text-white px-2 py-0.5 rounded-full shadow-sm uppercase tracking-tight`}>
+                              {typeLabel}
+                            </span>
+                          );
+                        })}
+                      </div>
+                    </div>
+                    <div className="flex items-center justify-between mt-1">
+                      <span className="text-[10px] font-bold text-gray-400">Liv. {pokemon.level}</span>
+                      <div className="flex items-center gap-1.5">
+                        {!isEligible && reason && (
+                          <span className="text-[10px] font-black text-red-500 uppercase tracking-tight mr-1">
+                            {reason}
+                          </span>
+                        )}
+                        <span className="text-[10px] font-black text-gray-800">{pokemon.hp}/{pokemon.maxHp} PS</span>
+                      </div>
+                    </div>
+                    <div className="h-1.5 bg-gray-200 rounded-full mt-1 overflow-hidden">
+                      <div 
+                        className={`h-full transition-all duration-500 ${
+                          pokemon.hp <= 0 ? 'w-0' : (pokemon.hp / pokemon.maxHp) > 0.5 ? 'bg-emerald-500' : (pokemon.hp / pokemon.maxHp) > 0.2 ? 'bg-yellow-500' : 'bg-red-500'
+                        }`}
+                        style={{ width: `${(pokemon.hp / pokemon.maxHp) * 100}%` }}
+                      />
                     </div>
                   </div>
-                  <div className="flex items-center justify-between mt-1">
-                    <span className="text-[10px] font-bold text-gray-400">Liv. {pokemon.level}</span>
-                    <span className="text-[10px] font-black text-gray-800">{pokemon.hp}/{pokemon.maxHp} PS</span>
-                  </div>
-                  <div className="h-1.5 bg-gray-200 rounded-full mt-1 overflow-hidden">
-                    <div 
-                      className={`h-full transition-all duration-500 ${
-                        (pokemon.hp / pokemon.maxHp) > 0.5 ? 'bg-emerald-500' : (pokemon.hp / pokemon.maxHp) > 0.2 ? 'bg-yellow-500' : 'bg-red-500'
-                      }`}
-                      style={{ width: `${(pokemon.hp / pokemon.maxHp) * 100}%` }}
-                    />
-                  </div>
-                </div>
-              </button>
-            ))}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}

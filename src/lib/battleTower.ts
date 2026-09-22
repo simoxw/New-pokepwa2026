@@ -64,8 +64,8 @@ export const TOWER_CARDS_POOL: TowerCard[] = [
     name: 'Overclock della CPU',
     rarity: 'common',
     icon: '⚡',
-    description: '+12% Danno di Attacco, ma perdi il 5% di Difesa.',
-    attackMultiplier: 1.12,
+    description: '+8% Danno di Attacco, ma perdi il-5% di Difesa.',
+    attackMultiplier: 1.08,
     defenseMultiplier: 0.95
   },
   {
@@ -73,72 +73,108 @@ export const TOWER_CARDS_POOL: TowerCard[] = [
     name: 'Garbage Collection',
     rarity: 'rare',
     icon: '💊',
-    description: 'Cura il 15% dei PS massimi di tutta la squadra dopo ogni vittoria.',
-    healAfterKoPercent: 15
+    description: 'Cura il 10% dei PS massimi di tutta la squadra dopo ogni vittoria.',
+    healAfterKoPercent: 10
   },
   {
     id: 'fibra-10g',
     name: 'Banda Larga 10Gbps',
     rarity: 'common',
     icon: '🚀',
-    description: '+12% Velocità per il tuo Pokémon.',
-    speedMultiplier: 1.12
+    description: '+8% Velocità per il tuo Pokémon.',
+    speedMultiplier: 1.08
   },
   {
     id: 'firewall-rigido',
     name: 'Firewall Rigido v4',
     rarity: 'rare',
     icon: '🛡️',
-    description: 'Subisci il 10% in meno di danno da tutte le mosse.',
-    defenseMultiplier: 1.10
+    description: 'Subisci il 6% in meno di danno da tutte le mosse.',
+    defenseMultiplier: 1.06
   },
   {
     id: 'pacchetti-vampiro',
     name: 'Drenaggio di Pacchetti',
     rarity: 'epic',
     icon: '🩸',
-    description: 'Ruba l\'8% dei danni inflitti per curare il tuo Pokémon attivo.',
-    lifeStealPercent: 8
+    description: 'Ruba il 5% dei danni inflitti per curare il tuo Pokémon attivo.',
+    lifeStealPercent: 5
   },
   {
     id: 'algoritmo-euristico',
     name: 'Algoritmo Euristico',
     rarity: 'rare',
     icon: '🎯',
-    description: '+10% probabilità di Brutto Colpo (Critico) su ogni mossa.',
-    critChanceBonus: 10
+    description: '+6% probabilità di Brutto Colpo (Critico) su ogni mossa.',
+    critChanceBonus: 6
   },
   {
     id: 'buffer-overflow',
     name: 'Buffer Overflow',
     rarity: 'epic',
     icon: '💥',
-    description: '+20% Danno se i tuoi PS scendono sotto il 35%.',
-    lowHpBonus: 1.20
+    description: '+12% Danno se i tuoi PS scendono sotto il 35%.',
+    lowHpBonus: 1.12
   },
   {
     id: 'schivata-quantica',
     name: 'Schivata Quantica (RNG)',
     rarity: 'epic',
     icon: '🎲',
-    description: '8% di probabilità di schivare completamente un attacco subito.',
-    dodgeChance: 8
+    description: '5% di probabilità di schivare completamente un attacco subito.',
+    dodgeChance: 5
   },
   {
     id: 'crypto-miner',
     name: 'Background Miner',
     rarity: 'common',
     icon: '💰',
-    description: '+1.500 PokéDollari extra ad ogni piano superato.',
-    bonusMoney: 1500
+    description: '+800 PokéDollari extra ad ogni piano superato.',
+    bonusMoney: 800
   },
   {
     id: 'power-shield',
     name: 'Scudo Energetico UPS',
     rarity: 'legendary',
     icon: '🔋',
-    description: 'Inizi ogni round con 15 PS di Barriera protettiva extra.',
-    shieldHp: 15
+    description: 'Inizi ogni round con 8 PS di Barriera protettiva extra.',
+    shieldHp: 8
+  },
+  // 4 NEW BUFF CARDS
+  {
+    id: 'jit-compiler',
+    name: 'Compilatore JIT',
+    rarity: 'common',
+    icon: '⚙️',
+    description: '+4% di Attacco e +4% di Velocità.',
+    attackMultiplier: 1.04,
+    speedMultiplier: 1.04
+  },
+  {
+    id: 'antivirus-scan',
+    name: 'Scansione Antivirus',
+    rarity: 'rare',
+    icon: '🛡️',
+    description: 'Subisci il 6% in meno di danno, ma perdi il 3% di Velocità.',
+    defenseMultiplier: 1.06,
+    speedMultiplier: 0.97
+  },
+  {
+    id: 'registry-optimizer',
+    name: 'Ottimizzazione Registro',
+    rarity: 'rare',
+    icon: '🧹',
+    description: '+4% Velocità e +4% Probabilità di Brutto Colpo.',
+    speedMultiplier: 1.04,
+    critChanceBonus: 4
+  },
+  {
+    id: 'predictive-algorithm',
+    name: 'Algoritmo Predittivo',
+    rarity: 'epic',
+    icon: '👁️',
+    description: '5% Probabilità di Schivata.',
+    dodgeChance: 5
   },
 
   // CARTE CORROTTE / MALEDETTE (Risk vs Reward)
@@ -147,8 +183,8 @@ export const TOWER_CARDS_POOL: TowerCard[] = [
     name: 'Kernel Overclock [Corrotto]',
     rarity: 'cursed',
     icon: '💀',
-    description: '+25% Danno inflitto, ma subisci il +15% di danno da ogni mossa avversaria.',
-    attackMultiplier: 1.25,
+    description: '+18% Danno inflitto, ma subisci il +15% di danno da ogni mossa avversaria.',
+    attackMultiplier: 1.18,
     incomingDamageMultiplier: 1.15
   },
   {
@@ -156,8 +192,8 @@ export const TOWER_CARDS_POOL: TowerCard[] = [
     name: 'Fuga di Memoria [Corrotto]',
     rarity: 'cursed',
     icon: '☣️',
-    description: '+3.000 PokéDollari a piano, ma il tuo Pokémon in campo perde il 5% di PS ad inizio scontro.',
-    bonusMoney: 3000,
+    description: '+1.800 PokéDollari a piano, ma il tuo Pokémon in campo perde il 5% di PS ad inizio scontro.',
+    bonusMoney: 1800,
     startHpSelfDamagePercent: 5
   },
   {
@@ -165,8 +201,8 @@ export const TOWER_CARDS_POOL: TowerCard[] = [
     name: 'Bug Critico [Corrotto]',
     rarity: 'cursed',
     icon: '🎯',
-    description: '+25% Probabilità di Brutto Colpo, ma la precisione delle tue mosse scende del 10%.',
-    critChanceBonus: 25,
+    description: '+15% Probabilità di Brutto Colpo, ma la precisione delle tue mosse scende del 10%.',
+    critChanceBonus: 15,
     accuracyPenaltyPercent: 10
   }
 ];

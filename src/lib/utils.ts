@@ -37,16 +37,19 @@ export function normalizePokemon(raw: any): Pokemon {
     }
     const moveName = m.name || m.title || 'Azione';
     const baseMove = getMoveByName(moveName);
+    
+    // Retroactive Fix: If the saved move has type 'normal' but the baseMove has a specific type, 
+    // or if the name is in English but we found the Italian counterpart, correct them retroactively.
     return {
       ...baseMove,
       ...m,
       name: baseMove.name || moveName,
-      type: m.type || baseMove.type,
-      category: m.category || baseMove.category,
-      power: typeof m.power === 'number' ? m.power : baseMove.power,
-      accuracy: typeof m.accuracy === 'number' ? m.accuracy : baseMove.accuracy,
-      pp: typeof m.pp === 'number' ? m.pp : baseMove.pp,
-      maxPp: typeof m.maxPp === 'number' ? m.maxPp : baseMove.maxPp
+      type: (baseMove.type && baseMove.type !== 'normal') ? baseMove.type : (m.type || baseMove.type || 'normal'),
+      category: baseMove.category || m.category || 'physical',
+      power: baseMove.power || m.power || 40,
+      accuracy: baseMove.accuracy || m.accuracy || 100,
+      pp: typeof m.pp === 'number' ? m.pp : (baseMove.pp || 35),
+      maxPp: baseMove.maxPp || m.maxPp || 35
     };
   });
 

@@ -369,16 +369,17 @@ export async function fetchMoveData(url: string, fallbackName?: string): Promise
   const isUrl = typeof url === 'string' && url.startsWith('http');
   const moveName = fallbackName || (isUrl ? url.split('/').filter(Boolean).pop() || '' : url);
   const defaultMove = getMoveByName(moveName);
+  
+  const moveSlug = moveName.toLowerCase().trim().replace(/[\s_]+/g, '-');
+  const targetUrl = isUrl ? url : `https://pokeapi.co/api/v2/move/${moveSlug}`;
 
-  if (isUrl) {
-    try {
-      const moveData = await fetchWithCache(url);
-      if (moveData) {
-        return parseMoveObject(moveData, moveName);
-      }
-    } catch {
-      // Return defaultMove on failure
+  try {
+    const moveData = await fetchWithCache(targetUrl);
+    if (moveData) {
+      return parseMoveObject(moveData, moveName);
     }
+  } catch {
+    // Return defaultMove on failure
   }
 
   return defaultMove;
@@ -683,13 +684,9 @@ export async function fetchPokemonData(id: number, level: number, location: stri
       chosenMoveNames = local ? local.moves : ['tackle'];
     }
 
-    const moves: Move[] = chosenMoveNames.map(mName => {
-      const cached = MEMORY_CACHE.get(mName);
-      if (cached) {
-        return parseMoveObject(cached, mName);
-      }
-      return getMoveByName(mName);
-    });
+    const moves: Move[] = await Promise.all(
+      chosenMoveNames.map(mName => fetchMoveData(mName, mName))
+    );
 
     if (moves.length === 0) {
       moves.push(getMoveByName('tackle'));

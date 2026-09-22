@@ -26,6 +26,40 @@ export const ZoneExplorer: React.FC<ZoneExplorerProps> = ({ onEncounter }) => {
       setState(prev => ({ ...prev, player: { ...prev.player, location: 'villaggio' } }));
     }
   }, [state.player.location, state.player.badges, state.player.leagueVictories, setState]);
+
+  // Asynchronous background prefetching for the current zone to warm up cache
+  React.useEffect(() => {
+    if (!zone) return;
+    
+    const prefetchZoneData = async () => {
+      // 1. Prefetch Pokemon Spawns
+      if (Array.isArray(zone.spawnTable)) {
+        for (const spawn of zone.spawnTable) {
+          try {
+            // fetchPokemonData handles caching internally, filling memory and CacheStorage
+            fetchPokemonData(spawn.pokemonId, spawn.minLevel, zone.name);
+          } catch {
+            // Silent catch to prevent background network glitches from affecting UI
+          }
+        }
+      }
+      
+      // 2. Prefetch Trainers
+      if (Array.isArray(zone.trainerTable)) {
+        for (const t of zone.trainerTable) {
+          try {
+            getTrainer(t.trainerId as any, (t as any).isGymLeader);
+          } catch {
+            // Silent catch
+          }
+        }
+      }
+    };
+
+    // Run after a short delay so it doesn't block the initial mount/transition animation
+    const timer = setTimeout(prefetchZoneData, 500);
+    return () => clearTimeout(timer);
+  }, [zone]);
   const [isExploring, setIsExploring] = useState(false);
   const [encounter, setEncounter] = useState<Pokemon | null>(null);
   const [isNocturnal, setIsNocturnal] = useState(false);
@@ -194,11 +228,19 @@ export const ZoneExplorer: React.FC<ZoneExplorerProps> = ({ onEncounter }) => {
         const pokemon = await fetchPokemonData(found.pokemonId, level);
         setEncounter(pokemon);
       } else {
-        // If no spawn table match, give a default low-rarity common encounter so it doesn't feel empty
+        // If no spawn table match, give a default proportional encounter so it doesn't feel empty
         if (Math.random() > 0.5 && zone.spawnTable.length > 0) {
-          const common = zone.spawnTable[0];
-          const level = Math.floor(Math.random() * (common.maxLevel - common.minLevel + 1)) + common.minLevel;
-          const pokemon = await fetchPokemonData(common.pokemonId, level);
+          // Weighted random selection from the spawn table to avoid single-species fallback spam
+          const totalRaritySum = zone.spawnTable.reduce((sum, s) => sum + s.rarity, 0);
+          const fallbackRoll = Math.random() * totalRaritySum;
+          let tempSum = 0;
+          const fallbackPoke = zone.spawnTable.find(s => {
+            tempSum += s.rarity;
+            return fallbackRoll <= tempSum;
+          }) || zone.spawnTable[0];
+
+          const level = Math.floor(Math.random() * (fallbackPoke.maxLevel - fallbackPoke.minLevel + 1)) + fallbackPoke.minLevel;
+          const pokemon = await fetchPokemonData(fallbackPoke.pokemonId, level);
           setEncounter(pokemon);
         }
       }

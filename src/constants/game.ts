@@ -734,37 +734,45 @@ export const ZONES: Zone[] = [
     description: 'Un tempio sospeso tra le righe di codice accessibile solo dopo aver sconfitto la Lega Pokémon. Qui appaiono le Ultra Creature e i Pokémon Mitici più rari.',
     background: 'bg-purple-900',
     spawnTable: [
-      { pokemonId: 385, rarity: 1, minLevel: 50, maxLevel: 60 }, // Jirachi
-      { pokemonId: 494, rarity: 1, minLevel: 50, maxLevel: 60 }, // Victini
-      { pokemonId: 648, rarity: 1, minLevel: 50, maxLevel: 60 }, // Meloetta
-      { pokemonId: 719, rarity: 1, minLevel: 50, maxLevel: 60 }, // Diancie
-      { pokemonId: 720, rarity: 1, minLevel: 50, maxLevel: 60 }, // Hoopa
-      { pokemonId: 721, rarity: 1, minLevel: 50, maxLevel: 60 }, // Volcanion
-      { pokemonId: 801, rarity: 1, minLevel: 50, maxLevel: 60 }, // Magearna
-      { pokemonId: 802, rarity: 1, minLevel: 50, maxLevel: 60 }, // Marshadow
-      { pokemonId: 807, rarity: 1, minLevel: 50, maxLevel: 60 }, // Zeraora
-      { pokemonId: 786, rarity: 1, minLevel: 60, maxLevel: 70 }, // Tapu Lele
-      { pokemonId: 787, rarity: 1, minLevel: 60, maxLevel: 70 }, // Tapu Bulu
-      { pokemonId: 788, rarity: 1, minLevel: 60, maxLevel: 70 }, // Tapu Fini
-      { pokemonId: 893, rarity: 1, minLevel: 60, maxLevel: 70 }, // Zarude
-      { pokemonId: 793, rarity: 2, minLevel: 60, maxLevel: 70 }, // Nihilego
-      { pokemonId: 794, rarity: 2, minLevel: 60, maxLevel: 70 }, // Buzzwole
-      { pokemonId: 795, rarity: 2, minLevel: 60, maxLevel: 70 }, // Pheromosa
-      { pokemonId: 796, rarity: 2, minLevel: 60, maxLevel: 70 }, // Xurkitree
-      { pokemonId: 797, rarity: 2, minLevel: 60, maxLevel: 70 }, // Celesteela
-      { pokemonId: 798, rarity: 2, minLevel: 60, maxLevel: 70 }, // Kartana
-      { pokemonId: 799, rarity: 2, minLevel: 60, maxLevel: 70 }, // Guzzlord
-      { pokemonId: 803, rarity: 2, minLevel: 40, maxLevel: 50 }, // Poipole
-      { pokemonId: 805, rarity: 2, minLevel: 60, maxLevel: 70 }, // Stakataka
-      { pokemonId: 806, rarity: 2, minLevel: 60, maxLevel: 70 }, // Blacephalon
-      { pokemonId: 891, rarity: 3, minLevel: 30, maxLevel: 40 }, // Kubfu
-      { pokemonId: 898, rarity: 1, minLevel: 70, maxLevel: 80 }, // Calyrex
-      { pokemonId: 905, rarity: 1, minLevel: 70, maxLevel: 80 }, // Enamorus
-      { pokemonId: 1014, rarity: 1, minLevel: 70, maxLevel: 80 }, // Okidogi
-      { pokemonId: 1015, rarity: 1, minLevel: 70, maxLevel: 80 }, // Munkidori
-      { pokemonId: 1016, rarity: 1, minLevel: 70, maxLevel: 80 }, // Fezandipiti
-      { pokemonId: 1017, rarity: 1, minLevel: 70, maxLevel: 80 }, // Ogerpon
-      { pokemonId: 1025, rarity: 0.5, minLevel: 80, maxLevel: 85 }, // Pecharunt
+      { pokemonId: 385, rarity: 2, minLevel: 50, maxLevel: 60 }, // Jirachi
+      { pokemonId: 494, rarity: 2, minLevel: 50, maxLevel: 60 }, // Victini
+      { pokemonId: 648, rarity: 2, minLevel: 50, maxLevel: 60 }, // Meloetta
+      { pokemonId: 719, rarity: 2, minLevel: 50, maxLevel: 60 }, // Diancie
+      { pokemonId: 720, rarity: 2, minLevel: 50, maxLevel: 60 }, // Hoopa
+      { pokemonId: 721, rarity: 2, minLevel: 50, maxLevel: 60 }, // Volcanion
+      { pokemonId: 801, rarity: 2, minLevel: 50, maxLevel: 60 }, // Magearna
+      { pokemonId: 802, rarity: 2, minLevel: 50, maxLevel: 60 }, // Marshadow
+      { pokemonId: 807, rarity: 2, minLevel: 50, maxLevel: 60 }, // Zeraora
+      { pokemonId: 785, rarity: 2.5, minLevel: 60, maxLevel: 70 }, // Tapu Koko
+      { pokemonId: 786, rarity: 2.5, minLevel: 60, maxLevel: 70 }, // Tapu Lele
+      { pokemonId: 787, rarity: 2.5, minLevel: 60, maxLevel: 70 }, // Tapu Bulu
+      { pokemonId: 788, rarity: 2.5, minLevel: 60, maxLevel: 70 }, // Tapu Fini
+      { pokemonId: 893, rarity: 2, minLevel: 60, maxLevel: 70 }, // Zarude
+      { pokemonId: 793, rarity: 3, minLevel: 60, maxLevel: 70 }, // Nihilego
+      { pokemonId: 794, rarity: 3, minLevel: 60, maxLevel: 70 }, // Buzzwole
+      { pokemonId: 795, rarity: 3, minLevel: 60, maxLevel: 70 }, // Pheromosa
+      { pokemonId: 796, rarity: 3, minLevel: 60, maxLevel: 70 }, // Xurkitree
+      { pokemonId: 797, rarity: 3, minLevel: 60, maxLevel: 70 }, // Celesteela
+      { pokemonId: 798, rarity: 3, minLevel: 60, maxLevel: 70 }, // Kartana
+      { pokemonId: 799, rarity: 3, minLevel: 60, maxLevel: 70 }, // Guzzlord
+      { pokemonId: 803, rarity: 3, minLevel: 40, maxLevel: 50 }, // Poipole
+      { pokemonId: 805, rarity: 3, minLevel: 60, maxLevel: 70 }, // Stakataka
+      { pokemonId: 806, rarity: 3, minLevel: 60, maxLevel: 70 }, // Blacephalon
+      { pokemonId: 891, rarity: 4, minLevel: 30, maxLevel: 40 }, // Kubfu
+      { pokemonId: 898, rarity: 2, minLevel: 70, maxLevel: 80 }, // Calyrex
+      { pokemonId: 905, rarity: 2, minLevel: 70, maxLevel: 80 }, // Enamorus
+      { pokemonId: 1014, rarity: 2, minLevel: 70, maxLevel: 80 }, // Okidogi
+      { pokemonId: 1015, rarity: 2, minLevel: 70, maxLevel: 80 }, // Munkidori
+      { pokemonId: 1016, rarity: 2, minLevel: 70, maxLevel: 80 }, // Fezandipiti
+      { pokemonId: 1017, rarity: 2, minLevel: 70, maxLevel: 80 }, // Ogerpon
+      { pokemonId: 1025, rarity: 1, minLevel: 80, maxLevel: 85 }, // Pecharunt
+      { pokemonId: 638, rarity: 2.5, minLevel: 50, maxLevel: 60 }, // Cobalion (Spade della Giustizia)
+      { pokemonId: 639, rarity: 2.5, minLevel: 50, maxLevel: 60 }, // Terrakion (Spade della Giustizia)
+      { pokemonId: 640, rarity: 2.5, minLevel: 50, maxLevel: 60 }, // Virizion (Spade della Giustizia)
+      { pokemonId: 647, rarity: 2.5, minLevel: 50, maxLevel: 60 }, // Keldeo (Spade della Giustizia)
+      { pokemonId: 144, rarity: 2.5, minLevel: 50, maxLevel: 60 }, // Articuno (Uccelli Leggendari)
+      { pokemonId: 145, rarity: 2.5, minLevel: 50, maxLevel: 60 }, // Zapdos (Uccelli Leggendari)
+      { pokemonId: 146, rarity: 2.5, minLevel: 50, maxLevel: 60 }, // Moltres (Uccelli Leggendari)
     ],
     trainerTable: [
       { trainerId: 'camilla-cynthia', rarity: 15 },
@@ -777,31 +785,30 @@ export const ZONES: Zone[] = [
     description: 'Il punto più profondo del database accessibile solo dopo aver sconfitto la Lega Pokémon, dove risiedono i guardiani leggendari e le memorie sommerse.',
     background: 'bg-blue-950',
     spawnTable: [
-      { pokemonId: 489, rarity: 3, minLevel: 20, maxLevel: 30 }, // Phione
-      { pokemonId: 490, rarity: 1, minLevel: 50, maxLevel: 60 }, // Manaphy
-      { pokemonId: 380, rarity: 2, minLevel: 50, maxLevel: 60 }, // Latias
-      { pokemonId: 381, rarity: 2, minLevel: 50, maxLevel: 60 }, // Latios
-      { pokemonId: 480, rarity: 2, minLevel: 50, maxLevel: 60 }, // Uxie
-      { pokemonId: 481, rarity: 2, minLevel: 50, maxLevel: 60 }, // Mesprit
-      { pokemonId: 482, rarity: 2, minLevel: 50, maxLevel: 60 }, // Azelf
-      { pokemonId: 488, rarity: 2, minLevel: 50, maxLevel: 60 }, // Cresselia
-      { pokemonId: 789, rarity: 3, minLevel: 10, maxLevel: 20 }, // Cosmog
-      { pokemonId: 792, rarity: 1, minLevel: 60, maxLevel: 70 }, // Lunala
-      { pokemonId: 647, rarity: 1, minLevel: 50, maxLevel: 60 }, // Keldeo
-      { pokemonId: 377, rarity: 2, minLevel: 40, maxLevel: 50 }, // Regirock
-      { pokemonId: 378, rarity: 2, minLevel: 40, maxLevel: 50 }, // Regice
-      { pokemonId: 379, rarity: 2, minLevel: 40, maxLevel: 50 }, // Registeel
-      { pokemonId: 486, rarity: 1, minLevel: 70, maxLevel: 70 }, // Regigigas
-      { pokemonId: 638, rarity: 1, minLevel: 50, maxLevel: 60 }, // Cobalion
-      { pokemonId: 639, rarity: 1, minLevel: 50, maxLevel: 60 }, // Terrakion
-      { pokemonId: 640, rarity: 1, minLevel: 50, maxLevel: 60 }, // Virizion
-      { pokemonId: 894, rarity: 1, minLevel: 60, maxLevel: 70 }, // Regieleki
-      { pokemonId: 895, rarity: 1, minLevel: 60, maxLevel: 70 }, // Regidrago
-      { pokemonId: 897, rarity: 1, minLevel: 70, maxLevel: 70 }, // Spectrier
-      { pokemonId: 1001, rarity: 1, minLevel: 60, maxLevel: 70 }, // Wo-Chien
-      { pokemonId: 1002, rarity: 1, minLevel: 60, maxLevel: 70 }, // Chien-Pao
-      { pokemonId: 1003, rarity: 1, minLevel: 60, maxLevel: 70 }, // Ting-Lu
-      { pokemonId: 1004, rarity: 1, minLevel: 60, maxLevel: 70 }, // Chi-Yu
+      { pokemonId: 489, rarity: 5, minLevel: 20, maxLevel: 30 }, // Phione
+      { pokemonId: 490, rarity: 2, minLevel: 50, maxLevel: 60 }, // Manaphy
+      { pokemonId: 380, rarity: 3, minLevel: 50, maxLevel: 60 }, // Latias
+      { pokemonId: 381, rarity: 3, minLevel: 50, maxLevel: 60 }, // Latios
+      { pokemonId: 480, rarity: 3, minLevel: 50, maxLevel: 60 }, // Uxie (Solari)
+      { pokemonId: 481, rarity: 3, minLevel: 50, maxLevel: 60 }, // Mesprit (Solari)
+      { pokemonId: 482, rarity: 3, minLevel: 50, maxLevel: 60 }, // Azelf (Solari)
+      { pokemonId: 488, rarity: 3, minLevel: 50, maxLevel: 60 }, // Cresselia
+      { pokemonId: 789, rarity: 4, minLevel: 10, maxLevel: 20 }, // Cosmog
+      { pokemonId: 792, rarity: 2, minLevel: 60, maxLevel: 70 }, // Lunala
+      { pokemonId: 377, rarity: 3, minLevel: 40, maxLevel: 50 }, // Regirock (Regi)
+      { pokemonId: 378, rarity: 3, minLevel: 40, maxLevel: 50 }, // Regice (Regi)
+      { pokemonId: 379, rarity: 3, minLevel: 40, maxLevel: 50 }, // Registeel (Regi)
+      { pokemonId: 486, rarity: 2, minLevel: 70, maxLevel: 70 }, // Regigigas
+      { pokemonId: 894, rarity: 2, minLevel: 60, maxLevel: 70 }, // Regieleki
+      { pokemonId: 895, rarity: 2, minLevel: 60, maxLevel: 70 }, // Regidrago
+      { pokemonId: 897, rarity: 2, minLevel: 70, maxLevel: 70 }, // Spectrier
+      { pokemonId: 1001, rarity: 2, minLevel: 60, maxLevel: 70 }, // Wo-Chien
+      { pokemonId: 1002, rarity: 2, minLevel: 60, maxLevel: 70 }, // Chien-Pao
+      { pokemonId: 1003, rarity: 2, minLevel: 60, maxLevel: 70 }, // Ting-Lu
+      { pokemonId: 1004, rarity: 2, minLevel: 60, maxLevel: 70 }, // Chi-Yu
+      { pokemonId: 243, rarity: 3, minLevel: 50, maxLevel: 60 }, // Raikou (Bestie Leggendarie)
+      { pokemonId: 244, rarity: 3, minLevel: 50, maxLevel: 60 }, // Entei (Bestie Leggendarie)
+      { pokemonId: 245, rarity: 3, minLevel: 50, maxLevel: 60 }, // Suicune (Bestie Leggendarie)
     ],
     trainerTable: [
       { trainerId: 'rocco-steven', rarity: 15 },
