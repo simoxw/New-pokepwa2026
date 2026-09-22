@@ -132,9 +132,19 @@ Questo documento descrive le principali funzioni, algoritmi e metodi esportati n
 - **Tabelle Allenatori Locali**: Ogni zona attinge a una `trainerTable` specifica definita in `game.ts`, garantendo che gli NPC incontrati siano tematicamente coerenti con l'ambiente (es. Pescatori in Spiaggia, Alpinisti in Montagna).
 - **Spawn Dinamico**: Il livello dei Pokémon selvatici e degli allenatori scala progressivamente tra le zone, partendo dal livello 2 nel Bosco dei Selfie fino al livello 100 nelle zone più profonde del Post-Game.
 
+### `PokemonDetails.tsx` & `Pokemon` Model
+- **`handleToggleFavorite()`**:  
+  Attiva/disattiva la proprietà reattiva `isFavorite` sul Pokémon selezionato sia nella squadra (`state.player.team`) sia nel box (`state.player.box`) tramite confronto univoco `instanceId`. Mostra una stella dorata con glow sia nella scheda dettagliata, sia nel Box PC che nella lista Squadra.
+
+### `Settings.tsx`
+- **`handleVerifyPasscode(passcode)`**:  
+  Valida l'immissione del codice PIN segreto (`190693`) per l'accesso al Menù Trucchi. In caso di PIN errato, riproduce un suono di KO e scatena il fumetto di errore comico del **Prof. Scordarello** con il suo avatar e battute personalizzate.
+
 ### `Box.tsx`
 - **`filteredBox` (useMemo)**:  
-  Filtra e ordina l'array dei Pokémon archiviati applicando contemporaneamente ricerca testuale (nome, nickname, #ID), filtro elementale sui 18 tipi, filtro generazioni (Gen 1-9), toggle per Shiny ✨, pronti a evolvere ⚡, feriti ❤️, e ordinamento (recenti, livello, nome, pokedex, statistiche).
+  Filtra e ordina l'array dei Pokémon archiviati applicando contemporaneamente ricerca testuale (nome, nickname, #ID), filtro elementale sui 18 tipi, filtro generazioni (Gen 1-9), toggle per **Preferiti ⭐**, **Shiny ✨**, **Pronti a evolvere ⚡**, **Feriti ❤️**, e ordinamento a 8 vie (recenti, livello, nome, pokedex, statistiche, IV).
+- **`isMultiSelectMode` & Mass Release**:  
+  Consente la selezione multipla di Pokémon archiviati per la liberazione di massa, con riassunto delle specie selezionate, blocco di sicurezza automatica per Pokémon Shiny o di livello >= 30, e ripristino istantaneo dello spazio di memoria.
 - **`withdraw(targetPokemon)`**:  
   Sposta in modo sicuro un Pokémon dal Box alla squadra attiva tramite confronto di `instanceId` univoco (`Crypto.randomUUID()`), garantendo che eventuali copie identiche della stessa specie mantengano statistiche e livelli indipendenti.
 - **`deposit(targetPokemon)`**:  

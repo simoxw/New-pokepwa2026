@@ -120,11 +120,13 @@ poke-pwa/
 - **`Trade.tsx`**: Sistema di scambio per importare o scambiare Pokémon con stringhe di codice serializzate.
 - **`PlayerProfile.tsx`**: Profilo dell'allenatore con tempo di gioco, ID allenatore, soldi, vittorie e statistiche.
 - **`StarterSelection.tsx`**: Scena introduttiva con il Professor Scordarello per la scelta del Pokémon iniziale.
-- **`Settings.tsx`**: Menu delle preferenze (audio, player brani BGM per esplorazione e lotte, velocità testo, backup salvataggio e reset).
+- **`Settings.tsx`**: Menu delle preferenze (audio, player brani BGM per esplorazione e lotte, velocità testo, backup salvataggio, reset e **Menù Trucchi protetto da PIN `190693`** con fumetto satirico di errore del Prof. Scordarello).
+- **`PokemonDetails.tsx`**: Scheda informativa del Pokémon catturato con gestione dello stato **Preferito ⭐**, statistiche avanzate, mosse e calcolo potenziale della natura.
 
 ### Sottocomponenti di Lotta (`/src/components/battle/`)
 - **`BattleHUD.tsx`**: Barre dei PS dinamiche con valore numerico reale (es. `48 / 48 HP`) sia per il giocatore che per l'avversario, colore in base alla percentuale residua, badge dei tipi sotto la barra HP, targhetta di livello, chip dello stato alterato (SLP, PAR, BRN, PSN, FRZ) e meteo attivo.
-- **`BattleControls.tsx`**: Pannello di comando con i 4 tasti principali: *Lotta* (con selezione delle 4 mosse e visualizzazione di tipo/PP), *Zaino*, *Pokémon* e *Fuga*.
+- **`BattleControls.tsx`**: Pannello di comando con i 4 tasti principali (*Lotta*, *Zaino*, *Pokémon*, *Fuga*) e supporto all'ispezione con pressione prolungata (600ms).
+- **`MoveInfoModal.tsx`**: Overlay popup per l'ispezione dettagliata della mossa (tipo, potenza, precisione, priorità, classe di danno, descrizione ed efficacia relativa).
 - **`BattleBag.tsx`**: Menu rapido degli strumenti utilizzabili durante la lotta (Pozioni, Cura Totale e Poké Ball).
 - **`PostBattleScreen.tsx`**: Schermata riassuntiva post-vittoria con barre progressive di avanzamento XP, punti EV assegnati, salite di livello e premi in denaro.
 

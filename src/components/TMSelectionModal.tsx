@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { Pokemon, Move, TYPE_TRANSLATIONS, TYPE_COLORS } from '../types/game';
 import { fetchAllSpeciesMoves, fetchMoveData } from '../lib/pokeapi';
-import { getItalianMoveName } from '../data/movesData';
+import { getItalianMoveName, getMoveByName } from '../data/movesData';
 import { Search, Disc, X, Loader2, Sparkles, Check } from 'lucide-react';
 
 interface TMSelectionModalProps {
@@ -17,7 +17,7 @@ export const TMSelectionModal: React.FC<TMSelectionModalProps> = ({
 }) => {
   const [loading, setLoading] = useState(true);
   const [fetchingMove, setFetchingMove] = useState<string | null>(null);
-  const [moves, setMoves] = useState<{ name: string; url: string; displayName?: string }[]>([]);
+  const [moves, setMoves] = useState<{ name: string; url: string; displayName?: string; moveDetails?: Move }[]>([]);
   const [search, setSearch] = useState('');
 
   useEffect(() => {
@@ -27,12 +27,14 @@ export const TMSelectionModal: React.FC<TMSelectionModalProps> = ({
       const rawMoves = await fetchAllSpeciesMoves(pokemon.id);
       if (!isMounted) return;
 
-      // Translate move names to Italian
+      // Translate move names to Italian and extract details for type badges
       const formatted = rawMoves.map(m => {
         const italianName = getItalianMoveName(m.name);
+        const details = getMoveByName(m.name);
         return {
           ...m,
-          displayName: italianName
+          displayName: italianName,
+          moveDetails: details
         };
       });
 
@@ -43,10 +45,16 @@ export const TMSelectionModal: React.FC<TMSelectionModalProps> = ({
     return () => { isMounted = false; };
   }, [pokemon.id]);
 
-  const filteredMoves = moves.filter(m => 
-    (m.displayName || m.name).toLowerCase().includes(search.toLowerCase()) ||
-    m.name.toLowerCase().includes(search.toLowerCase())
-  );
+  const filteredMoves = moves.filter(m => {
+    const q = search.toLowerCase();
+    const moveType = (m.moveDetails?.type || 'normal').toLowerCase();
+    const typeLabel = (TYPE_TRANSLATIONS[moveType] || moveType).toLowerCase();
+    return (
+      (m.displayName || m.name).toLowerCase().includes(q) ||
+      m.name.toLowerCase().includes(q) ||
+      typeLabel.includes(q)
+    );
+  });
 
   const handleChooseMove = async (moveInfo: { name: string; url: string }) => {
     try {
@@ -137,30 +145,58 @@ export const TMSelectionModal: React.FC<TMSelectionModalProps> = ({
               );
               const isSelected = fetchingMove === m.name;
 
+              const moveType = (m.moveDetails?.type || 'normal').toLowerCase();
+              const typeColorClass = TYPE_COLORS[moveType] || 'bg-slate-500';
+              const typeLabel = TYPE_TRANSLATIONS[moveType] || moveType.toUpperCase();
+
               return (
                 <div 
                   key={m.name}
-                  className={`p-3 rounded-2xl border-2 flex items-center justify-between transition-all ${
+                  className={`p-3 rounded-2xl border-2 flex items-center justify-between gap-2 transition-all ${
                     alreadyLearned 
                       ? 'bg-gray-100 border-gray-200 opacity-60' 
                       : 'bg-white border-gray-200 hover:border-purple-400 hover:shadow-md cursor-pointer'
                   }`}
                   onClick={() => !alreadyLearned && !isSelected && handleChooseMove(m)}
                 >
-                  <div className="flex items-center gap-3">
-                    <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-700 font-black text-xs flex items-center justify-center uppercase">
+                  <div className="flex items-center gap-3 min-w-0 flex-1">
+                    <div className="w-9 h-9 rounded-xl bg-purple-100 text-purple-700 font-black text-xs flex items-center justify-center uppercase shrink-0 shadow-xs">
                       MT
                     </div>
-                    <div>
-                      <div className="font-black text-sm text-gray-800 capitalize">
-                        {m.displayName || m.name}
+                    <div className="min-w-0 flex-1">
+                      {/* Move Name & Type Badge */}
+                      <div className="flex items-center gap-2 flex-wrap mb-0.5">
+                        <span className="font-black text-sm text-gray-800 capitalize leading-tight">
+                          {m.displayName || m.name}
+                        </span>
+                        <span className={`${typeColorClass} text-[9px] font-black text-white px-2 py-0.5 rounded-md shadow-2xs uppercase tracking-wider`}>
+                          {typeLabel}
+                        </span>
                       </div>
-                      {alreadyLearned && (
-                        <div className="text-[10px] font-bold text-gray-400 flex items-center gap-1">
-                          <Check className="w-3 h-3 text-green-500" />
-                          Già conosciuta
-                        </div>
-                      )}
+
+                      {/* Move Stats & Already Learned indicator */}
+                      <div className="flex items-center gap-1.5 text-[10px] text-gray-500 font-bold flex-wrap">
+                        {m.moveDetails?.power ? (
+                          <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded border border-gray-200/80">
+                            Pot. {m.moveDetails.power}
+                          </span>
+                        ) : (
+                          <span className="bg-gray-100 text-gray-600 px-1.5 py-0.5 rounded border border-gray-200/80">
+                            Stato
+                          </span>
+                        )}
+                        {m.moveDetails?.pp && (
+                          <span className="text-gray-400">
+                            PP {m.moveDetails.pp}
+                          </span>
+                        )}
+                        {alreadyLearned && (
+                          <span className="text-emerald-600 font-bold flex items-center gap-0.5 ml-1">
+                            <Check className="w-3 h-3 text-emerald-500 stroke-[3]" />
+                            Già conosciuta
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
 

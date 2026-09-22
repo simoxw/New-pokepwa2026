@@ -26,15 +26,17 @@ Combina la fedeltà delle meccaniche competitive Pokémon ufficiali (formule mat
 
 ---
 
-### 2. 📦 Sistema Memoria PC (Box con Ricerca & Filtri Rapidi)
+### 2. 📦 Sistema Memoria PC (Box con Ricerca, Filtri Rapidi & Preferiti)
 - **Ricerca Istantanea Multi-Parametro**: Cerca per nome, soprannome o `#ID` Pokédex (es. `25` o `#025`).
 - **Filtri Rapidi a 1-Tap**:
+  - **⭐ Preferiti**: Isola istantaneamente tutti i Pokémon contrassegnati con la stella.
   - **✨ Solo Shiny**: Isola con un tocco tutti i cromatici catturati.
   - **⚡ Pronti a Evolvere**: Filtra i Pokémon che hanno raggiunto il livello richiesto per l'evoluzione.
   - **❤️ Feriti / KO**: Mostra i membri che necessitano di cure prima di partire.
 - **Filtro per 18 Tipi Elementali**: Chip con colori e icone per visualizzare solo Pokémon di un elemento.
 - **Filtro per 9 Generazioni**: Filtro rapido da Kanto a Paldea.
-- **Ordinamento Intelligente a 6 Vie**: Più Recenti, Livello Max, Livello Min, # Pokédex, Alfabetico (A-Z) e Statistiche Massime.
+- **Ordinamento Intelligente a 8 Vie**: Più Recenti, Livello Max, Livello Min, # Pokédex, Alfabetico (A-Z), Statistiche Massime e Valori IV.
+- **Selezione Multipla e Rilascio di Massa**: Rilascia più Pokémon contemporaneamente con sistemi di protezione e conferma automatica per Shiny o Pokémon di alto livello.
 - **Gestione Sicura**: Spostamento rapido tra squadra attiva (6 slot) e Box tramite identificativi univoci (`instanceId`), immune a disallineamenti da filtri.
 
 ---
@@ -91,6 +93,13 @@ Combina la fedeltà delle meccaniche competitive Pokémon ufficiali (formule mat
 - 📜 **Registro Missioni**: Tracciamento di missioni primarie e secondarie con ricompense automatiche.
 - 🏪 **Poké Market**: Acquisto e vendita di rimedi, Poké Ball di ogni grado e strumenti evolutivi.
 - 🎖️ **Portamedaglie**: Bacheca interattiva con effetti passivi e requisiti delle 10 medaglie ufficiali.
+
+---
+
+### 6. ⚙️ Impostazioni, Personalizzazione BGM & Menù Trucchi Protetto
+- **🔑 Menù Trucchi Protetto da PIN (`190693`)**: Accesso riservato al menù sviluppatore tramite codice PIN segreto. In caso di errore, viene mostrato un intervento comico e satirico del Prof. Scordarello.
+- **🎵 Lettore BGM Personalizzato**: Caricamento di tracce musicali MP3/WAV personalizzate per la musica di sottofondo dell'Overworld e della Lotta.
+- **💾 Gestione Salvataggi e Export JSON**: Salvataggio automatico continuo in `localStorage`, export/import del file di salvataggio in formato JSON, e cancellazione sicura.
 
 ---
 
