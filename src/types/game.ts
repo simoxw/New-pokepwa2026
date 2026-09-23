@@ -190,6 +190,7 @@ export interface GameState {
     title?: string;
     unlockedTitles?: string[];
     towerHighFloor?: number;
+    expShareEnabled?: boolean;
   };
   settings?: {
     moveAnimationsEnabled?: boolean;
@@ -231,6 +232,7 @@ export const INITIAL_STATE: GameState = {
     location: 'villaggio',
     badges: [],
     defeatedTrainers: [],
+    expShareEnabled: true,
     quests: [
       {
         id: 'first-steps',

@@ -373,18 +373,77 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       }
     }
 
-    // Update player state with progress from this pokemon
-    setState(prev => {
-      const team = [...prev.player.team];
-      team[0] = newPokemon;
-      return {
-        ...prev,
-        player: {
-          ...prev.player,
-          team
+    // Exp Share calculation (Unlocks at >= 6 badges, enabled by default)
+    const isExpShareUnlocked = state.player.badges.length >= 6;
+    const isExpShareActive = isExpShareUnlocked && (state.player.expShareEnabled !== false);
+    const teamExpGains: Array<{
+      pokemon: Pokemon;
+      oldLevel: number;
+      newLevel: number;
+      oldExp: number;
+      newExp: number;
+      nextLevelExp: number;
+      expGained: number;
+      leveledUp: boolean;
+    }> = [];
+
+    const updatedTeam = [...state.player.team];
+    updatedTeam[0] = newPokemon;
+
+    if (isExpShareActive && updatedTeam.length > 1) {
+      const benchExp = Math.max(1, Math.floor(exp * 0.5));
+      for (let i = 1; i < updatedTeam.length; i++) {
+        const member = updatedTeam[i];
+        if (member && member.hp > 0 && member.level < 100) {
+          const oldMemberLevel = member.level;
+          const oldMemberExp = member.experience;
+          let memberClone = {
+            ...member,
+            experience: member.experience + benchExp
+          };
+          if (enemy.evYield) {
+            memberClone = applyEvs(memberClone, enemy.evYield);
+          }
+          const memberCheck = checkLevelUp(memberClone);
+          const newMemberPkmn = memberCheck.newPokemon;
+          if (memberCheck.leveledUp) {
+            if (memberCheck.newMoves.length > 0) {
+              for (const mInfo of memberCheck.newMoves) {
+                if (newMemberPkmn.moves.find(m => m.name.toLowerCase() === mInfo.name.toLowerCase())) continue;
+                if (newMemberPkmn.moves.length < 4) {
+                  try {
+                    const fMove = await fetchMoveData(mInfo.url);
+                    newMemberPkmn.moves.push(fMove);
+                  } catch (e) {
+                    console.error("Failed to fetch bench move", e);
+                  }
+                }
+              }
+            }
+          }
+          updatedTeam[i] = newMemberPkmn;
+          teamExpGains.push({
+            pokemon: newMemberPkmn,
+            oldLevel: oldMemberLevel,
+            newLevel: newMemberPkmn.level,
+            oldExp: oldMemberExp,
+            newExp: newMemberPkmn.experience,
+            nextLevelExp: newMemberPkmn.nextLevelExp,
+            expGained: benchExp,
+            leveledUp: memberCheck.leveledUp
+          });
         }
-      };
-    });
+      }
+    }
+
+    // Update player state with progress from this pokemon and bench
+    setState(prev => ({
+      ...prev,
+      player: {
+        ...prev.player,
+        team: updatedTeam
+      }
+    }));
 
     // Trainer logic: check if they have more Pokemon
     if (trainer) {
@@ -450,6 +509,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
         nextLevelExp: newPokemon.nextLevelExp,
         statGains,
         evsGained,
+        teamExpGains: teamExpGains.length > 0 ? teamExpGains : undefined,
         badge: badge && !state.player.badges.includes(badge.id) ? badge : null,
         moneyEarned: moneyReward,
         trainerName: trainer.name
@@ -477,10 +537,11 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
         nextLevelExp: newPokemon.nextLevelExp,
         statGains,
         evsGained,
+        teamExpGains: teamExpGains.length > 0 ? teamExpGains : undefined,
         moneyEarned: wildReward
       });
     }
-  }, [enemy, playerActive, playerStatus, playerMoves, setState, addLog, trainer, enemyTeam, state.player.badges]);
+  }, [enemy, playerActive, playerStatus, playerMoves, setState, addLog, trainer, enemyTeam, state.player.badges, state.player.team, state.player.expShareEnabled]);
 
   // When player clicks continue in PostBattleScreen
   const handlePostBattleContinue = useCallback(() => {
@@ -489,7 +550,8 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       return;
     }
     const currentPkmn = postBattleData.pokemon;
-    const evo = canEvolve(currentPkmn) ? currentPkmn : undefined;
+    const allParty = [currentPkmn, ...(postBattleData.teamExpGains?.map(g => g.pokemon) || [])];
+    const evo = allParty.find(p => canEvolve(p));
     setPostBattleData(null);
     setBattleResult({
       type: 'win',
@@ -1193,7 +1255,25 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
         }
       }));
 
-      if (item.type === 'healing') {
+      if (['antidoto', 'antiparalisi', 'antiscotto', 'sveglia', 'cura-totale', 'full-heal'].includes(item.id)) {
+        if (isTargetActive) {
+          setPlayerStatus({ status: undefined, duration: undefined });
+          setState(prev => {
+            const team = [...prev.player.team];
+            team[0] = { ...team[0], status: undefined, statusDuration: undefined };
+            return { ...prev, player: { ...prev.player, team } };
+          });
+        } else {
+          setState(prev => {
+            const team = [...prev.player.team];
+            team[targetIndex] = { ...team[targetIndex], status: undefined, statusDuration: undefined };
+            return { ...prev, player: { ...prev.player, team } };
+          });
+        }
+
+        await new Promise(r => setTimeout(r, 1000));
+        await triggerEnemySingleTurn(playerHp, enemyHp);
+      } else if (item.type === 'healing') {
         const isRevive = item.id.includes('revitalizzante');
         let nextHp = targetPokemon.hp;
 
@@ -1224,24 +1304,6 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
 
         await new Promise(r => setTimeout(r, 1000));
         await triggerEnemySingleTurn(isTargetActive ? nextHp : playerHp, enemyHp);
-      } else if (['antidoto', 'antiparalisi', 'antiscotto', 'sveglia', 'cura-totale', 'full-heal'].includes(item.id)) {
-        if (isTargetActive) {
-          setPlayerStatus({ status: undefined, duration: undefined });
-          setState(prev => {
-            const team = [...prev.player.team];
-            team[0] = { ...team[0], status: undefined, statusDuration: undefined };
-            return { ...prev, player: { ...prev.player, team } };
-          });
-        } else {
-          setState(prev => {
-            const team = [...prev.player.team];
-            team[targetIndex] = { ...team[targetIndex], status: undefined, statusDuration: undefined };
-            return { ...prev, player: { ...prev.player, team } };
-          });
-        }
-
-        await new Promise(r => setTimeout(r, 1000));
-        await triggerEnemySingleTurn(playerHp, enemyHp);
       } else if (item.type === 'capture') {
         if (trainer) {
           addLog("Non puoi rubare i Pokémon degli altri allenatori!");

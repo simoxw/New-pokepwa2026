@@ -239,8 +239,20 @@ export const BattleBag: React.FC<BattleBagProps> = ({
                             </span>
                           )}
                           {currentStatus && (
-                            <span className="text-[9px] font-black bg-purple-600 text-white px-1.5 py-0.2 rounded uppercase">
-                              {currentStatus}
+                            <span className={`text-[9px] font-black px-1.5 py-0.2 rounded uppercase shadow-xs ${
+                              currentStatus === 'poisoned' ? 'bg-purple-600 text-white' :
+                              currentStatus === 'paralyzed' ? 'bg-amber-400 text-slate-900' :
+                              currentStatus === 'sleep' ? 'bg-slate-400 text-white' :
+                              currentStatus === 'burned' ? 'bg-red-500 text-white' :
+                              'bg-cyan-400 text-slate-900'
+                            }`}>
+                              {{
+                                poisoned: 'AVV',
+                                paralyzed: 'PAR',
+                                sleep: 'SON',
+                                burned: 'SCO',
+                                frozen: 'CON'
+                              }[currentStatus] || currentStatus.toUpperCase()}
                             </span>
                           )}
                         </div>

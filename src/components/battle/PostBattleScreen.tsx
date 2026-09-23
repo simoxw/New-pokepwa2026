@@ -3,6 +3,17 @@ import { motion } from 'motion/react';
 import { Pokemon, Badge } from '../../types/game';
 import { Award, Coins, Sparkles, TrendingUp, Heart, Swords, Shield, Zap, Wind } from 'lucide-react';
 
+export interface TeamExpGain {
+  pokemon: Pokemon;
+  oldLevel: number;
+  newLevel: number;
+  oldExp: number;
+  newExp: number;
+  nextLevelExp: number;
+  expGained: number;
+  leveledUp: boolean;
+}
+
 export interface PostBattleData {
   pokemon: Pokemon;
   enemy: Pokemon;
@@ -21,6 +32,7 @@ export interface PostBattleData {
     speed: number;
   };
   evsGained?: Record<string, number>;
+  teamExpGains?: TeamExpGain[];
   badge?: Badge | null;
   moneyEarned: number;
   trainerName?: string;
@@ -43,6 +55,7 @@ export const PostBattleScreen: React.FC<PostBattleScreenProps> = ({ data, onCont
     nextLevelExp,
     statGains,
     evsGained,
+    teamExpGains,
     badge,
     moneyEarned,
     trainerName
@@ -208,6 +221,81 @@ export const PostBattleScreen: React.FC<PostBattleScreenProps> = ({ data, onCont
                 ))}
               </div>
             </div>
+          )}
+
+          {/* Team Exp Share (Condividi Esp.) */}
+          {teamExpGains && teamExpGains.length > 0 && (
+            <motion.div
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="bg-slate-800/80 border border-cyan-500/30 rounded-2xl p-3.5 space-y-2.5"
+            >
+              <div className="flex items-center justify-between">
+                <div className="flex items-center gap-1.5">
+                  <Sparkles className="w-4 h-4 text-cyan-400" />
+                  <h3 className="text-xs font-black uppercase text-cyan-300 tracking-wider">
+                    Condividi Esp. Squadra
+                  </h3>
+                </div>
+                <span className="text-[10px] font-bold bg-cyan-950/80 text-cyan-300 border border-cyan-500/40 px-2 py-0.5 rounded-full">
+                  Attivo (+50% EXP)
+                </span>
+              </div>
+
+              <div className="space-y-2 max-h-48 overflow-y-auto pr-1">
+                {teamExpGains.map((gain) => {
+                  const pDidLevelUp = gain.newLevel > gain.oldLevel;
+                  const progressPercent = Math.min(100, Math.round((gain.newExp / (gain.nextLevelExp || 1)) * 100));
+
+                  return (
+                    <div
+                      key={gain.pokemon.instanceId || gain.pokemon.id}
+                      className="bg-slate-900/90 border border-slate-700/70 rounded-xl p-2.5 flex items-center gap-3 shadow-inner"
+                    >
+                      <img
+                        src={gain.pokemon?.sprites?.front || (gain.pokemon as any)?.spriteUrl}
+                        alt={gain.pokemon.name}
+                        className="w-10 h-10 object-contain shrink-0"
+                      />
+                      <div className="flex-1 min-w-0">
+                        <div className="flex justify-between items-center mb-1">
+                          <div className="flex items-center gap-1.5 truncate">
+                            <span className="text-xs font-black uppercase text-white truncate">
+                              {gain.pokemon.nickname || gain.pokemon.name}
+                            </span>
+                            {pDidLevelUp && (
+                              <span className="bg-emerald-500 text-[8px] font-black text-white px-1.5 py-0.2 rounded-full uppercase shadow-xs shrink-0 animate-pulse">
+                                Level Up!
+                              </span>
+                            )}
+                          </div>
+                          <div className="flex items-center gap-1 shrink-0">
+                            {pDidLevelUp ? (
+                              <div className="flex items-center gap-1 text-[11px] font-bold">
+                                <span className="text-slate-400">Lv.{gain.oldLevel}</span>
+                                <span className="text-slate-500">➔</span>
+                                <span className="text-emerald-400 font-black">Lv.{gain.newLevel}</span>
+                              </div>
+                            ) : (
+                              <span className="text-[11px] font-bold text-slate-300">Lv.{gain.pokemon.level}</span>
+                            )}
+                            <span className="text-[11px] text-cyan-400 font-bold ml-1.5">+{gain.expGained} EXP</span>
+                          </div>
+                        </div>
+
+                        {/* Mini exp bar */}
+                        <div className="w-full bg-slate-950 h-1.5 rounded-full overflow-hidden border border-slate-800">
+                          <div
+                            className="h-full bg-gradient-to-r from-cyan-500 to-blue-400 rounded-full transition-all duration-500"
+                            style={{ width: `${progressPercent}%` }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                  );
+                })}
+              </div>
+            </motion.div>
           )}
 
           {/* Badge Won Spotlight */}

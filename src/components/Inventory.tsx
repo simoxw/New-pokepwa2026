@@ -310,6 +310,9 @@ export const Inventory: React.FC<{
     }
   };
 
+  const isExpShareUnlocked = state.player.badges.length >= 6;
+  const isExpShareEnabled = state.player.expShareEnabled !== false;
+
   return (
     <div className="h-full bg-white flex flex-col relative">
       <div className="p-4 border-b flex items-center gap-4">
@@ -318,7 +321,51 @@ export const Inventory: React.FC<{
       </div>
       
       <div className="flex-1 overflow-y-auto p-4 space-y-3 min-h-0">
-        {state.player.inventory.filter(i => i.count > 0).length === 0 ? (
+        {/* Key Item: Condividi Esperienza (Unlocked with 6+ badges) */}
+        {isExpShareUnlocked && (
+          <div className="bg-gradient-to-r from-indigo-50 via-cyan-50 to-blue-50 border-2 border-indigo-200/80 rounded-2xl p-4 flex items-center justify-between shadow-sm">
+            <div className="flex items-center gap-4 min-w-0 pr-2">
+              <div className="w-12 h-12 bg-white rounded-xl shadow-sm flex items-center justify-center text-2xl shrink-0 border border-indigo-100">
+                📡
+              </div>
+              <div className="min-w-0">
+                <div className="flex items-center gap-2">
+                  <h4 className="font-black text-sm uppercase text-slate-900 truncate">
+                    Condividi Esperienza
+                  </h4>
+                  <span className="text-[9px] font-black bg-indigo-600 text-white px-2 py-0.5 rounded-full uppercase tracking-wider shrink-0">
+                    Base
+                  </span>
+                </div>
+                <p className="text-[10px] text-slate-600 font-medium leading-tight mt-0.5">
+                  Distribuisce il 50% dei Punti Esp. di lotta a tutti i Pokémon in squadra non esausti.
+                </p>
+              </div>
+            </div>
+
+            <button
+              onClick={() => {
+                setState(prev => ({
+                  ...prev,
+                  player: {
+                    ...prev.player,
+                    expShareEnabled: !isExpShareEnabled
+                  }
+                }));
+              }}
+              className={`px-3.5 py-2 rounded-xl font-black text-xs uppercase tracking-wider transition-all active:scale-95 shadow-md flex items-center gap-1.5 shrink-0 cursor-pointer ${
+                isExpShareEnabled
+                  ? 'bg-gradient-to-r from-emerald-500 to-teal-600 text-white shadow-emerald-500/20'
+                  : 'bg-slate-300 text-slate-600 hover:bg-slate-400'
+              }`}
+            >
+              <span>{isExpShareEnabled ? 'ATTIVO' : 'SPENTO'}</span>
+              <span className={`w-2 h-2 rounded-full ${isExpShareEnabled ? 'bg-white animate-pulse' : 'bg-slate-500'}`} />
+            </button>
+          </div>
+        )}
+
+        {state.player.inventory.filter(i => i.count > 0).length === 0 && !isExpShareUnlocked ? (
           <div key="empty-inventory" className="h-full flex flex-col items-center justify-center text-gray-400 gap-2">
             <Package className="w-12 h-12" />
             <p>Lo zaino è vuoto.</p>
