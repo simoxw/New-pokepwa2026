@@ -93,18 +93,18 @@ export const PostBattleScreen: React.FC<PostBattleScreenProps> = ({ data, onCont
         className="w-full max-w-lg bg-slate-900 border-2 border-amber-500/40 rounded-3xl shadow-2xl overflow-hidden flex flex-col my-auto text-white"
       >
         {/* Header Ribbon */}
-        <div className="bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 p-4 text-center relative overflow-hidden shadow-md">
+        <div className="bg-gradient-to-r from-amber-600 via-yellow-500 to-amber-600 py-2.5 px-4 text-center relative overflow-hidden shadow-md">
           <div className="absolute inset-0 bg-white/10 opacity-30 animate-pulse pointer-events-none" />
           <motion.div
             initial={{ y: -10, opacity: 0 }}
             animate={{ y: 0, opacity: 1 }}
             className="flex items-center justify-center gap-2"
           >
-            <Sparkles className="w-6 h-6 text-yellow-100 animate-spin" style={{ animationDuration: '6s' }} />
-            <h1 className="text-2xl sm:text-3xl font-black uppercase tracking-wider text-slate-950 drop-shadow">
+            <Sparkles className="w-5 h-5 text-yellow-100 animate-spin" style={{ animationDuration: '6s' }} />
+            <h1 className="text-xl sm:text-2xl font-black uppercase tracking-wider text-slate-950 drop-shadow">
               Vittoria!
             </h1>
-            <Sparkles className="w-6 h-6 text-yellow-100 animate-spin" style={{ animationDuration: '6s' }} />
+            <Sparkles className="w-5 h-5 text-yellow-100 animate-spin" style={{ animationDuration: '6s' }} />
           </motion.div>
           <p className="text-xs sm:text-sm font-bold text-slate-900/90 mt-0.5">
             {trainerName ? `Hai sconfitto ${trainerName}!` : `Hai sconfitto ${enemy.name} selvatico!`}
