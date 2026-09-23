@@ -80,6 +80,7 @@ export interface Pokemon {
   }[];
   caughtAt: number;
   caughtLocation: string;
+  originalTrainer?: string;
 }
 
 export interface Ability {
