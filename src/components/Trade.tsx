@@ -98,28 +98,6 @@ export const Trade: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     setTimeout(() => setCopiedSuccess(false), 2500);
   };
 
-  // Share via WhatsApp / Native Share
-  const handleShareCode = async () => {
-    if (!exportCode || !selectedToExport) return;
-    const shareText = `🎮 Ti ho inviato ${selectedToExport.name} (Lv. ${selectedToExport.level}) su PokéPWA!\n\nCopia questo codice e incollalo nella schermata Scambio:\n${exportCode}`;
-    
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: `Scambio Pokémon: ${selectedToExport.name}`,
-          text: shareText
-        });
-        return;
-      } catch {
-        // Fallback to whatsapp if canceled or unsupported
-      }
-    }
-    
-    // WhatsApp Fallback
-    const waUrl = `https://api.whatsapp.com/send?text=${encodeURIComponent(shareText)}`;
-    window.open(waUrl, '_blank');
-  };
-
   // Handle direct import
   const handleImport = () => {
     const pokemon = decodePokemon(importCode);
@@ -678,7 +656,7 @@ export const Trade: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 </h3>
               </div>
               <p className="text-[11px] text-slate-400">
-                Seleziona un Pokémon della tua squadra per generare il codice o inviarlo via WhatsApp.
+                Seleziona un Pokémon della tua squadra per generare il codice di scambio.
               </p>
 
               {/* Horizontal Team Picker */}
@@ -709,7 +687,7 @@ export const Trade: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                 })}
               </div>
 
-              {/* Generated Code Display & Sharing Action */}
+              {/* Generated Code Display & Copy Action */}
               {exportCode && (
                 <motion.div
                   initial={{ opacity: 0, y: 5 }}
@@ -722,7 +700,7 @@ export const Trade: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     </span>
                     {copiedSuccess && (
                       <span className="text-[9px] font-bold text-emerald-400 flex items-center gap-1 animate-pulse shrink-0">
-                        <CheckCircle2 className="w-3 h-3" /> Copiato!
+                        <CheckCircle2 className="w-3 h-3" /> Codice Copiato!
                       </span>
                     )}
                   </div>
@@ -731,20 +709,13 @@ export const Trade: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     {exportCode}
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2 pt-0.5">
+                  <div className="pt-0.5">
                     <button
                       onClick={handleCopyCode}
-                      className="py-2 rounded-lg bg-slate-800 hover:bg-slate-700 text-white font-black text-[11px] uppercase flex items-center justify-center gap-1.5 transition-all active:scale-95 cursor-pointer"
+                      className="w-full py-2.5 rounded-lg bg-gradient-to-r from-purple-600 to-indigo-600 hover:from-purple-500 hover:to-indigo-500 text-white font-black text-[11px] uppercase flex items-center justify-center gap-2 shadow-md shadow-purple-900/30 transition-all active:scale-95 cursor-pointer"
                     >
-                      <Copy className="w-3 h-3 text-purple-400" />
-                      Copia Codice
-                    </button>
-                    <button
-                      onClick={handleShareCode}
-                      className="py-2 rounded-lg bg-gradient-to-r from-emerald-500 to-teal-600 text-slate-950 font-black text-[11px] uppercase flex items-center justify-center gap-1.5 shadow-md shadow-emerald-500/20 transition-all active:scale-95 cursor-pointer"
-                    >
-                      <Share2 className="w-3 h-3 text-slate-950" />
-                      Condividi / WhatsApp
+                      <Copy className="w-3.5 h-3.5 text-white" />
+                      Copia Codice negli Appunti
                     </button>
                   </div>
                 </motion.div>

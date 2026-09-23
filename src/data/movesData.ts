@@ -1968,7 +1968,7 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
   },
   'sandstorm': {
     englishName: 'sandstorm',
-    name: 'Terremoto',
+    name: 'Terrempesta',
     type: 'rock',
     category: 'status',
     power: 0,
@@ -1976,6 +1976,67 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
     pp: 10,
     maxPp: 10,
     target: 'user'
+  },
+  'phantom-force': {
+    englishName: 'phantom-force',
+    name: 'Spettrotuffo',
+    type: 'ghost',
+    category: 'physical',
+    power: 90,
+    accuracy: 100,
+    pp: 10,
+    maxPp: 10
+  },
+  'dream-eater': {
+    englishName: 'dream-eater',
+    name: 'Mangiasogni',
+    type: 'psychic',
+    category: 'special',
+    power: 100,
+    accuracy: 100,
+    pp: 15,
+    maxPp: 15,
+    drain: 50
+  },
+  'hex': {
+    englishName: 'hex',
+    name: 'Sciagura',
+    type: 'ghost',
+    category: 'special',
+    power: 65,
+    accuracy: 100,
+    pp: 10,
+    maxPp: 10
+  },
+  'poltergeist': {
+    englishName: 'poltergeist',
+    name: 'Poltergeist',
+    type: 'ghost',
+    category: 'physical',
+    power: 110,
+    accuracy: 90,
+    pp: 5,
+    maxPp: 5
+  },
+  'spirit-shackle': {
+    englishName: 'spirit-shackle',
+    name: 'Cucitura d\'Ombra',
+    type: 'ghost',
+    category: 'physical',
+    power: 80,
+    accuracy: 100,
+    pp: 10,
+    maxPp: 10
+  },
+  'spectral-thief': {
+    englishName: 'spectral-thief',
+    name: 'Ombratuffo',
+    type: 'ghost',
+    category: 'physical',
+    power: 90,
+    accuracy: 100,
+    pp: 10,
+    maxPp: 10
   }
 };
 

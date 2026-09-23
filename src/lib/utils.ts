@@ -38,18 +38,31 @@ export function normalizePokemon(raw: any): Pokemon {
     const moveName = m.name || m.title || 'Azione';
     const baseMove = getMoveByName(moveName);
     
-    // Retroactive Fix: If the saved move has type 'normal' but the baseMove has a specific type, 
-    // or if the name is in English but we found the Italian counterpart, correct them retroactively.
+    // Authoritative stats (Power, Category, Type, MaxPP, Effects)
+    const maxPp = baseMove.maxPp || baseMove.pp || m.maxPp || 35;
+    const currentPp = typeof m.pp === 'number' ? Math.min(Math.max(0, m.pp), maxPp) : maxPp;
+
     return {
       ...baseMove,
-      ...m,
       name: baseMove.name || moveName,
-      type: (baseMove.type && baseMove.type !== 'normal') ? baseMove.type : (m.type || baseMove.type || 'normal'),
-      category: baseMove.category || m.category || 'physical',
-      power: baseMove.power || m.power || 40,
-      accuracy: baseMove.accuracy || m.accuracy || 100,
-      pp: typeof m.pp === 'number' ? m.pp : (baseMove.pp || 35),
-      maxPp: baseMove.maxPp || m.maxPp || 35
+      type: baseMove.type || m.type || 'normal',
+      category: baseMove.category || m.category || (baseMove.power ? 'physical' : 'status'),
+      power: baseMove.power !== undefined ? baseMove.power : (m.power !== undefined ? m.power : 40),
+      accuracy: baseMove.accuracy !== undefined ? baseMove.accuracy : (m.accuracy || 100),
+      pp: currentPp,
+      maxPp: maxPp,
+      priority: baseMove.priority !== undefined ? baseMove.priority : m.priority,
+      statusEffect: baseMove.statusEffect || m.statusEffect,
+      effectChance: baseMove.effectChance || m.effectChance,
+      drain: baseMove.drain !== undefined ? baseMove.drain : m.drain,
+      healing: baseMove.healing !== undefined ? baseMove.healing : m.healing,
+      recoil: baseMove.recoil !== undefined ? baseMove.recoil : m.recoil,
+      recoilMaxHp: baseMove.recoilMaxHp !== undefined ? baseMove.recoilMaxHp : m.recoilMaxHp,
+      stat_changes: baseMove.stat_changes || m.stat_changes,
+      flinchChance: baseMove.flinchChance || m.flinchChance,
+      confusionChance: baseMove.confusionChance || m.confusionChance,
+      multiTurn: baseMove.multiTurn || m.multiTurn,
+      target: baseMove.target || m.target
     };
   });
 
@@ -103,7 +116,7 @@ export function normalizePokemon(raw: any): Pokemon {
 }
 
 /**
- * Encodes a Pokemon object to a Base64 string.
+ * Encodes a Pokemon object to a Base64 string with all full data intact.
  */
 export function encodePokemon(pokemon: Pokemon): string {
   try {
@@ -116,7 +129,7 @@ export function encodePokemon(pokemon: Pokemon): string {
 }
 
 /**
- * Decodes a Base64 string to a Pokemon object.
+ * Decodes a Base64 string to a Pokemon object (supports standard base64, URL-encoded json, and legacy formats).
  */
 export function decodePokemon(base64: string): Pokemon | null {
   try {
@@ -125,8 +138,14 @@ export function decodePokemon(base64: string): Pokemon | null {
 
     let json: string = '';
     
-    // Try standard base64 decoding with padding fix if needed
-    try {
+    // Check if directly URL-encoded JSON or raw JSON
+    if (trimmed.startsWith('%7B') || trimmed.startsWith('{') || trimmed.startsWith('%7b')) {
+      try {
+        json = decodeURIComponent(trimmed);
+      } catch {
+        json = trimmed;
+      }
+    } else {
       let padded = trimmed;
       while (padded.length % 4 !== 0) {
         padded += '=';
@@ -137,64 +156,38 @@ export function decodePokemon(base64: string): Pokemon | null {
       } catch {
         json = rawDecoded;
       }
-    } catch {
-      return null;
     }
 
     let parsed: any = null;
-    
-    // 1. Standard parse
     try {
       parsed = JSON.parse(json);
     } catch {
-      // 2. Truncated JSON repair
-      const repairAttempts = [
-        json + '}',
-        json + '}]}',
-        json + '"}]}',
-        json + '"]}',
-        json + '"}}',
-        json + '"}'
-      ];
-      for (const attempt of repairAttempts) {
-        try {
-          parsed = JSON.parse(attempt);
-          break;
-        } catch {
-          // continue
+      // Fallback for truncated/cut-off JSON
+      const idMatch = json.match(/"pokemonId":\s*(\d+)/) || json.match(/"id":\s*(\d+)/);
+      const nameMatch = json.match(/"name":\s*"([^"]+)"/);
+      const levelMatch = json.match(/"level":\s*(\d+)/);
+      const typesMatch = json.match(/"types":\s*\[([^\]]+)\]/);
+
+      if (idMatch || nameMatch) {
+        const extractedId = idMatch ? parseInt(idMatch[1], 10) : 1;
+        const extractedName = nameMatch ? nameMatch[1] : 'Pokémon';
+        const extractedLevel = levelMatch ? parseInt(levelMatch[1], 10) : 5;
+        let extractedTypes = ['normal'];
+        if (typesMatch) {
+          extractedTypes = typesMatch[1].replace(/"/g, '').split(',').map(t => t.trim());
         }
-      }
 
-      // 3. Regex fallback if JSON was cut off mid-payload
-      if (!parsed) {
-        const idMatch = json.match(/"pokemonId":\s*(\d+)/) || json.match(/"id":\s*(\d+)/);
-        const nameMatch = json.match(/"name":\s*"([^"]+)"/);
-        const levelMatch = json.match(/"level":\s*(\d+)/);
-        const typesMatch = json.match(/"types":\s*\[([^\]]+)\]/);
-
-        if (idMatch || nameMatch) {
-          const extractedId = idMatch ? parseInt(idMatch[1], 10) : 1;
-          const extractedName = nameMatch ? nameMatch[1] : 'Pokémon';
-          const extractedLevel = levelMatch ? parseInt(levelMatch[1], 10) : 5;
-          let extractedTypes = ['normal'];
-          if (typesMatch) {
-            extractedTypes = typesMatch[1].replace(/"/g, '').split(',').map(t => t.trim());
-          }
-
-          parsed = {
-            pokemonId: extractedId,
-            name: extractedName,
-            level: extractedLevel,
-            types: extractedTypes
-          };
-        }
+        parsed = {
+          id: extractedId,
+          pokemonId: extractedId,
+          name: extractedName,
+          level: extractedLevel,
+          types: extractedTypes
+        };
       }
     }
 
-    if (!parsed || typeof parsed !== 'object') {
-      return null;
-    }
-
+    if (!parsed) return null;
     return normalizePokemon(parsed);
   } catch (e) {
     console.error('Failed to decode pokemon', e);

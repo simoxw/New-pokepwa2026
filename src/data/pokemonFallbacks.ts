@@ -120,6 +120,7 @@ export const POKEMON_FALLBACKS: Record<number, FallbackPokemonInfo> = {
   717: { name: 'Yveltal', types: ['dark', 'flying'], baseStats: { hp: 126, attack: 131, defense: 95, spAtk: 131, spDef: 98, speed: 99 }, moves: ['oblivion-wing', 'dark-pulse', 'sucker-punch', 'psychic'] },
   718: { name: 'Zygarde', types: ['dragon', 'ground'], baseStats: { hp: 108, attack: 100, defense: 121, spAtk: 81, spDef: 95, speed: 95 }, moves: ['thousand-arrows', 'outrage', 'earthquake', 'dragon-dance'] },
   791: { name: 'Solgaleo', types: ['psychic', 'steel'], baseStats: { hp: 137, attack: 137, defense: 107, spAtk: 113, spDef: 89, speed: 97 }, moves: ['sunsteel-strike', 'zen-headbutt', 'earthquake', 'morning-sun'] },
+  792: { name: 'Lunala', types: ['psychic', 'ghost'], baseStats: { hp: 137, attack: 113, defense: 89, spAtk: 137, spDef: 107, speed: 97 }, moves: ['phantom-force', 'psychic', 'moonblast', 'shadow-ball'] },
   800: { name: 'Necrozma', types: ['psychic'], baseStats: { hp: 97, attack: 107, defense: 101, spAtk: 127, spDef: 89, speed: 79 }, moves: ['prismatic-laser', 'photon-geyser', 'psychic', 'calm-mind'] },
   807: { name: 'Zeraora', types: ['electric'], baseStats: { hp: 88, attack: 112, defense: 75, spAtk: 102, spDef: 80, speed: 143 }, moves: ['plasma-fists', 'close-combat', 'thunderbolt', 'volt-switch'] },
   888: { name: 'Zacian', types: ['fairy', 'steel'], baseStats: { hp: 92, attack: 130, defense: 115, spAtk: 80, spDef: 115, speed: 138 }, moves: ['behemoth-blade', 'play-rough', 'swords-dance', 'close-combat'] },
