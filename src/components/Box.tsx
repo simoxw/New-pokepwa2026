@@ -818,7 +818,17 @@ export const Box: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     key={`mass-${p.instanceId || p.id}-${idx}`} 
                     className="p-1.5 bg-slate-900 rounded-xl border border-slate-800 flex flex-col items-center text-center"
                   >
-                    <img src={p?.sprites?.front || (p as any)?.spriteUrl} alt={p.name} className="w-10 h-10 object-contain" />
+                    <img 
+                      src={
+                        (p?.sprites?.front && !p.sprites.front.includes('official-artwork'))
+                          ? p.sprites.front
+                          : ((p as any)?.spriteUrl && !(p as any).spriteUrl.includes('official-artwork'))
+                            ? (p as any).spriteUrl
+                            : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${p.isShiny ? 'shiny/' : ''}${p.id || 1}.png`
+                      } 
+                      alt={p.name} 
+                      className="w-10 h-10 object-contain" 
+                    />
                     <span className="text-[9px] font-bold text-slate-200 truncate w-full">{p.nickname || p.name}</span>
                     <span className="text-[8px] font-mono text-slate-400">L.{p.level}</span>
                   </div>
@@ -964,7 +974,13 @@ const BoxPokemonCard: React.FC<BoxPokemonCardProps> = ({
       {/* Centered Sprite */}
       <div className="w-full flex-1 flex items-center justify-center my-0.5 relative">
         <img 
-          src={pokemon?.sprites?.front || (pokemon as any)?.spriteUrl} 
+          src={
+            (pokemon?.sprites?.front && !pokemon.sprites.front.includes('official-artwork'))
+              ? pokemon.sprites.front
+              : ((pokemon as any)?.spriteUrl && !(pokemon as any).spriteUrl.includes('official-artwork'))
+                ? (pokemon as any).spriteUrl
+                : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemon.isShiny ? 'shiny/' : ''}${pokemon.id || 1}.png`
+          } 
           alt={pokemon.name} 
           className="w-full h-full object-contain drop-shadow"
           loading="lazy" 

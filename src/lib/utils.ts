@@ -14,17 +14,34 @@ export function normalizePokemon(raw: any): Pokemon {
 
   const sprites = raw.sprites || {};
   
+  const isShiny = Boolean(raw.isShiny);
+  
   // Official PokeAPI Image URLs
-  const officialArtworkUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemonId}.png`;
-  const frontSpriteUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemonId}.png`;
-  const backSpriteUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/${pokemonId}.png`;
+  const officialArtworkUrl = isShiny
+    ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/shiny/${pokemonId}.png`
+    : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/${pokemonId}.png`;
+  const frontSpriteUrl = isShiny
+    ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/shiny/${pokemonId}.png`
+    : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/${pokemonId}.png`;
+  const backSpriteUrl = isShiny
+    ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/shiny/${pokemonId}.png`
+    : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/back/${pokemonId}.png`;
   const homeSpriteUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/home/${pokemonId}.png`;
-  const showdownSpriteUrl = `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${pokemonId}.gif`;
+  const showdownSpriteUrl = isShiny
+    ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/shiny/${pokemonId}.gif`
+    : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${pokemonId}.gif`;
 
   const customImg = raw.spriteUrl || raw.sprite || raw.image;
 
+  // Artwork: prefer sprites.artwork or customImg or official artwork
   const artwork = sprites.artwork || customImg || officialArtworkUrl;
-  const front = sprites.front || customImg || frontSpriteUrl || officialArtworkUrl;
+
+  // Front sprite (pixel sprite for box, team icons, grid):
+  // If sprites.front or customImg is NOT an official-artwork HD image, keep it; otherwise use classic pixel sprite
+  const front = (sprites.front && !sprites.front.includes('official-artwork'))
+    ? sprites.front
+    : ((customImg && !customImg.includes('official-artwork')) ? customImg : frontSpriteUrl);
+
   const back = sprites.back || backSpriteUrl;
   const home = sprites.home || homeSpriteUrl;
   const animated = sprites.animated || showdownSpriteUrl;
@@ -42,6 +59,11 @@ export function normalizePokemon(raw: any): Pokemon {
     const maxPp = baseMove.maxPp || baseMove.pp || m.maxPp || 35;
     const currentPp = typeof m.pp === 'number' ? Math.min(Math.max(0, m.pp), maxPp) : maxPp;
 
+    let moveDrain = baseMove.drain !== undefined ? baseMove.drain : m.drain;
+    if (typeof moveDrain === 'number' && moveDrain > 1) {
+      moveDrain = moveDrain / 100;
+    }
+
     return {
       ...baseMove,
       name: baseMove.name || moveName,
@@ -54,7 +76,7 @@ export function normalizePokemon(raw: any): Pokemon {
       priority: baseMove.priority !== undefined ? baseMove.priority : m.priority,
       statusEffect: baseMove.statusEffect || m.statusEffect,
       effectChance: baseMove.effectChance || m.effectChance,
-      drain: baseMove.drain !== undefined ? baseMove.drain : m.drain,
+      drain: moveDrain,
       healing: baseMove.healing !== undefined ? baseMove.healing : m.healing,
       recoil: baseMove.recoil !== undefined ? baseMove.recoil : m.recoil,
       recoilMaxHp: baseMove.recoilMaxHp !== undefined ? baseMove.recoilMaxHp : m.recoilMaxHp,

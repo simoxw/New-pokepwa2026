@@ -1996,7 +1996,7 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
     accuracy: 100,
     pp: 15,
     maxPp: 15,
-    drain: 50
+    drain: 0.5
   },
   'hex': {
     englishName: 'hex',
