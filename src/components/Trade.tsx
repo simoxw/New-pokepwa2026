@@ -2,12 +2,21 @@ import React, { useState, useEffect, useMemo } from 'react';
 import { useGame } from '../contexts/GameContext';
 import { 
   ChevronLeft, Copy, Download, Upload, Sparkles, Shuffle, 
-  Share2, CheckCircle2, Globe, ArrowRight
+  Share2, CheckCircle2, Globe, ArrowRight, Clock, ArrowDownUp,
+  TrendingUp, TrendingDown, ArrowUp, ArrowDown
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { encodePokemon, decodePokemon } from '../lib/utils';
 import { fetchPokemonData } from '../lib/pokeapi';
 import { Pokemon } from '../types/game';
+
+// Helper to sum total IVs
+const getPokemonTotalIv = (p: Pokemon): number => {
+  if (!p.ivs) return 0;
+  return (p.ivs.hp ?? 0) + (p.ivs.attack ?? 0) + (p.ivs.defense ?? 0) + (p.ivs.spAtk ?? 0) + (p.ivs.spDef ?? 0) + (p.ivs.speed ?? 0);
+};
+
+type WonderSort = 'date' | 'iv_desc' | 'iv_asc' | 'lvl_desc' | 'lvl_asc';
 
 // Curated Wonder Trade Mystery Pool (Generations 1 - 9)
 const WONDER_TRADE_POOL: number[] = [
@@ -62,6 +71,7 @@ export const Trade: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   
   // Wonder Trade State
   const [wonderSource, setWonderSource] = useState<'team' | 'box'>('team');
+  const [boxSort, setBoxSort] = useState<WonderSort>('date');
   const [selectedOffer, setSelectedOffer] = useState<Pokemon | null>(null);
   const [wonderStage, setWonderStage] = useState<WonderStage>('select');
   const [partnerTrainer, setPartnerTrainer] = useState<{ name: string; region: string } | null>(null);
@@ -241,10 +251,27 @@ export const Trade: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     }
   };
 
-  // Available Pokémon list based on wonderSource selection
+  // Available Pokémon list based on wonderSource selection and boxSort criteria
   const availablePokemons = useMemo(() => {
-    return wonderSource === 'team' ? state.player.team : state.player.box;
-  }, [wonderSource, state.player.team, state.player.box]);
+    if (wonderSource === 'team') {
+      return state.player.team;
+    }
+    const list = [...state.player.box];
+    switch (boxSort) {
+      case 'date':
+        return list.sort((a, b) => (b.caughtAt || 0) - (a.caughtAt || 0));
+      case 'iv_desc':
+        return list.sort((a, b) => getPokemonTotalIv(b) - getPokemonTotalIv(a));
+      case 'iv_asc':
+        return list.sort((a, b) => getPokemonTotalIv(a) - getPokemonTotalIv(b));
+      case 'lvl_desc':
+        return list.sort((a, b) => (b.level || 1) - (a.level || 1));
+      case 'lvl_asc':
+        return list.sort((a, b) => (a.level || 1) - (b.level || 1));
+      default:
+        return list;
+    }
+  }, [wonderSource, state.player.team, state.player.box, boxSort]);
 
   return (
     <div className="h-full bg-slate-950 text-white flex flex-col relative overflow-hidden font-sans select-none">
@@ -364,6 +391,80 @@ export const Trade: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                   </div>
                 </div>
 
+                {/* Box PC Filter & Sort Options Bar */}
+                {wonderSource === 'box' && state.player.box.length > 0 && (
+                  <div className="flex items-center gap-1.5 overflow-x-auto pb-1 no-scrollbar pt-0.5 px-0.5">
+                    <span className="text-[10px] font-bold text-slate-400 uppercase tracking-wider shrink-0 flex items-center gap-1 mr-0.5">
+                      <ArrowDownUp className="w-3 h-3 text-cyan-400" /> Ordina:
+                    </span>
+                    
+                    <button
+                      onClick={() => setBoxSort('date')}
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
+                        boxSort === 'date'
+                          ? 'bg-cyan-500/20 text-cyan-300 border border-cyan-500/50 shadow-xs'
+                          : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
+                      }`}
+                      title="Ordina per data di cattura (più recenti)"
+                    >
+                      <Clock className="w-3 h-3 text-cyan-400" />
+                      <span>Data (Recenti)</span>
+                    </button>
+
+                    <button
+                      onClick={() => setBoxSort('iv_desc')}
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
+                        boxSort === 'iv_desc'
+                          ? 'bg-emerald-500/20 text-emerald-300 border border-emerald-500/50 shadow-xs'
+                          : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
+                      }`}
+                      title="Ordina per totale IV decrescente"
+                    >
+                      <TrendingUp className="w-3 h-3 text-emerald-400" />
+                      <span>IV Max ➔ Min</span>
+                    </button>
+
+                    <button
+                      onClick={() => setBoxSort('iv_asc')}
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
+                        boxSort === 'iv_asc'
+                          ? 'bg-amber-500/20 text-amber-300 border border-amber-500/50 shadow-xs'
+                          : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
+                      }`}
+                      title="Ordina per totale IV crescente (Pokémon più deboli da scambiare)"
+                    >
+                      <TrendingDown className="w-3 h-3 text-amber-400" />
+                      <span>IV Min ➔ Max</span>
+                    </button>
+
+                    <button
+                      onClick={() => setBoxSort('lvl_desc')}
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
+                        boxSort === 'lvl_desc'
+                          ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/50 shadow-xs'
+                          : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
+                      }`}
+                      title="Ordina per livello decrescente"
+                    >
+                      <ArrowDown className="w-3 h-3 text-indigo-400" />
+                      <span>Livello Max ➔ Min</span>
+                    </button>
+
+                    <button
+                      onClick={() => setBoxSort('lvl_asc')}
+                      className={`px-2.5 py-1 rounded-lg text-[10px] font-bold flex items-center gap-1.5 shrink-0 transition-all cursor-pointer ${
+                        boxSort === 'lvl_asc'
+                          ? 'bg-indigo-500/20 text-indigo-300 border border-indigo-500/50 shadow-xs'
+                          : 'bg-slate-900 text-slate-400 hover:text-slate-200 border border-slate-800'
+                      }`}
+                      title="Ordina per livello crescente"
+                    >
+                      <ArrowUp className="w-3 h-3 text-indigo-400" />
+                      <span>Livello Min ➔ Max</span>
+                    </button>
+                  </div>
+                )}
+
                 {/* Horizontal Pokemon Selector List */}
                 <div className="bg-slate-900/90 border border-slate-800 rounded-2xl p-2.5">
                   {availablePokemons.length === 0 ? (
@@ -374,25 +475,34 @@ export const Trade: React.FC<{ onBack: () => void }> = ({ onBack }) => {
                     <div className="flex gap-2 overflow-x-auto pb-1.5 pt-0.5 no-scrollbar">
                       {availablePokemons.map((p, i) => {
                         const isSelected = (selectedOffer?.instanceId || selectedOffer?.id) === (p.instanceId || p.id);
+                        const totalIv = getPokemonTotalIv(p);
+                        const isIvSort = boxSort === 'iv_desc' || boxSort === 'iv_asc';
                         return (
                           <button
                             key={`wt-offer-${p.instanceId || p.id}-${i}`}
                             onClick={() => setSelectedOffer(p)}
-                            className={`relative flex-shrink-0 w-16 h-20 rounded-xl border-2 transition-all flex flex-col items-center justify-between p-1 cursor-pointer ${
+                            className={`relative flex-shrink-0 w-18 h-22 rounded-xl border-2 transition-all flex flex-col items-center justify-between p-1.5 cursor-pointer ${
                               isSelected
                                 ? 'border-cyan-400 bg-cyan-950/80 shadow-md shadow-cyan-500/20 scale-105'
                                 : 'border-slate-800 bg-slate-950 hover:border-slate-700 opacity-80 hover:opacity-100'
                             }`}
                           >
-                            <span className="text-[9px] font-black text-slate-300">
-                              Lv.{p.level}
-                            </span>
+                            <div className="w-full flex items-center justify-between text-[9px] font-black px-0.5">
+                              <span className="text-slate-300 font-mono">
+                                Lv.{p.level}
+                              </span>
+                              {wonderSource === 'box' && isIvSort && (
+                                <span className="text-[8px] font-mono font-bold text-emerald-400 bg-emerald-950/80 px-1 py-0.2 rounded border border-emerald-500/30">
+                                  {totalIv}
+                                </span>
+                              )}
+                            </div>
                             <img
                               src={p?.sprites?.front || (p as any)?.spriteUrl}
                               alt={p.name}
-                              className="w-9 h-9 object-contain drop-shadow"
+                              className="w-10 h-10 object-contain drop-shadow"
                             />
-                            <span className="text-[8px] font-bold text-white truncate max-w-[56px] uppercase">
+                            <span className="text-[8px] font-bold text-white truncate max-w-[62px] uppercase text-center">
                               {p.nickname || p.name}
                             </span>
                             {p.isShiny && (

@@ -198,30 +198,31 @@ export const PokemonDetails: React.FC<PokemonDetailsProps> = ({
                 </span>
               </div>
               <div className="space-y-3 text-[10px] font-black">
-                <div className="flex items-center gap-2">
-                  <span className="w-9 text-slate-700">HP</span>
-                  <div className="flex-1 text-right text-emerald-600 font-mono">{pokemon.ivs?.hp ?? 0} / {pokemon.evs?.hp || 0}</div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-9 text-slate-700">ATT</span>
-                  <div className="flex-1 text-right text-red-600 font-mono">{pokemon.ivs?.attack ?? 0} / {pokemon.evs?.attack || 0}</div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-9 text-slate-700">DIF</span>
-                  <div className="flex-1 text-right text-blue-600 font-mono">{pokemon.ivs?.defense ?? 0} / {pokemon.evs?.defense || 0}</div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-9 text-slate-700">S.ATT</span>
-                  <div className="flex-1 text-right text-purple-600 font-mono">{pokemon.ivs?.spAtk ?? 0} / {pokemon.evs?.spAtk || 0}</div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-9 text-slate-700">S.DIF</span>
-                  <div className="flex-1 text-right text-teal-600 font-mono">{pokemon.ivs?.spDef ?? 0} / {pokemon.evs?.spDef || 0}</div>
-                </div>
-                <div className="flex items-center gap-2">
-                  <span className="w-9 text-slate-700">VEL</span>
-                  <div className="flex-1 text-right text-amber-600 font-mono">{pokemon.ivs?.speed ?? 0} / {pokemon.evs?.speed || 0}</div>
-                </div>
+                {[
+                  { label: 'HP', iv: pokemon.ivs?.hp ?? 0, ev: pokemon.evs?.hp || 0, color: 'text-emerald-600' },
+                  { label: 'ATT', iv: pokemon.ivs?.attack ?? 0, ev: pokemon.evs?.attack || 0, color: 'text-red-600' },
+                  { label: 'DIF', iv: pokemon.ivs?.defense ?? 0, ev: pokemon.evs?.defense || 0, color: 'text-blue-600' },
+                  { label: 'S.ATT', iv: pokemon.ivs?.spAtk ?? 0, ev: pokemon.evs?.spAtk || 0, color: 'text-purple-600' },
+                  { label: 'S.DIF', iv: pokemon.ivs?.spDef ?? 0, ev: pokemon.evs?.spDef || 0, color: 'text-teal-600' },
+                  { label: 'VEL', iv: pokemon.ivs?.speed ?? 0, ev: pokemon.evs?.speed || 0, color: 'text-amber-600' },
+                ].map(({ label, iv, ev, color }) => (
+                  <div key={label} className="flex items-center justify-between">
+                    <div className="flex items-center gap-1.5 min-w-[50px]">
+                      <span className="text-slate-700">{label}</span>
+                      {iv === 31 && (
+                        <span 
+                          className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_6px_rgba(16,185,129,0.9)] inline-block shrink-0 animate-pulse" 
+                          title="IV Massimo (31 Perfetto)"
+                        />
+                      )}
+                    </div>
+                    <div className={`text-right font-mono ${color}`}>
+                      <span className={iv === 31 ? 'font-black text-emerald-600' : ''}>{iv}</span>
+                      <span className="text-slate-400 font-normal"> / </span>
+                      <span>{ev}</span>
+                    </div>
+                  </div>
+                ))}
               </div>
             </div>
           </div>
