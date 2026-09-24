@@ -58,4 +58,37 @@ describe('Pokemon Import & Normalization', () => {
     expect(normalized.experience).toBe(0);
     expect(normalized.nextLevelExp).toBe(127); // 7^3 - 6^3 = 343 - 216 = 127
   });
+
+  it('should auto-correct mismatched species ID (e.g. name Poliwrath with legacy ID 61 -> resolved to 62)', () => {
+    const mismatchedPokemon = {
+      id: 61,
+      name: 'Poliwrath',
+      level: 56,
+      types: ['water', 'fighting']
+    };
+
+    const normalized = normalizePokemon(mismatchedPokemon);
+    expect(normalized.id).toBe(62);
+    expect(normalized.sprites.artwork).toBe('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/official-artwork/62.png');
+    expect(normalized.sprites.front).toBe('https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/62.png');
+  });
+
+  it('should safely normalize Pokemon with object/non-string sprites structures without throwing', () => {
+    const rawWithNestedSprites = {
+      id: 25,
+      name: 'Pikachu',
+      level: 10,
+      sprites: {
+        animated: { front_default: 'https://example.com/pika.gif' },
+        artwork: { front_default: 'https://example.com/pika.png' },
+        front: null
+      }
+    };
+
+    expect(() => normalizePokemon(rawWithNestedSprites)).not.toThrow();
+    const normalized = normalizePokemon(rawWithNestedSprites);
+    expect(normalized.sprites).toBeDefined();
+    expect(typeof normalized.sprites.artwork).toBe('string');
+    expect(typeof normalized.sprites.animated).toBe('string');
+  });
 });

@@ -97,42 +97,58 @@ function normalizeLoadedState(parsed: any): GameState {
   };
 }
 
-export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [isStorageReady, setIsStorageReady] = useState(false);
-
-  // Fast initial sync state from localStorage (if any) to prevent initial render lag
-  const [state, setState] = useState<GameState>(() => {
-    try {
-      const saved = localStorage.getItem('pokepwa_save');
-      if (!saved) return INITIAL_STATE;
+function getInitialGameState(): GameState {
+  try {
+    // 1. Try primary localStorage
+    const saved = localStorage.getItem('pokepwa_save');
+    if (saved) {
       const parsed = JSON.parse(saved);
-      return normalizeLoadedState(parsed);
-    } catch {
-      return INITIAL_STATE;
-    }
-  });
-
-  // Asynchronous IndexedDB verification & load
-  useEffect(() => {
-    let isMounted = true;
-
-    async function loadFromIndexedDB() {
-      try {
-        const idbData = await getStorageItem<any>('pokepwa_save');
-        if (idbData && isMounted) {
-          const normalized = normalizeLoadedState(idbData);
-          setState(normalized);
-        }
-      } catch (err) {
-        console.warn('[GameProvider] Error reading from IndexedDB:', err);
-      } finally {
-        if (isMounted) {
-          setIsStorageReady(true);
-        }
+      if (parsed && parsed.player) {
+        return normalizeLoadedState(parsed);
       }
     }
 
-    loadFromIndexedDB();
+    // 2. Try backup snapshot localStorage
+    const backup = localStorage.getItem('pokepwa_save_backup');
+    if (backup) {
+      const parsedBackup = JSON.parse(backup);
+      if (parsedBackup && parsedBackup.player) {
+        return normalizeLoadedState(parsedBackup);
+      }
+    }
+  } catch (err) {
+    console.error('[GameProvider] Error reading synchronous localStorage:', err);
+  }
+  return INITIAL_STATE;
+}
+
+export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+  const [state, setState] = useState<GameState>(() => getInitialGameState());
+  const [isStorageReady, setIsStorageReady] = useState(true);
+  const isFirstMount = React.useRef(true);
+
+  // Background IndexedDB verification & recovery if localStorage was cleared
+  useEffect(() => {
+    let isMounted = true;
+
+    async function checkIndexedDB() {
+      try {
+        const idbData = await getStorageItem<any>('pokepwa_save');
+        if (idbData && idbData.player && isMounted) {
+          setState(current => {
+            // If current state in memory has no team but IndexedDB has a valid team, restore it!
+            if ((!current.player.team || current.player.team.length === 0) && (idbData.player.team && idbData.player.team.length > 0)) {
+              return normalizeLoadedState(idbData);
+            }
+            return current;
+          });
+        }
+      } catch (err) {
+        console.warn('[GameProvider] Error reading from IndexedDB:', err);
+      }
+    }
+
+    checkIndexedDB();
 
     return () => {
       isMounted = false;
@@ -140,13 +156,30 @@ export const GameProvider: React.FC<{ children: React.ReactNode }> = ({ children
   }, []);
 
   const saveGame = useCallback(() => {
-    // Saves directly to IndexedDB (asynchronous with safe localStorage mirroring)
+    try {
+      const serialized = JSON.stringify(state);
+      localStorage.setItem('pokepwa_save', serialized);
+      
+      // Keep safety backup whenever team has members
+      if (state.player && state.player.team && state.player.team.length > 0) {
+        localStorage.setItem('pokepwa_save_backup', serialized);
+      }
+    } catch {
+      // LocalStorage quota reached, IndexedDB will handle the full dataset
+    }
+
+    // Direct background sync with IndexedDB
     setStorageItem('pokepwa_save', state).catch(err => {
-      console.error('[GameProvider] Save failed:', err);
+      console.error('[GameProvider] IDB save failed:', err);
     });
   }, [state]);
 
+  // Synchronous autosave on any state changes after the initial mount
   useEffect(() => {
+    if (isFirstMount.current) {
+      isFirstMount.current = false;
+      return;
+    }
     saveGame();
   }, [state, saveGame]);
 

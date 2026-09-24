@@ -99,8 +99,12 @@ export const Team: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               {i + 1}
             </button>
 
-            <div className="w-20 h-20 bg-gray-50 rounded-2xl flex items-center justify-center p-2 relative z-10">
-              <img src={pokemon?.sprites?.artwork || pokemon?.sprites?.front || (pokemon as any)?.spriteUrl} alt={pokemon.name} className="w-full h-full object-contain" />
+            <div className="w-20 h-20 bg-gray-50 rounded-2xl flex items-center justify-center p-2 relative z-10 shrink-0">
+              <img 
+                src={pokemon?.sprites?.artwork || pokemon?.sprites?.front || (pokemon as any)?.spriteUrl} 
+                alt={pokemon.name} 
+                className="w-full h-full object-contain drop-shadow-md transform scale-110" 
+              />
             </div>
             
             <div className="flex-1 relative z-10">

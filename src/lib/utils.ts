@@ -1,19 +1,23 @@
 import { Pokemon, GameState } from '../types/game';
 import { getMoveByName } from '../data/movesData';
+import { resolveCanonicalPokemonId } from '../data/pokemonSpeciesMap';
+import { POKEMON_FALLBACKS } from '../data/pokemonFallbacks';
 
 /**
  * Normalizes any raw Pokemon object (from storage or N64/Base64 import)
- * to ensure all sprite properties and required fields are guaranteed present.
+ * to ensure all sprite properties and required fields are guaranteed present and canonical.
  */
 export function normalizePokemon(raw: any): Pokemon {
-  const pokemonId = typeof raw.pokemonId === 'number' && raw.pokemonId > 0
+  const rawId = typeof raw.pokemonId === 'number' && raw.pokemonId > 0
     ? raw.pokemonId 
     : (typeof raw.baseSpeciesId === 'number' && raw.baseSpeciesId > 0
         ? raw.baseSpeciesId 
         : (typeof raw.id === 'number' && raw.id > 0 ? raw.id : (parseInt(raw.id, 10) || 1)));
 
+  // Resolve canonical ID (e.g. if name is 'Poliwrath' but id was 61, resolves to 62)
+  const pokemonId = resolveCanonicalPokemonId(raw.name || raw.species || raw.speciesName, rawId);
+
   const sprites = raw.sprites || {};
-  
   const isShiny = Boolean(raw.isShiny);
   
   // Official PokeAPI Image URLs
@@ -31,20 +35,33 @@ export function normalizePokemon(raw: any): Pokemon {
     ? `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/shiny/${pokemonId}.gif`
     : `https://raw.githubusercontent.com/PokeAPI/sprites/master/sprites/pokemon/other/showdown/${pokemonId}.gif`;
 
-  const customImg = raw.spriteUrl || raw.sprite || raw.image;
+  const customImg = typeof raw.spriteUrl === 'string' ? raw.spriteUrl : (typeof raw.sprite === 'string' ? raw.sprite : (typeof raw.image === 'string' ? raw.image : undefined));
 
-  // Artwork: prefer sprites.artwork or customImg or official artwork
-  const artwork = sprites.artwork || customImg || officialArtworkUrl;
+  const rawArtwork = typeof sprites.artwork === 'string' ? sprites.artwork : (typeof sprites.artwork?.front_default === 'string' ? sprites.artwork.front_default : undefined);
+  const rawFront = typeof sprites.front === 'string' ? sprites.front : (typeof sprites.front_default === 'string' ? sprites.front_default : undefined);
+  const rawBack = typeof sprites.back === 'string' ? sprites.back : (typeof sprites.back_default === 'string' ? sprites.back_default : undefined);
+  const rawAnimated = typeof sprites.animated === 'string' ? sprites.animated : (typeof sprites.animated?.front_default === 'string' ? sprites.animated.front_default : undefined);
+  const rawHome = typeof sprites.home === 'string' ? sprites.home : undefined;
+
+  // Artwork: Official high-resolution artwork
+  let artwork = officialArtworkUrl;
+  if (rawArtwork && !rawArtwork.includes('PokeAPI') && !rawArtwork.includes('raw.githubusercontent.com')) {
+    artwork = rawArtwork;
+  } else if (customImg && !customImg.includes('PokeAPI') && !customImg.includes('raw.githubusercontent.com')) {
+    artwork = customImg;
+  }
 
   // Front sprite (pixel sprite for box, team icons, grid):
-  // If sprites.front or customImg is NOT an official-artwork HD image, keep it; otherwise use classic pixel sprite
-  const front = (sprites.front && !sprites.front.includes('official-artwork'))
-    ? sprites.front
-    : ((customImg && !customImg.includes('official-artwork')) ? customImg : frontSpriteUrl);
+  let front = frontSpriteUrl;
+  if (rawFront && !rawFront.includes('PokeAPI') && !rawFront.includes('raw.githubusercontent.com')) {
+    front = rawFront;
+  } else if (customImg && !customImg.includes('PokeAPI') && !customImg.includes('raw.githubusercontent.com')) {
+    front = customImg;
+  }
 
-  const back = sprites.back || backSpriteUrl;
-  const home = sprites.home || homeSpriteUrl;
-  const animated = sprites.animated || showdownSpriteUrl;
+  const back = (rawBack && !rawBack.includes('PokeAPI') && !rawBack.includes('raw.githubusercontent.com')) ? rawBack : backSpriteUrl;
+  const home = rawHome || homeSpriteUrl;
+  const animated = (rawAnimated && !rawAnimated.includes('PokeAPI') && !rawAnimated.includes('raw.githubusercontent.com')) ? rawAnimated : showdownSpriteUrl;
 
   // Moves normalization using getMoveByName
   const rawMoves = Array.isArray(raw.moves) ? raw.moves : [];

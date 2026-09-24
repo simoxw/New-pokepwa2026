@@ -31,7 +31,7 @@ import { BattleTower } from './components/BattleTower';
 import { playBgm } from './lib/sound';
 
 function GameContent() {
-  const { state, setState } = useGame();
+  const { state, setState, isStorageReady } = useGame();
   // Quest Progress Checker
   useEffect(() => {
     const caughtCount = Object.values(state.player.pokedex).filter(s => s === 'caught').length;
@@ -101,10 +101,13 @@ function GameContent() {
   const [activeBattleModifiers, setActiveBattleModifiers] = useState<any>(null);
 
   useEffect(() => {
+    if (!isStorageReady) return;
     if (state.player.team.length === 0) {
       setShowStarterSelect(true);
+    } else {
+      setShowStarterSelect(false);
     }
-  }, [state.player.team.length]);
+  }, [state.player.team.length, isStorageReady]);
 
   useEffect(() => {
     if (!activeBattle) {

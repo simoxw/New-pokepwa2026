@@ -71,6 +71,19 @@ export async function getStorageItem<T>(key: string): Promise<T | null> {
         return localRaw as unknown as T;
       }
     }
+
+    // Check backup recovery if primary key was empty
+    if (key === 'pokepwa_save') {
+      const backupRaw = localStorage.getItem('pokepwa_save_backup') || localStorage.getItem('pokepwa_save_bak');
+      if (backupRaw) {
+        try {
+          const backupParsed = JSON.parse(backupRaw) as T;
+          console.info('[Storage] Recovered progress from backup save snapshot.');
+          setStorageItem(key, backupParsed).catch(console.error);
+          return backupParsed;
+        } catch { /* ignore */ }
+      }
+    }
   } catch (err) {
     console.warn('[Storage] localStorage read error:', err);
   }
@@ -100,6 +113,11 @@ export async function setStorageItem<T>(key: string, value: T): Promise<void> {
   try {
     const serialized = typeof value === 'string' ? value : JSON.stringify(value);
     localStorage.setItem(key, serialized);
+
+    // Maintain a safety snapshot backup
+    if (key === 'pokepwa_save' && value && (value as any).player && (value as any).player.team?.length > 0) {
+      localStorage.setItem('pokepwa_save_backup', serialized);
+    }
   } catch {
     // Expected when data exceeds 5MB - IndexedDB already holds the primary source of truth!
   }
