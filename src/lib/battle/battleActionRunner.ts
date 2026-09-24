@@ -357,7 +357,7 @@ export function executeMoveAction(
 
   // Boss Vampirico mutation heal
   if (!isPlayer && options?.bossMutationType === 'vampirico' && finalDamage > 0 && curUserHp > 0) {
-    const vampHeal = Math.max(1, Math.floor(finalDamage * 0.15));
+    const vampHeal = Math.max(1, Math.floor(finalDamage * 0.20));
     curUserHp = Math.min(user.maxHp, curUserHp + vampHeal);
     setUserHp(curUserHp);
     addLog(`🩸 Boss Vampirico rigenera ${vampHeal} PS dall'attacco!`);

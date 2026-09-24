@@ -129,9 +129,9 @@ export function calculateDamage(
     baseDamage = Math.floor(baseDamage * options.incomingDamageMultiplier);
   }
   if (options.bossMutationType === 'corazzato') {
-    baseDamage = Math.floor(baseDamage * 0.85); // -15% damage taken
+    baseDamage = Math.floor(baseDamage * 0.75); // -25% damage taken
   } else if (options.bossMutationType === 'overclocked') {
-    baseDamage = Math.floor(baseDamage * 1.10); // +10% damage dealt by boss
+    baseDamage = Math.floor(baseDamage * 1.15); // +15% damage dealt by boss
   }
 
   return {

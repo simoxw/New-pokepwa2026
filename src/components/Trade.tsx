@@ -108,7 +108,8 @@ export const Trade: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     
     const importedPokemon: Pokemon = {
       ...pokemon,
-      instanceId: `${pokemon.id}_${Math.random().toString(36).substring(2, 11)}_${Date.now()}_${Math.floor(Math.random() * 10000)}`
+      instanceId: `${pokemon.id}_${Math.random().toString(36).substring(2, 11)}_${Date.now()}_${Math.floor(Math.random() * 10000)}`,
+      caughtAt: Date.now()
     };
 
     setState(prev => ({
@@ -183,6 +184,7 @@ export const Trade: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       const finalizedPokemon: Pokemon = {
         ...incomingPoke,
         instanceId: `wt_${mysteryId}_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`,
+        caughtAt: Date.now(),
         originalTrainer: `${trainer.name} (${trainer.region})`,
         caughtLocation: 'Scambio Prodigioso'
       };

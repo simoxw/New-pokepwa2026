@@ -35,19 +35,19 @@ export const BOSS_MUTATIONS: Record<BossMutationType, BossMutationInfo> = {
   corazzato: {
     type: 'corazzato',
     name: 'Boss Corazzato',
-    description: 'Subisce il -15% di danni da tutti gli attacchi.',
+    description: 'Subisce il -25% di danni da tutti gli attacchi.',
     icon: '🛡️'
   },
   overclocked: {
     type: 'overclocked',
     name: 'Boss Overclocked',
-    description: '+15% Velocità e +10% Danno inflitto.',
+    description: '+20% Velocità e +15% Danno inflitto.',
     icon: '⚡'
   },
   vampirico: {
     type: 'vampirico',
     name: 'Boss Vampirico',
-    description: 'Ruba il 10% dei danni inflitti per rigenerare PS.',
+    description: 'Ruba il 20% dei danni inflitti per rigenerare PS.',
     icon: '🩸'
   },
   corrotto: {
@@ -522,17 +522,18 @@ export async function generateTowerOpponent(floor: number): Promise<Trainer & { 
     try {
       let poke = await fetchPokemonData(pokeId, Math.max(1, level));
 
-      // Boss Pokemon optimization: Perfect IVs (31) and Max EVs (252)
+      // Boss Pokemon optimization: Perfect IVs (31) and Max EVs (252) + 15% Boss HP
       if (isBoss) {
         const perfectIvs = { hp: 31, attack: 31, defense: 31, spAtk: 31, spDef: 31, speed: 31 };
         const maxEvs = { hp: 128, attack: 252, defense: 0, spAtk: 252, spDef: 0, speed: 252 };
         const updatedStats = calculateStats(poke.baseStats, level, perfectIvs, maxEvs, poke.nature);
+        const bossHp = Math.floor(updatedStats.hp * 1.15);
         poke = {
           ...poke,
           ivs: perfectIvs,
           evs: maxEvs,
-          hp: updatedStats.hp,
-          maxHp: updatedStats.hp,
+          hp: bossHp,
+          maxHp: bossHp,
           stats: {
             attack: updatedStats.attack,
             defense: updatedStats.defense,
