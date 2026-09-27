@@ -75,6 +75,18 @@ describe('Status Effects', () => {
       const result = getStatusEffect(p);
       expect(result.damage).toBe(6); // 100 / 16 = 6.25 -> 6
     });
+
+    it('should calculate badly-poisoned (toxic) damage progressively', () => {
+      const pTurn1 = mockPokemon({ status: 'badly-poisoned', maxHp: 160, statusDuration: 1 });
+      const res1 = getStatusEffect(pTurn1);
+      expect(res1.damage).toBe(10); // 160 * 1 / 16 = 10
+      expect(res1.nextDuration).toBe(2);
+
+      const pTurn2 = mockPokemon({ status: 'badly-poisoned', maxHp: 160, statusDuration: 2 });
+      const res2 = getStatusEffect(pTurn2);
+      expect(res2.damage).toBe(20); // 160 * 2 / 16 = 20
+      expect(res2.nextDuration).toBe(3);
+    });
   });
 
   describe('applyStatusStatModifiers', () => {

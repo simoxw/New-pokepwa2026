@@ -4,6 +4,7 @@ import { calculateDamage, getAccuracyMultiplier, CalculateDamageOptions } from '
 import { isImmuneToStatus, VolatileStatus } from './statusEffects';
 import { checkAbility } from './abilities';
 import { playProtect, playHit } from '../sound';
+import { SideHazards, setHazardFromMove } from './hazards';
 
 export interface ExecuteMoveResult {
   nextUserHp: number;
@@ -69,6 +70,10 @@ export function executeMoveAction(
     lifestealPercent?: number;
     dodgeChance?: number;
     accuracyPenalty?: number;
+    userSideHazards?: SideHazards;
+    setUserSideHazards?: React.Dispatch<React.SetStateAction<SideHazards>>;
+    targetSideHazards?: SideHazards;
+    setTargetSideHazards?: React.Dispatch<React.SetStateAction<SideHazards>>;
   }
 ): ExecuteMoveResult {
   // Quantum Dodge Check
@@ -244,6 +249,7 @@ export function executeMoveAction(
       const STATUS_MESSAGES: Record<StatusCondition, string> = {
         paralyzed: `${target.name} è rimasto paralizzato! Potrebbe non riuscire a muoversi!`,
         poisoned: `${target.name} è stato avvelenato!`,
+        'badly-poisoned': `${target.name} è stato gravemente avvelenato!`,
         sleep: `${target.name} si è addormentato!`,
         burned: `${target.name} si è scottato!`,
         frozen: `${target.name} è stato congelato!`
@@ -276,6 +282,17 @@ export function executeMoveAction(
     }
     if (move.statusEffect) {
       applyStatusCondition(move.statusEffect, move.effectChance);
+    }
+    // Hazard setting status moves (e.g., Stealth Rock, Spikes, Toxic Spikes, Sticky Web)
+    if (options?.targetSideHazards && options?.setTargetSideHazards) {
+      const hazardCheck = setHazardFromMove(move.name, options.targetSideHazards, options.userSideHazards);
+      if (hazardCheck.msg) {
+        addLog(hazardCheck.msg);
+        options.setTargetSideHazards(hazardCheck.updatedTargetSide);
+        if (hazardCheck.updatedUserSide && options.setUserSideHazards) {
+          options.setUserSideHazards(hazardCheck.updatedUserSide);
+        }
+      }
     }
     // Confusion status move (e.g. Supersonic, Confuse Ray)
     if (move.confusionChance) {
@@ -415,6 +432,16 @@ export function executeMoveAction(
     curUserHp = Math.max(0, curUserHp - recoilDmg);
     setUserHp(curUserHp);
     addLog(`${user.name} risente del contraccolpo! (-${recoilDmg} PS)`);
+  }
+
+  // Hazard clearing attacking moves (e.g., Rapid Spin)
+  const mNameLower = move.name.toLowerCase();
+  if ((mNameLower.includes('rapid-spin') || mNameLower.includes('rapidsguardo')) && options?.userSideHazards && options?.setUserSideHazards) {
+    const hazardCheck = setHazardFromMove(move.name, options.targetSideHazards || {}, options.userSideHazards);
+    if (hazardCheck.msg) {
+      addLog(hazardCheck.msg);
+      if (hazardCheck.updatedUserSide) options.setUserSideHazards(hazardCheck.updatedUserSide);
+    }
   }
 
   // 4c. SECONDARY EFFECTS (Status, Stat Changes, Confusion, Flinch)

@@ -1,4 +1,4 @@
-export type StatusCondition = 'paralyzed' | 'poisoned' | 'sleep' | 'frozen' | 'burned';
+export type StatusCondition = 'paralyzed' | 'poisoned' | 'badly-poisoned' | 'sleep' | 'frozen' | 'burned';
 
 export interface Pokemon {
   id: number;
@@ -124,7 +124,7 @@ export interface Move {
   confusionChance?: number; // chance 0-100 to confuse target
   stat_changes?: StatChange[];
   stat_changes_target?: 'user' | 'target';
-  statusEffect?: 'paralyzed' | 'poisoned' | 'sleep' | 'frozen' | 'burned';
+  statusEffect?: 'paralyzed' | 'poisoned' | 'badly-poisoned' | 'sleep' | 'frozen' | 'burned';
   effectChance?: number;
   target?: string;
   description?: string;

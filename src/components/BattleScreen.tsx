@@ -11,6 +11,7 @@ import { PostBattleScreen, PostBattleData } from './battle/PostBattleScreen';
 import { calculateDamage, getAccuracyMultiplier, getStageMultiplier } from '../lib/battle/battleMath';
 import { executeMoveAction } from '../lib/battle/battleActionRunner';
 import { selectEnemyMove } from '../lib/battle/battleAi';
+import { SideHazards, defaultSideHazards, processEntryHazards } from '../lib/battle/hazards';
 import { 
   canMove, 
   getStatusEffect, 
@@ -144,6 +145,10 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
   // Volatile Status (Confusion, Flinch)
   const [playerVolatile, setPlayerVolatile] = useState<VolatileStatus>({});
   const [enemyVolatile, setEnemyVolatile] = useState<VolatileStatus>({});
+
+  // Side Hazards
+  const [playerSideHazards, setPlayerSideHazards] = useState<SideHazards>(defaultSideHazards());
+  const [enemySideHazards, setEnemySideHazards] = useState<SideHazards>(defaultSideHazards());
 
   // Stat Stages (-6 to +6)
   const [playerStages, setPlayerStages] = useState<BattleStages>({
@@ -279,12 +284,13 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     }));
   }, []);
 
-  // End-of-turn status tick (Burn, Poison)
+  // End-of-turn status tick (Burn, Poison, Bad Poison)
   const handleStatusEndTurn = useCallback(async (
     target: Pokemon, 
     currentHp: number, 
     setHp: (val: number) => void,
-    status: StatusCondition | undefined
+    status: StatusCondition | undefined,
+    setStatusState?: React.Dispatch<React.SetStateAction<{ status?: StatusCondition; duration?: number }>>
   ) => {
     if (!status || currentHp <= 0) return currentHp;
     const effect = getStatusEffect({ ...target, status });
@@ -292,6 +298,9 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       addLog(effect.msg!);
       const newHp = Math.max(0, currentHp - effect.damage);
       setHp(newHp);
+      if (effect.nextDuration !== undefined && setStatusState) {
+        setStatusState(prev => ({ ...prev, duration: effect.nextDuration }));
+      }
       await new Promise(r => setTimeout(r, 800));
       return newHp;
     }
@@ -459,16 +468,35 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
         addLog(`${trainer.name} sta per mandare in campo ${nextEnemy.name}!`);
         await new Promise(r => setTimeout(r, 1500));
         
+        const enemyHazardRes = processEntryHazards(nextEnemy, nextEnemy.hp, enemySideHazards, nextEnemy.status);
+        let nextEnemyHpVal = enemyHazardRes.nextHp;
+        let nextEnemyStatusVal = enemyHazardRes.nextStatus;
+        if (enemyHazardRes.logs.length > 0) {
+          enemyHazardRes.logs.forEach(msg => addLog(msg));
+        }
+        setEnemySideHazards(enemyHazardRes.updatedSideHazards);
+
         setEnemy(nextEnemy);
-        setEnemyHp(nextEnemy.hp);
+        setEnemyHp(nextEnemyHpVal);
         setEnemyMoves(nextEnemy.moves.map(m => ({
           ...m,
           pp: typeof m.pp === 'number' ? m.pp : (m.maxPp ?? 35),
           maxPp: m.maxPp ?? m.pp ?? 35
         })));
-        setEnemyStatus({ status: nextEnemy.status, duration: nextEnemy.statusDuration });
-        setEnemyStages({ attack: 0, defense: 0, spAtk: 0, spDef: 0, speed: 0, accuracy: 0, evasion: 0 });
+        setEnemyStatus({ status: nextEnemyStatusVal, duration: enemyHazardRes.nextStatusDuration ?? nextEnemy.statusDuration });
+        const newEnemyStages = { attack: 0, defense: 0, spAtk: 0, spDef: 0, speed: 0, accuracy: 0, evasion: 0 };
+        if (enemyHazardRes.nextSpeedStageDelta) {
+          newEnemyStages.speed = Math.max(-6, Math.min(6, enemyHazardRes.nextSpeedStageDelta));
+        }
+        setEnemyStages(newEnemyStages);
         setEnemyVolatile({});
+
+        if (nextEnemyHpVal <= 0) {
+          addLog(`${nextEnemy.name} è k.o. a causa delle trappole sul campo!`);
+          await handleWin(finalPlayerHp);
+          return;
+        }
+
         setIsAnimating(false);
         return;
       }
@@ -567,7 +595,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     
     setState(prev => {
       const team = [...prev.player.team];
-      team[0] = { ...team[0], hp: 0 };
+      team[0] = { ...team[0], hp: 0, status: undefined, statusDuration: undefined };
       return { ...prev, player: { ...prev.player, team } };
     });
 
@@ -656,7 +684,13 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       setPlayerHp,
       false,
       true,
-      addLog
+      addLog,
+      {
+        userSideHazards: enemySideHazards,
+        setUserSideHazards: setEnemySideHazards,
+        targetSideHazards: playerSideHazards,
+        setTargetSideHazards: setPlayerSideHazards
+      }
     );
 
     if (res.userFainted) {
@@ -673,14 +707,14 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     const liveEnemyStatus = res.nextUserStatus || enemyStatus;
 
     let nextPlayerHp = res.nextTargetHp;
-    nextPlayerHp = await handleStatusEndTurn(playerActive, nextPlayerHp, setPlayerHp, livePlayerStatus.status);
+    nextPlayerHp = await handleStatusEndTurn(playerActive, nextPlayerHp, setPlayerHp, livePlayerStatus.status, setPlayerStatus);
     if (nextPlayerHp <= 0) {
       await handlePlayerFaint();
       return;
     }
 
     let nextEnemyHp = res.nextUserHp;
-    nextEnemyHp = await handleStatusEndTurn(enemy, nextEnemyHp, setEnemyHp, liveEnemyStatus.status);
+    nextEnemyHp = await handleStatusEndTurn(enemy, nextEnemyHp, setEnemyHp, liveEnemyStatus.status, setEnemyStatus);
     if (nextEnemyHp <= 0) {
       await handleWin(nextPlayerHp);
       return;
@@ -943,12 +977,20 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
         critChanceBonus: towerCritChanceBonus,
         lifestealPercent: towerLifeStealPercent,
         accuracyPenalty: towerAccuracyPenalty,
-        bossMutationType: bossMutation?.type
+        bossMutationType: bossMutation?.type,
+        userSideHazards: playerSideHazards,
+        setUserSideHazards: setPlayerSideHazards,
+        targetSideHazards: enemySideHazards,
+        setTargetSideHazards: setEnemySideHazards
       } : {
         defenseMultiplier: towerDefMult,
         incomingDamageMultiplier: towerIncomingDmgMult,
         dodgeChance: towerDodgeChance,
-        bossMutationType: bossMutation?.type
+        bossMutationType: bossMutation?.type,
+        userSideHazards: enemySideHazards,
+        setUserSideHazards: setEnemySideHazards,
+        targetSideHazards: playerSideHazards,
+        setTargetSideHazards: setPlayerSideHazards
       };
 
       const actionRes = executeMoveAction(
@@ -1059,14 +1101,14 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     setEnemyVolatile(prev => ({ ...prev, isFlinched: false, isProtected: false }));
 
     // Player status damage (Poison / Burn)
-    curPlayerHp = await handleStatusEndTurn(playerActive, curPlayerHp, setPlayerHp, livePlayerStatus.status);
+    curPlayerHp = await handleStatusEndTurn(playerActive, curPlayerHp, setPlayerHp, livePlayerStatus.status, setPlayerStatus);
     if (curPlayerHp <= 0) {
       await handlePlayerFaint();
       return;
     }
 
     // Enemy status damage (Poison / Burn)
-    curEnemyHp = await handleStatusEndTurn(enemy, curEnemyHp, setEnemyHp, liveEnemyStatus.status);
+    curEnemyHp = await handleStatusEndTurn(enemy, curEnemyHp, setEnemyHp, liveEnemyStatus.status, setEnemyStatus);
     if (curEnemyHp <= 0) {
       await handleWin(curPlayerHp);
       return;
@@ -1200,7 +1242,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
         ...team[0], 
         hp: playerHp, 
         status: playerStatus.status, 
-        statusDuration: playerStatus.duration,
+        statusDuration: playerStatus.status === 'badly-poisoned' ? 1 : playerStatus.duration,
         moves: playerMoves 
       };
       const [removed] = team.splice(index, 1);
@@ -1208,17 +1250,40 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       return { ...prev, player: { ...prev.player, team } };
     });
 
-    setPlayerHp(nextPkmn.hp);
+    // Process Entry Hazards on incoming Pokemon
+    const hazardRes = processEntryHazards(nextPkmn, nextPkmn.hp, playerSideHazards, nextPkmn.status);
+    let switchedHp = hazardRes.nextHp;
+    let switchedStatus = hazardRes.nextStatus;
+    
+    if (hazardRes.logs.length > 0) {
+      hazardRes.logs.forEach(msg => addLog(msg));
+    }
+    setPlayerSideHazards(hazardRes.updatedSideHazards);
+    setPlayerHp(switchedHp);
     setPlayerMoves(nextPkmn.moves.map(m => ({
       ...m,
       pp: typeof m.pp === 'number' ? m.pp : (m.maxPp ?? 35),
       maxPp: m.maxPp ?? m.pp ?? 35
     })));
-    setPlayerStatus({ status: nextPkmn.status, duration: nextPkmn.statusDuration });
+    setPlayerStatus({ 
+      status: switchedStatus, 
+      duration: hazardRes.nextStatusDuration ?? nextPkmn.statusDuration 
+    });
+    if (hazardRes.nextSpeedStageDelta) {
+      setPlayerStages(prev => ({ 
+        ...prev, 
+        speed: Math.max(-6, Math.min(6, prev.speed + hazardRes.nextSpeedStageDelta!)) 
+      }));
+    }
     setShowSwitch(false);
     
+    if (switchedHp <= 0) {
+      await handlePlayerFaint();
+      return;
+    }
+
     if (!wasFainted) {
-      await triggerEnemySingleTurn(nextPkmn.hp, enemyHp);
+      await triggerEnemySingleTurn(switchedHp, enemyHp);
     } else {
       setIsAnimating(false);
     }

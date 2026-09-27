@@ -1,6 +1,6 @@
-import { Pokemon, Move } from '../../types/game';
+import { Pokemon, Move, StatusCondition } from '../../types/game';
 
-export type StatusCondition = 'paralyzed' | 'poisoned' | 'sleep' | 'frozen' | 'burned';
+export type { StatusCondition };
 
 export interface VolatileStatus {
   confusionTurns?: number;
@@ -135,9 +135,10 @@ export function canMove(pokemon: Pokemon): {
       };
 
     case 'poisoned':
+    case 'badly-poisoned':
       return { 
         canMove: true, 
-        newStatus: 'poisoned', 
+        newStatus: pokemon.status, 
         newDuration: pokemon.statusDuration 
       };
 
@@ -157,7 +158,7 @@ export function canMove(pokemon: Pokemon): {
   }
 }
 
-export function getStatusEffect(pokemon: Pokemon): { damage?: number; msg?: string } {
+export function getStatusEffect(pokemon: Pokemon): { damage?: number; msg?: string; nextDuration?: number } {
   if (!pokemon.status) return {};
 
   switch (pokemon.status) {
@@ -166,6 +167,15 @@ export function getStatusEffect(pokemon: Pokemon): { damage?: number; msg?: stri
         damage: Math.max(1, Math.floor(pokemon.maxHp / 8)), 
         msg: `${pokemon.name} soffre per il veleno!` 
       };
+    case 'badly-poisoned': {
+      const counter = Math.max(1, pokemon.statusDuration || 1);
+      const dmg = Math.max(1, Math.floor((pokemon.maxHp * counter) / 16));
+      return {
+        damage: dmg,
+        msg: `${pokemon.name} soffre per l'iperavvelenamento!`,
+        nextDuration: Math.min(15, counter + 1)
+      };
+    }
     case 'burned':
       return { 
         damage: Math.max(1, Math.floor(pokemon.maxHp / 16)), 
@@ -184,6 +194,7 @@ export function isImmuneToStatus(types: string[], status: StatusCondition): bool
     case 'burned':
       return lowerTypes.includes('fire');
     case 'poisoned':
+    case 'badly-poisoned':
       return lowerTypes.includes('poison') || lowerTypes.includes('steel');
     case 'frozen':
       return lowerTypes.includes('ice');

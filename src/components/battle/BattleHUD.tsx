@@ -32,6 +32,7 @@ export const BattleHUD: React.FC<HpBarProps> = ({ current, max, label, level, is
 
   const STATUS_COLORS: Record<string, string> = {
     poisoned: 'bg-purple-500',
+    'badly-poisoned': 'bg-purple-700',
     paralyzed: 'bg-yellow-400',
     sleep: 'bg-gray-400',
     burned: 'bg-orange-500',
@@ -40,6 +41,7 @@ export const BattleHUD: React.FC<HpBarProps> = ({ current, max, label, level, is
 
   const STATUS_LABELS: Record<string, string> = {
     poisoned: 'VEL',
+    'badly-poisoned': 'TOSS',
     paralyzed: 'PAR',
     sleep: 'SON',
     burned: 'SCO',

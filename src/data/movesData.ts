@@ -1322,7 +1322,7 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
     pp: 10,
     maxPp: 10,
     target: 'selected-pokemon',
-    statusEffect: 'poisoned',
+    statusEffect: 'badly-poisoned',
     effectChance: 100
   },
   'will-o-wisp': {
@@ -1383,6 +1383,60 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
     accuracy: 100,
     pp: 20,
     maxPp: 20,
+    target: 'selected-pokemon'
+  },
+  'spikes': {
+    englishName: 'spikes',
+    name: 'Punte',
+    type: 'ground',
+    category: 'status',
+    power: 0,
+    accuracy: 100,
+    pp: 20,
+    maxPp: 20,
+    target: 'selected-pokemon'
+  },
+  'toxic-spikes': {
+    englishName: 'toxic-spikes',
+    name: 'Fielepunte',
+    type: 'poison',
+    category: 'status',
+    power: 0,
+    accuracy: 100,
+    pp: 20,
+    maxPp: 20,
+    target: 'selected-pokemon'
+  },
+  'sticky-web': {
+    englishName: 'sticky-web',
+    name: 'Ragnatela',
+    type: 'bug',
+    category: 'status',
+    power: 0,
+    accuracy: 100,
+    pp: 20,
+    maxPp: 20,
+    target: 'selected-pokemon'
+  },
+  'rapid-spin': {
+    englishName: 'rapid-spin',
+    name: 'Rapidsguardo',
+    type: 'normal',
+    category: 'physical',
+    power: 50,
+    accuracy: 100,
+    pp: 40,
+    maxPp: 40
+  },
+  'defog': {
+    englishName: 'defog',
+    name: 'Scaccianebbia',
+    type: 'flying',
+    category: 'status',
+    power: 0,
+    accuracy: 100,
+    pp: 15,
+    maxPp: 15,
     target: 'selected-pokemon'
   },
   'stone-edge': {
