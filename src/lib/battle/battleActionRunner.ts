@@ -109,10 +109,10 @@ export function executeMoveAction(
     healing: moveDef.healing !== undefined ? moveDef.healing : rawMove.healing,
     recoil: moveDef.recoil !== undefined ? moveDef.recoil : rawMove.recoil,
     recoilMaxHp: moveDef.recoilMaxHp !== undefined ? moveDef.recoilMaxHp : rawMove.recoilMaxHp,
-    statusEffect: moveDef.statusEffect,
-    effectChance: moveDef.effectChance !== undefined ? moveDef.effectChance : 100,
-    flinchChance: moveDef.flinchChance,
-    confusionChance: moveDef.confusionChance,
+    statusEffect: moveDef.statusEffect || rawMove.statusEffect,
+    effectChance: moveDef.effectChance !== undefined ? moveDef.effectChance : (rawMove.effectChance !== undefined ? rawMove.effectChance : 100),
+    flinchChance: moveDef.flinchChance !== undefined ? moveDef.flinchChance : rawMove.flinchChance,
+    confusionChance: moveDef.confusionChance !== undefined ? moveDef.confusionChance : rawMove.confusionChance,
     multiTurn: moveDef.multiTurn || rawMove.multiTurn,
   };
   // Quantum Dodge Check

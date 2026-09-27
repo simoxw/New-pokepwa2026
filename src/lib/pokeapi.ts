@@ -62,6 +62,25 @@ export function parseMoveObject(moveData: any, fallbackName?: string): Move {
       }))
     : [];
 
+  if (stat_changes.length === 0 && defaultMove.stat_changes && defaultMove.stat_changes.length > 0) {
+    stat_changes = defaultMove.stat_changes;
+  }
+
+  // Description / Flavor text extraction
+  let description: string | undefined = undefined;
+  if (Array.isArray(moveData.flavor_text_entries)) {
+    const itEntry = moveData.flavor_text_entries.find((e: any) => e.language?.name === 'it');
+    const enEntry = moveData.flavor_text_entries.find((e: any) => e.language?.name === 'en');
+    if (itEntry?.flavor_text) {
+      description = itEntry.flavor_text.replace(/[\n\f]/g, ' ');
+    } else if (enEntry?.flavor_text) {
+      description = enEntry.flavor_text.replace(/[\n\f]/g, ' ');
+    }
+  }
+  if (!description && defaultMove.description) {
+    description = defaultMove.description;
+  }
+
   const rawNameLower = (moveData.name || fallbackName || itMoveName || '').toLowerCase().replace(/[\s_]+/g, '-');
 
   // Fallback stat changes for iconic moves if PokéAPI meta is empty
@@ -104,16 +123,6 @@ export function parseMoveObject(moveData: any, fallbackName?: string): Move {
       stat_changes = [{ change: 1, stat: { name: 'special-attack' } }, { change: 1, stat: { name: 'special-defense' } }];
     } else if (rawNameLower.includes('dragon-dance') || rawNameLower.includes('dragodanza')) {
       stat_changes = [{ change: 1, stat: { name: 'attack' } }, { change: 1, stat: { name: 'speed' } }];
-    } else if (rawNameLower.includes('close-combat') || rawNameLower.includes('zuffa')) {
-      stat_changes = [{ change: -1, stat: { name: 'defense' } }, { change: -1, stat: { name: 'special-defense' } }];
-    } else if (rawNameLower.includes('superpower') || rawNameLower.includes('troppoforte')) {
-      stat_changes = [{ change: -1, stat: { name: 'attack' } }, { change: -1, stat: { name: 'defense' } }];
-    } else if (rawNameLower.includes('overheat') || rawNameLower.includes('vampata') || rawNameLower.includes('draco-meteor') || rawNameLower.includes('dragometeora') || rawNameLower.includes('leaf-storm') || rawNameLower.includes('verdebufera')) {
-      stat_changes = [{ change: -2, stat: { name: 'special-attack' } }];
-    } else if (rawNameLower.includes('hammer-arm') || rawNameLower.includes('mazzabrutta') || rawNameLower.includes('mazzazucca')) {
-      stat_changes = [{ change: -1, stat: { name: 'speed' } }];
-    } else if (rawNameLower.includes('shell-smash') || rawNameLower.includes('guscioforza')) {
-      stat_changes = [{ change: -1, stat: { name: 'defense' } }, { change: -1, stat: { name: 'special-defense' } }, { change: 2, stat: { name: 'attack' } }, { change: 2, stat: { name: 'special-attack' } }, { change: 2, stat: { name: 'speed' } }];
     }
   }
 
@@ -381,6 +390,7 @@ export function parseMoveObject(moveData: any, fallbackName?: string): Move {
     stat_changes_target,
     statusEffect,
     effectChance,
+    description,
     target,
     multiTurn
   };
