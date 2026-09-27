@@ -25,7 +25,11 @@ export interface LegendaryBoss {
     | 'baldo_fortress'
     | 'nardo_spirit'
     | 'perla_origins'
-    | 'iridio_synthesis';
+    | 'iridio_synthesis'
+    | 'oak_wisdom'
+    | 'nemona_passion'
+    | 'palmer_tower'
+    | 'volo_shadow';
   teamPokemon: {
     id: number;
     name: string;
@@ -414,6 +418,130 @@ export const LEGENDARY_BOSSES: LegendaryBoss[] = [
       nickname: 'Silvally "Multiattacco"',
       moves: ['Multiattacco', 'Sgranocchio', 'Terremoto', 'Danzaspada'],
       description: 'Silvally Cromatico di Iridio con IV perfetti in tutte le statistiche!'
+    }
+  },
+  {
+    id: 'boss-oak',
+    name: 'Prof. Oak',
+    title: 'Il Grande Maestro Pokémon',
+    region: 'Kanto / Pallet Town',
+    quote: 'Benvenuto nel mondo dei Pokémon! Dimmi, fino a dove si spinge la tua conoscenza?',
+    winQuote: 'Sbalorditivo! Hai superato persino la mia esperienza di un\'intera vita!',
+    moneyReward: 60000,
+    sprite: 'https://play.pokemonshowdown.com/sprites/trainers/oak.png',
+    avatar: '📜',
+    buffName: 'Sapienza Suprema',
+    buffDescription: '+10% Attacco Speciale e +12% Difesa Speciale. Immunità ai problemi di stato.',
+    buffType: 'oak_wisdom',
+    teamPokemon: [
+      { id: 128, name: 'Tauros', level: 100, customMoves: ['Capocciata', 'Terremoto', 'Pietrataglio', 'Zuffa'] },
+      { id: 103, name: 'Exeggutor', level: 100, customMoves: ['Gigassorbimento', 'Psichico', 'Sonnifero', 'Mazzabrutta'] },
+      { id: 59, name: 'Arcanine', level: 100, customMoves: ['Fuococarica', 'Zuffa', 'Extrarapido', 'Sgranocchio'] },
+      { id: 130, name: 'Gyarados', level: 100, customMoves: ['Cascata', 'Pietrataglio', 'Sgranocchio', 'Dragodanza'] },
+      { id: 6, name: 'Charizard', level: 100, customMoves: ['Lanciafiamme', 'Eterelama', 'Focalcolpo', 'Dragopulsar'] },
+      { id: 149, name: 'Dragonite', level: 100, customMoves: ['Oltraggio', 'Extrarapido', 'Tifone', 'Dragodanza'] }
+    ],
+    rewardPokemon: {
+      id: 128,
+      name: 'Tauros',
+      level: 70,
+      isShiny: true,
+      nickname: 'Tauros "Capobranco"',
+      moves: ['Capocciata', 'Terremoto', 'Pietrataglio', 'Zuffa'],
+      description: 'Il leggendario Tauros Cromatico del Prof. Oak con IV 31/31/31/31/31/31.'
+    }
+  },
+  {
+    id: 'boss-nemona',
+    name: 'Campionessa Nemona',
+    title: 'La Rivelazione di Paldea',
+    region: 'Paldea / Accademia Uva',
+    quote: 'Lottiamo! Lottiamo ancora e ancora! Non vedevo l\'ora di affrontare un vero avversario!',
+    winQuote: 'EVVIVA! Che lotta epica! Devo assolutamente allenarmi di più per la prossima volta!',
+    moneyReward: 55000,
+    sprite: 'https://play.pokemonshowdown.com/sprites/trainers/nemona-masters.png',
+    avatar: '⚡',
+    buffName: 'Entusiasmo Inesauribile',
+    buffDescription: '+12% Velocità e +10% Attacco Fisico a tutti i suoi Pokémon.',
+    buffType: 'nemona_passion',
+    teamPokemon: [
+      { id: 908, name: 'Meowscarada', level: 100, customMoves: ['Prestigiatore', 'Forzaforbice', 'Zuffa', 'Acquajet'] },
+      { id: 923, name: 'Pawmot', level: 100, customMoves: ['Pugnoscarica', 'Elettropugno', 'Zuffa', 'Preghiera'] },
+      { id: 706, name: 'Goodra Hisui', level: 100, customMoves: ['Dragopulsar', 'Meteorpugno', 'Gelaraggio', 'Ripresa'] },
+      { id: 745, name: 'Lycanroc', level: 100, customMoves: ['Pietrataglio', 'Zuffa', 'Sgranocchio', 'Controfuoco'] },
+      { id: 968, name: 'Orthworm', level: 100, customMoves: ['Pesobomba', 'Terremoto', 'Pietrataglio', 'Tossina'] },
+      { id: 998, name: 'Baxcalibur', level: 100, customMoves: ['Sciabola di Ghiaccio', 'Oltraggio', 'Terremoto', 'Danzadrago'] }
+    ],
+    rewardPokemon: {
+      id: 998,
+      name: 'Baxcalibur',
+      level: 70,
+      isShiny: true,
+      nickname: 'Baxcalibur "Ghiaccio Nero"',
+      moves: ['Sciabola di Ghiaccio', 'Oltraggio', 'Terremoto', 'Danzadrago'],
+      description: 'Baxcalibur Cromatico della Campionessa Nemona con IV perfetti 100%!'
+    }
+  },
+  {
+    id: 'boss-palmer',
+    name: 'Asso Palmer',
+    title: 'Il Re del Parco Lotta di Sinnoh',
+    region: 'Sinnoh / Torre Lotta',
+    quote: 'Orgoglioso padre ed Asso della Torre Lotta. Metti alla prova la tua squadra contro la mia!',
+    winQuote: 'Meraviglioso! Risplendi dello stesso spirito dei più grandi maestri Pokémon!',
+    moneyReward: 50000,
+    sprite: 'https://play.pokemonshowdown.com/sprites/trainers/palmer.png',
+    avatar: '🏰',
+    buffName: 'Determinazione Infrangibile',
+    buffDescription: '+12% Difesa e Difesa Speciale. Immunità ai cali di precisione.',
+    buffType: 'palmer_tower',
+    teamPokemon: [
+      { id: 464, name: 'Rhyperior', level: 100, customMoves: ['Devastoroccia', 'Terremoto', 'Megacorno', 'Pietrataglio'] },
+      { id: 149, name: 'Dragonite', level: 100, customMoves: ['Extrarapido', 'Oltraggio', 'Tifone', 'Dragodanza'] },
+      { id: 350, name: 'Milotic', level: 100, customMoves: ['Surf', 'Gelaraggio', 'Ripresa', 'Tossina'] },
+      { id: 486, name: 'Regigigas', level: 100, customMoves: ['Giga Impatto', 'Terremoto', 'Pietrataglio', 'Sgranocchio'] },
+      { id: 488, name: 'Cresselia', level: 100, customMoves: ['Psichico', 'Palla Ombra', 'Luminomossa', 'Ripresa'] },
+      { id: 485, name: 'Heatran', level: 100, customMoves: ['Magmastroncatura', 'Geoforza', 'Lanciafiamme', 'Pulsarforza'] }
+    ],
+    rewardPokemon: {
+      id: 485,
+      name: 'Heatran',
+      level: 70,
+      isShiny: true,
+      nickname: 'Heatran "Vulcano"',
+      moves: ['Magmastroncatura', 'Geoforza', 'Lanciafiamme', 'Pulsarforza'],
+      description: 'Heatran Cromatico dell\'Asso Palmer con IV al massimo 31/31/31/31/31/31.'
+    }
+  },
+  {
+    id: 'boss-volo',
+    name: 'Volo',
+    title: 'Il Mercante della Ginkgo Guild',
+    region: 'Hisui / Tempio di Sinnoh',
+    quote: 'Invocherò il potere primordiale del Creatore per forgiare un nuovo mondo di pura armonia!',
+    winQuote: 'Come... come può la mia volontà crollare dinanzi alla tua luce?!',
+    moneyReward: 65000,
+    sprite: 'https://play.pokemonshowdown.com/sprites/trainers/volo.png',
+    avatar: '👻',
+    buffName: 'Ombra del Destino',
+    buffDescription: '+10% Attacco e +10% Attacco Speciale. Potenza di mosse Spettro e Buio +15%.',
+    buffType: 'volo_shadow',
+    teamPokemon: [
+      { id: 442, name: 'Spiritomb', level: 100, customMoves: ['Neropulsar', 'Palla Ombra', 'Fuocofatuo', 'Psichico'] },
+      { id: 407, name: 'Roserade', level: 100, customMoves: ['Gigassorbimento', 'Fangobomba', 'Palla Ombra', 'Sintesi'] },
+      { id: 468, name: 'Togekiss', level: 100, customMoves: ['Eterelama', 'Magibrillio', 'Lanciafiamme', 'Forzasfera'] },
+      { id: 448, name: 'Lucario', level: 100, customMoves: ['Zuffa', 'Pulsarforza', 'Geleripiego', 'Danzaspada'] },
+      { id: 59, name: 'Arcanine Hisui', level: 100, customMoves: ['Fuococarica', 'Pietrataglio', 'Zuffa', 'Extrarapido'] },
+      { id: 487, name: 'Giratina', level: 100, customMoves: ['Oscurotuffo', 'Dragopulsar', 'Palla Ombra', 'Geoforza'] }
+    ],
+    rewardPokemon: {
+      id: 487,
+      name: 'Giratina',
+      level: 70,
+      isShiny: true,
+      nickname: 'Giratina "Forma Cromatico"',
+      moves: ['Oscurotuffo', 'Dragopulsar', 'Palla Ombra', 'Geoforza'],
+      description: 'Giratina Cromatico di Volo in Forma Originale con IV perfetti 100%!'
     }
   }
 ];

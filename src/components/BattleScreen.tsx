@@ -110,6 +110,14 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
         addLog(`👑 Lo Sguardo Insuperabile di Camilla riduce l'Attacco del tuo Pokémon (-1)!`);
       } else if (bossBuff === 'blu_arrogance') {
         addLog(`🏆 La Presunzione di Blu riduce la precisione delle tue mosse!`);
+      } else if (bossBuff === 'oak_wisdom') {
+        addLog(`📜 La Sapienza Suprema del Prof. Oak dona immunità di stato ed elevata resistenza!`);
+      } else if (bossBuff === 'nemona_passion') {
+        addLog(`⚡ L'Entusiasmo Inesauribile di Nemona aumenta l'Attacco e la Velocità del suo team!`);
+      } else if (bossBuff === 'palmer_tower') {
+        addLog(`🏰 La Determinazione Infrangibile di Palmer aumenta le Difese della sua squadra!`);
+      } else if (bossBuff === 'volo_shadow') {
+        addLog(`👻 L'Ombra del Destino di Volo potenzia la forza del suo team e delle mosse oscure!`);
       }
     }
 
@@ -844,8 +852,9 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     );
 
     // Calculate effective speeds
+    const bossSpeedBonus = (bossBuff === 'dandel_gigamax' || bossBuff === 'nardo_spirit' || bossBuff === 'nemona_passion') ? 1.10 : 1.0;
     const effPlayerSpeed = getEffectiveSpeed(playerActive.stats.speed, playerStages.speed ?? 0, playerStatus.status) * towerSpeedMult;
-    const effEnemySpeed = getEffectiveSpeed(enemy.stats.speed, enemyStages.speed ?? 0, enemyStatus.status) * (bossMutation?.type === 'overclocked' ? 1.20 : 1);
+    const effEnemySpeed = getEffectiveSpeed(enemy.stats.speed, enemyStages.speed ?? 0, enemyStatus.status) * (bossMutation?.type === 'overclocked' ? 1.20 : 1) * bossSpeedBonus;
 
     // Determine Turn Order
     const turnWinner = determineTurnOrder(
@@ -1065,11 +1074,11 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       let bossAtkMult = 1;
       let bossDefMult = 1;
       if (!attackerIsPlayer && bossBuff) {
-        if (bossBuff === 'rosso_aura' || bossBuff === 'lance_dragon' || bossBuff === 'nardo_spirit') bossAtkMult = 1.12;
-        if (bossBuff === 'dandel_gigamax' || bossBuff === 'perla_origins' || bossBuff === 'iridio_synthesis') bossAtkMult = 1.10;
+        if (bossBuff === 'rosso_aura' || bossBuff === 'lance_dragon' || bossBuff === 'nardo_spirit' || bossBuff === 'nemona_passion') bossAtkMult = 1.12;
+        if (bossBuff === 'dandel_gigamax' || bossBuff === 'perla_origins' || bossBuff === 'iridio_synthesis' || bossBuff === 'oak_wisdom' || bossBuff === 'volo_shadow') bossAtkMult = 1.10;
         if (bossBuff === 'blu_arrogance') bossAtkMult = 1.10;
 
-        if (bossBuff === 'camilla_presence') bossDefMult = 1.12;
+        if (bossBuff === 'camilla_presence' || bossBuff === 'oak_wisdom' || bossBuff === 'palmer_tower') bossDefMult = 1.12;
         if (bossBuff === 'rocco_steel' || bossBuff === 'baldo_fortress') bossDefMult = 1.15;
         if (bossBuff === 'blu_arrogance' || bossBuff === 'iridio_synthesis') bossDefMult = 1.10;
       }
@@ -1573,7 +1582,12 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
             )}
             {trainer && (
               <div className="absolute -bottom-16 -right-2 flex flex-col items-end pointer-events-none">
-                <img src={trainer.sprite} alt="trainer" className="w-14 h-14 object-contain opacity-80 drop-shadow-lg" />
+                <img 
+                  src={trainer.sprite} 
+                  alt="trainer" 
+                  className="w-14 h-14 object-contain opacity-80 drop-shadow-lg" 
+                  onError={(e) => { (e.target as HTMLElement).style.display = 'none'; }} 
+                />
                 <div className="flex flex-col items-end">
                   <span className="text-[10px] font-black uppercase text-white bg-blue-600/80 px-2 py-0.5 rounded-full border border-blue-400 shadow-sm leading-none">{trainer.name}</span>
                   {trainer.isGymLeader && (

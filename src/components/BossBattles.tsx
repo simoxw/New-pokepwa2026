@@ -133,10 +133,11 @@ export const BossBattles: React.FC<BossBattlesProps> = ({ onBack, onStartBattle 
                 {/* Boss Sprite & Buff Info */}
                 <div className="flex gap-4 items-center bg-black/40 p-3 rounded-xl border border-white/5 my-2">
                   <div className="w-16 h-16 shrink-0 relative flex items-center justify-center bg-purple-950/40 rounded-xl border border-purple-500/20">
+                    <span className="text-2xl absolute">{boss.avatar}</span>
                     <img 
                       src={boss.sprite} 
                       alt={boss.name} 
-                      className="w-14 h-14 object-contain filter drop-shadow" 
+                      className="w-14 h-14 object-contain filter drop-shadow z-10" 
                       onError={(e) => {
                         (e.target as HTMLElement).style.display = 'none';
                       }}
