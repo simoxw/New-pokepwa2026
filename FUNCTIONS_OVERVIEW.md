@@ -141,6 +141,27 @@ Questo documento descrive le principali funzioni, algoritmi e metodi esportati n
 
 ---
 
+## 5. Sfide Leggendarie - Boss Iconici (`/src/data/legendaryBosses.ts` & `/src/components/BossBattles.tsx`)
+
+### `LEGENDARY_BOSSES`
+- Array di configurazione dei **16 Boss Iconici** (Rosso, Camilla, Rocco, Lance, Dandel, Blu, Giovanni, N, Baldo, Nardo, Perla, Iridio, Prof. Oak, Nemona, Palmer, Volo).
+- Definisce per ciascun Boss: ID, nome, titolo, regione, citazione iniziale e di sconfitta, premio in denaro, sprite Showdown, avatar, nome e descrizione del buff passivo, tipo di buff e l'array di 6 Pokémon al Lvl 100 con relative mosse personalizzate.
+
+### `buildBossTrainer(boss)`
+- Costruisce asincronamente la squadra avversaria di livello 100, scaricando i dati base tramite PokéAPI.
+- Applica la ricalcolazione precisa delle statistiche per il Livello 100 con IV perfetti a 31 ed EV max distribuiti (252/252/4).
+- Sovrascrive le mosse base con il set di 4 mosse competitive personalizzate specificate nella configurazione del Boss.
+
+### `generateBossRewardPokemon(boss)`
+- Genera il Pokémon premio per la prima vittoria (es. Pikachu Cromatico con Volo, Mewtwo Cromatico, Giratina Cromatico, ecc.) al Livello 70, impostando IV al 100% (31/31/31/31/31/31), nome dell'Allenatore Originale (`originalTrainer`), nickname e stato Shiny.
+
+### Gestione dei Buff e dei Turni in `BattleScreen.tsx`
+- **Integrazione dei Buff Boss**: All'inizio della lotta viene mostrata una notifica di avviso con il nome ed effetto del Buff Passivo del Boss. Vengono applicati eventuali effetti di ingresso (es. paralisi da *Aura del Monte Argento*, calo dell'Attacco da *Sguardo Insuperabile*).
+- **Moltiplicatori di Danno e Velocità**: Durante il calcolo delle mosse (`executeMoveAction`), vengono applicati in tempo reale i bonus di attacco (`bossAtkMult`), difesa (`bossDefMult`) e velocità (`bossSpeedBonus`) riservati al Boss.
+- **Risoluzione Danni da Stato a Fine Turno**: Applicazione garantita dei danni da Avvelenamento e Scottatura per il Pokémon sopravvissuto anche quando l'avversario viene mandato K.O. nello stesso turno.
+
+---
+
 ## 6. Sistema di Progressione e Zone (`/src/lib/badges.ts` & `/src/constants/game.ts`)
 
 ### `isAreaUnlocked(areaId, playerBadges, leagueVictories)`

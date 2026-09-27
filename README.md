@@ -112,6 +112,34 @@ Combina la fedeltà delle meccaniche competitive Pokémon ufficiali (formule mat
 
 ---
 
+### 7. ⚡ Modalità Sfide Leggendarie (Boss Iconici Post-Lega)
+- **Sblocco Post-Lega Pokémon**: Pulsante **`⚡ Boss (Post-Lega)`** nel Hub centrale, accessibile con grafica bloccata finché non si completa la Lega Pokémon (`leagueVictories > 0`).
+- **16 Allenatori Iconici di Tutte le Generazioni**:
+  1. ⚡ **Rosso** (*Leggenda del Monte Argento*) → Premio: **Pikachu Cromatico con Volo** (Lvl 70, IV 100%)
+  2. 🐉 **Campionessa Camilla** (*La Campionessa Insuperabile di Sinnoh*) → Premio: **Garchomp Titanico** (Lvl 70, IV 100%)
+  3. 💎 **Rocco Petri** (*Maestro dell'Acciaio e delle Pietre Rare*) → Premio: **Metagross Cromatico** (Lvl 70, IV 100%)
+  4. 🔥 **Domadraghi Lance** (*Campione Supremo dell'Altopiano Blu*) → Premio: **Dragonite con Extrarapido** (Lvl 70, IV 100%)
+  5. 👑 **Campione Dandel** (*L'Imbattibile Re di Galar*) → Premio: **Charizard Cromatico** (Lvl 70, IV 100%)
+  6. 🏆 **Eterno Rivale Blu** (*Il Prodigio di Biancavilla*) → Premio: **Arcanine Imperiale** (Lvl 70, IV 100%)
+  7. 🚀 **Capo Giovanni** (*Il Boss Incontrastato del Team Rocket*) → Premio: **Mewtwo Cromatico** (Lvl 70, IV 100%)
+  8. 🕊️ **Re N** (*L'Eroe degli Ideali e della Verità*) → Premio: **Zoroark Cromatico** (Lvl 70, IV 100%)
+  9. 🗿 **Baldo** (*Asso del Parco Lotta di Hoenn*) → Premio: **Regigigas Cromatico** (Lvl 70, IV 100%)
+  10. 🦋 **Campione Nardo** (*Il Vagabondo Leggendario di Unima*) → Premio: **Volcarona Cromatico** (Lvl 70, IV 100%)
+  11. ❄️ **Perla & Eredi di Hisui** (*I Guardiani del Tempo e dello Spazio*) → Premio: **Zoroark Hisui Cromatico** (Lvl 70, IV 100%)
+  12. ⚙️ **Iridio** (*L'Alleato d'Argento della Fondazione Aether*) → Premio: **Silvally Cromatico** (Lvl 70, IV 100%)
+  13. 📜 **Prof. Oak** (*Il Grande Maestro Pokémon*) → Premio: **Tauros Cromatico** (Lvl 70, IV 100%)
+  14. ⚡ **Campionessa Nemona** (*La Rivelazione di Paldea*) → Premio: **Baxcalibur Cromatico** (Lvl 70, IV 100%)
+  15. 🏰 **Asso Palmer** (*Il Re della Torre Lotta*) → Premio: **Heatran Cromatico** (Lvl 70, IV 100%)
+  16. 👻 **Volo** (*Il Mercante della Ginkgo Guild*) → Premio: **Giratina Cromatico** (Lvl 70, IV 100%)
+- **Regole delle Sfide**:
+  - **Squadre Lvl 100**: 6 Pokémon al Livello 100, IV 31/31/31/31/31/31, EV distribuiti e set di mosse competitive.
+  - **I propri livelli reali**: I tuoi Pokémon conservano il loro livello attuale, accumulando grandi quantità di punti ESP.
+  - **Buff Passivo Unico**: Ogni Boss gode di un'abilità passiva di campo (es. parali all'inizio, aumento attacco/difesa/velocità, rigenerazione PS, immunità di stato).
+  - **Premi della Prima Vittoria**: $50.000 - $65.000 PokéDollari ed un Pokémon Speciale/Leggendario Cromatico al Lvl 70 con IV perfetti salvato direttamente nel Box o in Squadra.
+  - **Risfide Infinite**: I Boss possono essere riaffrontati quante volte si desidera.
+
+---
+
 ## 🚀 Come Avviare il Progetto in Locale
 
 ### Prerequisiti
