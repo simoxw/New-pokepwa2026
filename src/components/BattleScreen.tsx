@@ -517,6 +517,36 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
           return;
         }
 
+        // Apply end-turn status tick to active player Pokemon and next enemy if affected
+        let currentLivePlayerHp = finalPlayerHp;
+        if (currentLivePlayerHp > 0 && playerStatus.status) {
+          currentLivePlayerHp = await handleStatusEndTurn(
+            playerActive, 
+            currentLivePlayerHp, 
+            setPlayerHp, 
+            playerStatus.status, 
+            setPlayerStatus
+          );
+          if (currentLivePlayerHp <= 0) {
+            await handlePlayerFaint();
+            return;
+          }
+        }
+
+        if (nextEnemyStatusVal) {
+          nextEnemyHpVal = await handleStatusEndTurn(
+            nextEnemy,
+            nextEnemyHpVal,
+            setEnemyHp,
+            nextEnemyStatusVal,
+            setEnemyStatus
+          );
+          if (nextEnemyHpVal <= 0) {
+            await handleWin(currentLivePlayerHp);
+            return;
+          }
+        }
+
         setIsAnimating(false);
         return;
       }
@@ -1358,11 +1388,25 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     if (!wasFainted) {
       await triggerEnemySingleTurn(switchedHp, enemyHp);
     } else {
+      if (enemyHp > 0 && enemyStatus.status) {
+        const nextE = await handleStatusEndTurn(
+          enemy, 
+          enemyHp, 
+          setEnemyHp, 
+          enemyStatus.status, 
+          setEnemyStatus
+        );
+        if (nextE <= 0) {
+          await handleWin(switchedHp);
+          return;
+        }
+      }
       setIsAnimating(false);
     }
   }, [
     isAnimating, playerHp, state.player.team, addLog, playerActive.name, 
-    setState, playerStatus, playerMoves, triggerEnemySingleTurn, enemyHp
+    setState, playerStatus, playerMoves, triggerEnemySingleTurn, enemyHp,
+    enemyStatus, handleStatusEndTurn, handleWin
   ]);
 
   // Item Use in Battle
