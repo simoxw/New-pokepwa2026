@@ -2478,6 +2478,89 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
     maxPp: 20,
     target: 'user',
     healing: 0.1
+  },
+  'burning-jealousy': {
+    englishName: 'burning-jealousy',
+    name: 'Rabbia Bruciante',
+    type: 'fire',
+    category: 'special',
+    power: 70,
+    accuracy: 100,
+    pp: 5,
+    maxPp: 5,
+    statusEffect: 'burned',
+    effectChance: 100
+  },
+  'raging-fury': {
+    englishName: 'raging-fury',
+    name: 'Ira Furente',
+    type: 'fire',
+    category: 'physical',
+    power: 120,
+    accuracy: 100,
+    pp: 10,
+    maxPp: 10
+  },
+  'lava-plume': {
+    englishName: 'lava-plume',
+    name: 'Lavasbuffo',
+    type: 'fire',
+    category: 'special',
+    power: 80,
+    accuracy: 100,
+    pp: 15,
+    maxPp: 15,
+    statusEffect: 'burned',
+    effectChance: 30
+  },
+  'fire-lash': {
+    englishName: 'fire-lash',
+    name: 'Fuocofustagno',
+    type: 'fire',
+    category: 'physical',
+    power: 80,
+    accuracy: 100,
+    pp: 15,
+    maxPp: 15,
+    stat_changes: [{ change: -1, stat: { name: 'defense' } }],
+    effectChance: 100
+  },
+  'bitter-blade': {
+    englishName: 'bitter-blade',
+    name: 'Lama del Rimorso',
+    type: 'fire',
+    category: 'physical',
+    power: 90,
+    accuracy: 100,
+    pp: 10,
+    maxPp: 10,
+    drain: 0.5
+  },
+  'armor-cannon': {
+    englishName: 'armor-cannon',
+    name: 'Corazzaurto',
+    type: 'fire',
+    category: 'special',
+    power: 120,
+    accuracy: 100,
+    pp: 5,
+    maxPp: 5,
+    stat_changes_target: 'user',
+    stat_changes: [{ change: -1, stat: { name: 'defense' } }, { change: -1, stat: { name: 'special-defense' } }],
+    effectChance: 100
+  },
+  'torch-song': {
+    englishName: 'torch-song',
+    name: 'Cantoardente',
+    type: 'fire',
+    category: 'special',
+    power: 80,
+    accuracy: 100,
+    pp: 10,
+    maxPp: 10,
+    stat_changes_target: 'user',
+    stat_changes: [{ change: 1, stat: { name: 'special-attack' } }],
+    effectChance: 100
   }
 };
 
@@ -2696,7 +2779,23 @@ const ALIAS_MAP: Record<string, string> = {
   'scintilla': 'spark',
   'spark': 'spark',
   'balzo': 'bounce',
-  'bounce': 'bounce'
+  'bounce': 'bounce',
+  'rabbia-bruciante': 'burning-jealousy',
+  'burning-jealousy': 'burning-jealousy',
+  'ira-furente': 'raging-fury',
+  'raging-fury': 'raging-fury',
+  'lavasbuffo': 'lava-plume',
+  'lava-plume': 'lava-plume',
+  'fuocofustagno': 'fire-lash',
+  'fire-lash': 'fire-lash',
+  'ruotadifuoco': 'flame-wheel',
+  'flame-wheel': 'flame-wheel',
+  'lama-del-rimorso': 'bitter-blade',
+  'bitter-blade': 'bitter-blade',
+  'corazzaurto': 'armor-cannon',
+  'armor-cannon': 'armor-cannon',
+  'cantoardente': 'torch-song',
+  'torch-song': 'torch-song'
 };
 
 /**
@@ -2812,23 +2911,23 @@ export function getMoveByName(rawName: string): Move {
 
   // Attacking move fallback: ALWAYS has positive power and physical/special category!
   let inferredType = 'normal';
-  if (key.includes('fire') || key.includes('fuoco') || key.includes('flame') || key.includes('braciere')) inferredType = 'fire';
-  else if (key.includes('water') || key.includes('acqua') || key.includes('hydro') || key.includes('bolla') || key.includes('idro')) inferredType = 'water';
-  else if (key.includes('grass') || key.includes('erba') || key.includes('foglia') || key.includes('vine') || key.includes('leaf')) inferredType = 'grass';
-  else if (key.includes('electric') || key.includes('elettro') || key.includes('tuono') || key.includes('shock') || key.includes('thunder') || key.includes('spark')) inferredType = 'electric';
-  else if (key.includes('ice') || key.includes('ghiaccio') || key.includes('gelo') || key.includes('frost') || key.includes('freeze')) inferredType = 'ice';
-  else if (key.includes('psy') || key.includes('psico') || key.includes('mind')) inferredType = 'psychic';
-  else if (key.includes('dark') || key.includes('buio') || key.includes('ombra') || key.includes('shadow') || key.includes('neropulsar')) inferredType = 'dark';
-  else if (key.includes('flying') || key.includes('ala') || key.includes('becc') || key.includes('volo') || key.includes('aero') || key.includes('gust')) inferredType = 'flying';
-  else if (key.includes('poison') || key.includes('veleno') || key.includes('tossic') || key.includes('toxic') || key.includes('fango') || key.includes('sludge')) inferredType = 'poison';
-  else if (key.includes('dragon') || key.includes('drago')) inferredType = 'dragon';
-  else if (key.includes('steel') || key.includes('acciaio') || key.includes('metal') || key.includes('ferro') || key.includes('iron')) inferredType = 'steel';
-  else if (key.includes('fairy') || key.includes('folletto') || key.includes('pixie') || key.includes('charm') || key.includes('bacio') || key.includes('kiss')) inferredType = 'fairy';
-  else if (key.includes('rock') || key.includes('roccia') || key.includes('pietra') || key.includes('stone') || key.includes('cadutamassi')) inferredType = 'rock';
+  if (key.includes('fire') || key.includes('fuoco') || key.includes('flame') || key.includes('braciere') || key.includes('brucia') || key.includes('ardente') || key.includes('furente') || key.includes('vampa') || key.includes('caldo') || key.includes('calore') || key.includes('lava') || key.includes('magma') || key.includes('scott')) inferredType = 'fire';
+  else if (key.includes('water') || key.includes('acqua') || key.includes('hydro') || key.includes('bolla') || key.includes('idro') || key.includes('onda') || key.includes('cascata') || key.includes('getto')) inferredType = 'water';
+  else if (key.includes('grass') || key.includes('erba') || key.includes('foglia') || key.includes('vine') || key.includes('leaf') || key.includes('seme') || key.includes('flora') || key.includes('solare')) inferredType = 'grass';
+  else if (key.includes('electric') || key.includes('elettro') || key.includes('tuono') || key.includes('shock') || key.includes('thunder') || key.includes('spark') || key.includes('fulmine') || key.includes('lampo') || key.includes('scossa')) inferredType = 'electric';
+  else if (key.includes('ice') || key.includes('ghiaccio') || key.includes('gelo') || key.includes('frost') || key.includes('freeze') || key.includes('neve') || key.includes('bora') || key.includes('brivido')) inferredType = 'ice';
+  else if (key.includes('psy') || key.includes('psico') || key.includes('mind') || key.includes('zen') || key.includes('mente') || key.includes('tele')) inferredType = 'psychic';
+  else if (key.includes('dark') || key.includes('buio') || key.includes('ombra') || key.includes('shadow') || key.includes('neropulsar') || key.includes('morso') || key.includes('sgranocchio') || key.includes('notte')) inferredType = 'dark';
+  else if (key.includes('flying') || key.includes('ala') || key.includes('becc') || key.includes('volo') || key.includes('aero') || key.includes('gust') || key.includes('vento') || key.includes('aria') || key.includes('balzo') || key.includes('piuma')) inferredType = 'flying';
+  else if (key.includes('poison') || key.includes('veleno') || key.includes('tossic') || key.includes('toxic') || key.includes('fango') || key.includes('sludge') || key.includes('fiele') || key.includes('acido')) inferredType = 'poison';
+  else if (key.includes('dragon') || key.includes('drago') || key.includes('draco') || key.includes('oltraggio')) inferredType = 'dragon';
+  else if (key.includes('steel') || key.includes('acciaio') || key.includes('metal') || key.includes('ferro') || key.includes('iron') || key.includes('lama') || key.includes('scudo')) inferredType = 'steel';
+  else if (key.includes('fairy') || key.includes('folletto') || key.includes('pixie') || key.includes('charm') || key.includes('bacio') || key.includes('kiss') || key.includes('magi') || key.includes('luna') || key.includes('fatato')) inferredType = 'fairy';
+  else if (key.includes('rock') || key.includes('roccia') || key.includes('pietra') || key.includes('stone') || key.includes('cadutamassi') || key.includes('frana') || key.includes('masso')) inferredType = 'rock';
   else if (key.includes('ground') || key.includes('terra') || key.includes('earth') || key.includes('fossa') || key.includes('sabbia') || key.includes('sand') || key.includes('mud') || key.includes('terremoto') || key.includes('earthquake')) inferredType = 'ground';
-  else if (key.includes('bug') || key.includes('coleottero') || key.includes('forbice') || key.includes('insect') || key.includes('insetto') || key.includes('pin-missile') || key.includes('tagliofuria')) inferredType = 'bug';
-  else if (key.includes('ghost') || key.includes('spettro') || key.includes('pauros') || key.includes('nightmare')) inferredType = 'ghost';
-  else if (key.includes('fighting') || key.includes('lotta') || key.includes('pugno') || key.includes('calcio') || key.includes('punch') || key.includes('kick') || key.includes('combatt')) inferredType = 'fighting';
+  else if (key.includes('bug') || key.includes('coleottero') || key.includes('forbice') || key.includes('insect') || key.includes('insetto') || key.includes('pin-missile') || key.includes('tagliofuria') || key.includes('ronzio')) inferredType = 'bug';
+  else if (key.includes('ghost') || key.includes('spettro') || key.includes('pauros') || key.includes('nightmare') || key.includes('fantasma') || key.includes('spirit')) inferredType = 'ghost';
+  else if (key.includes('fighting') || key.includes('lotta') || key.includes('pugno') || key.includes('calcio') || key.includes('punch') || key.includes('kick') || key.includes('combatt') || key.includes('zuffa') || key.includes('colpo')) inferredType = 'fighting';
 
   const specialTypes = ['fire', 'water', 'grass', 'electric', 'ice', 'psychic', 'dark', 'dragon', 'fairy'];
   const category = specialTypes.includes(inferredType) ? 'special' : 'physical';

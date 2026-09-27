@@ -73,6 +73,10 @@ export function normalizePokemon(raw: any): Pokemon {
     const baseMove = getMoveByName(moveName);
     
     // Authoritative stats (Power, Category, Type, MaxPP, Effects)
+    const effectiveType = (baseMove.type && baseMove.type !== 'normal') 
+      ? baseMove.type 
+      : (m.type && typeof m.type === 'string' && m.type !== 'normal' ? m.type : (baseMove.type || 'normal'));
+
     const maxPp = baseMove.maxPp || baseMove.pp || m.maxPp || 35;
     const currentPp = typeof m.pp === 'number' ? Math.min(Math.max(0, m.pp), maxPp) : maxPp;
 
@@ -84,25 +88,25 @@ export function normalizePokemon(raw: any): Pokemon {
     return {
       ...baseMove,
       name: baseMove.name || moveName,
-      type: baseMove.type || 'normal',
-      category: baseMove.category || (baseMove.power ? 'physical' : 'status'),
-      power: baseMove.power !== undefined ? baseMove.power : (m.power !== undefined ? m.power : 40),
+      type: effectiveType,
+      category: baseMove.category || m.category || (baseMove.power ? 'physical' : 'status'),
+      power: (typeof baseMove.power === 'number' && (baseMove.power > 0 || baseMove.category === 'status')) ? baseMove.power : (typeof m.power === 'number' ? m.power : 40),
       accuracy: baseMove.accuracy !== undefined ? baseMove.accuracy : (m.accuracy || 100),
       pp: currentPp,
       maxPp: maxPp,
-      priority: baseMove.priority !== undefined ? baseMove.priority : 0,
-      statusEffect: baseMove.statusEffect,
-      effectChance: baseMove.effectChance,
+      priority: baseMove.priority !== undefined ? baseMove.priority : (m.priority || 0),
+      statusEffect: baseMove.statusEffect || (baseMove.category !== 'status' && m.statusEffect ? m.statusEffect : undefined),
+      effectChance: baseMove.effectChance !== undefined ? baseMove.effectChance : (baseMove.stat_changes_target === 'user' ? 100 : m.effectChance),
       drain: moveDrain,
       healing: baseMove.healing,
       recoil: baseMove.recoil,
       recoilMaxHp: baseMove.recoilMaxHp,
-      stat_changes: baseMove.stat_changes,
-      stat_changes_target: (baseMove as any).stat_changes_target,
+      stat_changes: (baseMove.stat_changes && baseMove.stat_changes.length > 0) ? baseMove.stat_changes : m.stat_changes,
+      stat_changes_target: (baseMove as any).stat_changes_target || m.stat_changes_target,
       flinchChance: baseMove.flinchChance,
       confusionChance: baseMove.confusionChance,
-      multiTurn: baseMove.multiTurn,
-      target: baseMove.target
+      multiTurn: baseMove.multiTurn || m.multiTurn,
+      target: baseMove.target || m.target
     };
   });
 
