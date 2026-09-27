@@ -1524,6 +1524,8 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
         <BattleBag 
           onUseItem={handleUseItem}
           onClose={() => setShowBag(false)}
+          currentActiveHp={playerHp}
+          activeStatus={playerStatus.status}
         />
       )}
 

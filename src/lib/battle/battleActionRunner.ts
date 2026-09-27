@@ -14,6 +14,34 @@ export interface ExecuteMoveResult {
   nextTargetStatus?: { status?: StatusCondition; duration?: number };
 }
 
+function isSelfStatChange(move: Move, sc: { change: number; target?: string }, defaultSelf: boolean): boolean {
+  if (sc.target === 'user') return true;
+  if (sc.target === 'target') return false;
+  if (move.stat_changes_target === 'user') return true;
+  if (move.stat_changes_target === 'target') return false;
+  if (move.target === 'user' || defaultSelf) return true;
+
+  const mName = (move.name || '').toLowerCase().replace(/[\s_]+/g, '-');
+  const selfMoves = [
+    'zuffa', 'close-combat',
+    'troppoforte', 'superpower',
+    'vampata', 'overheat',
+    'dragometeora', 'draco-meteor',
+    'verdebufera', 'leaf-storm',
+    'mazzazucca', 'hammer-arm',
+    'crescipugno', 'power-up-punch',
+    'nitrocarica', 'flame-charge',
+    'raggioscossa', 'charge-beam',
+    'ferrartigli', 'metal-claw',
+    'forzantica', 'ancient-power',
+    'ventombra', 'ominous-wind',
+    'eterevento', 'silver-wind'
+  ];
+  if (selfMoves.some(sm => mName.includes(sm))) return true;
+
+  return false;
+}
+
 export function executeMoveAction(
   move: Move,
   user: Pokemon,
@@ -172,7 +200,7 @@ export function executeMoveAction(
     for (const sc of changes) {
       const statKey = STAT_MAP[sc.stat?.name || ''];
       if (!statKey) continue;
-      const isSelf = defaultSelf || move.target === 'user' || sc.change > 0;
+      const isSelf = isSelfStatChange(move, sc, defaultSelf);
       const recipient = isSelf ? user : target;
       const setRecipientStages = isSelf ? setUserStages : setTargetStages;
       const recipientStages = isSelf ? userStages : targetStages;
@@ -390,18 +418,22 @@ export function executeMoveAction(
   }
 
   // 4c. SECONDARY EFFECTS (Status, Stat Changes, Confusion, Flinch)
+  // Stat changes proc (Self stat changes like Zuffa, Overheat, Superpower occur even if target fainted)
+  if (move.stat_changes && move.stat_changes.length > 0) {
+    const chance = move.effectChance ?? 100;
+    if (Math.random() * 100 < chance) {
+      const isSelf = isSelfStatChange(move, move.stat_changes[0], move.target === 'user');
+      if (isSelf || curTargetHp > 0) {
+        applyStatChanges(move.stat_changes, move.target === 'user');
+      }
+    }
+  }
+
   if (curTargetHp > 0) {
     // Status condition proc
     if (move.statusEffect && !targetStatus.status) {
       const chance = move.effectChance ?? 10;
       applyStatusCondition(move.statusEffect, chance);
-    }
-    // Stat changes proc
-    if (move.stat_changes && move.stat_changes.length > 0) {
-      const chance = move.effectChance ?? 100;
-      if (Math.random() * 100 < chance) {
-        applyStatChanges(move.stat_changes, move.target === 'user');
-      }
     }
     // Confusion proc
     if (move.confusionChance && (!targetVolatile.confusionTurns || targetVolatile.confusionTurns <= 0)) {

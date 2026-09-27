@@ -331,6 +331,28 @@ export function parseMoveObject(moveData: any, fallbackName?: string): Move {
     target = 'user';
   }
 
+  // Determine if stat changes target the user or the target
+  let stat_changes_target: 'user' | 'target' | undefined = defaultMove.stat_changes_target;
+  if (!stat_changes_target) {
+    if (
+      rawNameLower.includes('close-combat') || rawNameLower.includes('zuffa') ||
+      rawNameLower.includes('superpower') || rawNameLower.includes('troppoforte') ||
+      rawNameLower.includes('overheat') || rawNameLower.includes('vampata') ||
+      rawNameLower.includes('draco-meteor') || rawNameLower.includes('dragometeora') ||
+      rawNameLower.includes('leaf-storm') || rawNameLower.includes('verdebufera') ||
+      rawNameLower.includes('hammer-arm') || rawNameLower.includes('mazzazucca') ||
+      rawNameLower.includes('power-up-punch') || rawNameLower.includes('crescipugno') ||
+      rawNameLower.includes('flame-charge') || rawNameLower.includes('nitrocarica') ||
+      rawNameLower.includes('charge-beam') || rawNameLower.includes('raggioscossa') ||
+      rawNameLower.includes('metal-claw') || rawNameLower.includes('ferrartigli') ||
+      rawNameLower.includes('ancient-power') || rawNameLower.includes('forzantica')
+    ) {
+      stat_changes_target = 'user';
+    } else if (category === 'status' && target === 'user') {
+      stat_changes_target = 'user';
+    }
+  }
+
   return {
     name: itMoveName,
     power,
@@ -346,6 +368,7 @@ export function parseMoveObject(moveData: any, fallbackName?: string): Move {
     flinchChance,
     confusionChance,
     stat_changes: stat_changes.length > 0 ? stat_changes : undefined,
+    stat_changes_target,
     statusEffect,
     effectChance,
     target,

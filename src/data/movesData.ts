@@ -1404,6 +1404,7 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
     accuracy: 100,
     pp: 5,
     maxPp: 5,
+    stat_changes_target: 'user',
     stat_changes: [{ change: -1, stat: { name: 'defense' } }, { change: -1, stat: { name: 'special-defense' } }]
   },
   'outrage': {
@@ -1425,6 +1426,7 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
     accuracy: 90,
     pp: 5,
     maxPp: 5,
+    stat_changes_target: 'user',
     stat_changes: [{ change: -2, stat: { name: 'special-attack' } }]
   },
   'dragon-pulse': {
@@ -1580,6 +1582,7 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
     accuracy: 90,
     pp: 5,
     maxPp: 5,
+    stat_changes_target: 'user',
     stat_changes: [{ change: -2, stat: { name: 'special-attack' } }]
   },
   'venoshock': {
@@ -1920,6 +1923,7 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
     accuracy: 100,
     pp: 5,
     maxPp: 5,
+    stat_changes_target: 'user',
     stat_changes: [{ change: -1, stat: { name: 'attack' } }, { change: -1, stat: { name: 'defense' } }]
   },
   'hammer-arm': {
@@ -1931,6 +1935,7 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
     accuracy: 90,
     pp: 10,
     maxPp: 10,
+    stat_changes_target: 'user',
     stat_changes: [{ change: -1, stat: { name: 'speed' } }]
   },
   'focus-punch': {
@@ -2090,6 +2095,7 @@ export function getMoveByName(rawName: string): Move {
       priority: found.priority,
       target: found.target,
       stat_changes: found.stat_changes,
+      stat_changes_target: (found as any).stat_changes_target,
       statusEffect: found.statusEffect,
       effectChance: found.effectChance,
       drain: found.drain,
@@ -2118,6 +2124,7 @@ export function getMoveByName(rawName: string): Move {
         priority: move.priority,
         target: move.target,
         stat_changes: move.stat_changes,
+        stat_changes_target: (move as any).stat_changes_target,
         statusEffect: move.statusEffect,
         effectChance: move.effectChance,
         drain: move.drain,

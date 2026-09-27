@@ -104,6 +104,7 @@ export interface StatChange {
   stat: {
     name: string;
   };
+  target?: 'user' | 'target';
 }
 
 export interface Move {
@@ -122,6 +123,7 @@ export interface Move {
   flinchChance?: number; // chance 0-100 to flinch target
   confusionChance?: number; // chance 0-100 to confuse target
   stat_changes?: StatChange[];
+  stat_changes_target?: 'user' | 'target';
   statusEffect?: 'paralyzed' | 'poisoned' | 'sleep' | 'frozen' | 'burned';
   effectChance?: number;
   target?: string;
