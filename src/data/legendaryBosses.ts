@@ -1,5 +1,6 @@
 import { Trainer, Pokemon, GameState } from '../types/game';
 import { fetchPokemonData } from '../lib/pokeapi';
+import { getMoveByName } from './movesData';
 
 export interface LegendaryBoss {
   id: string;
@@ -576,21 +577,9 @@ export async function buildBossTrainer(boss: LegendaryBoss): Promise<Trainer & {
       speed: calcSpeed
     };
 
-    // If custom moves specified, fetch or keep best moves
+    // If custom moves specified, fetch real move data
     if (entry.customMoves && entry.customMoves.length > 0) {
-      // Map moves to custom move names
-      const moveObjects = p.moves.map((m, idx) => {
-        const customName = entry.customMoves![idx];
-        if (customName) {
-          return {
-            ...m,
-            name: customName,
-            power: m.power > 0 ? m.power : 90
-          };
-        }
-        return m;
-      });
-      p.moves = moveObjects;
+      p.moves = entry.customMoves.map((mName) => getMoveByName(mName));
     }
 
     team.push(p);
@@ -637,10 +626,7 @@ export async function generateBossRewardPokemon(boss: LegendaryBoss): Promise<Po
 
   // Custom moves
   if (spec.moves && spec.moves.length > 0) {
-    p.moves = p.moves.map((m, idx) => {
-      const cName = spec.moves[idx];
-      return cName ? { ...m, name: cName, power: m.power || 90 } : m;
-    });
+    p.moves = spec.moves.map((mName) => getMoveByName(mName));
   }
 
   return p;

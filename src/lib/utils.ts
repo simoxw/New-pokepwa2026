@@ -84,24 +84,25 @@ export function normalizePokemon(raw: any): Pokemon {
     return {
       ...baseMove,
       name: baseMove.name || moveName,
-      type: baseMove.type || m.type || 'normal',
-      category: baseMove.category || m.category || (baseMove.power ? 'physical' : 'status'),
+      type: baseMove.type || 'normal',
+      category: baseMove.category || (baseMove.power ? 'physical' : 'status'),
       power: baseMove.power !== undefined ? baseMove.power : (m.power !== undefined ? m.power : 40),
       accuracy: baseMove.accuracy !== undefined ? baseMove.accuracy : (m.accuracy || 100),
       pp: currentPp,
       maxPp: maxPp,
-      priority: baseMove.priority !== undefined ? baseMove.priority : m.priority,
-      statusEffect: baseMove.statusEffect || m.statusEffect,
-      effectChance: baseMove.effectChance || m.effectChance,
+      priority: baseMove.priority !== undefined ? baseMove.priority : 0,
+      statusEffect: baseMove.statusEffect,
+      effectChance: baseMove.effectChance,
       drain: moveDrain,
-      healing: baseMove.healing !== undefined ? baseMove.healing : m.healing,
-      recoil: baseMove.recoil !== undefined ? baseMove.recoil : m.recoil,
-      recoilMaxHp: baseMove.recoilMaxHp !== undefined ? baseMove.recoilMaxHp : m.recoilMaxHp,
-      stat_changes: baseMove.stat_changes || m.stat_changes,
-      flinchChance: baseMove.flinchChance || m.flinchChance,
-      confusionChance: baseMove.confusionChance || m.confusionChance,
-      multiTurn: baseMove.multiTurn || m.multiTurn,
-      target: baseMove.target || m.target
+      healing: baseMove.healing,
+      recoil: baseMove.recoil,
+      recoilMaxHp: baseMove.recoilMaxHp,
+      stat_changes: baseMove.stat_changes,
+      stat_changes_target: (baseMove as any).stat_changes_target,
+      flinchChance: baseMove.flinchChance,
+      confusionChance: baseMove.confusionChance,
+      multiTurn: baseMove.multiTurn,
+      target: baseMove.target
     };
   });
 

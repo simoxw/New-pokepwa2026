@@ -4,6 +4,7 @@ import { Pokemon, Move, Trainer, Item, BattleStages } from '../types/game';
 import { useGame } from '../contexts/GameContext';
 import { calculateExpGain, checkLevelUp, applyEvs } from '../lib/leveling';
 import { canEvolve } from '../lib/evolution';
+import { normalizePokemon } from '../lib/utils';
 import { fetchMoveData, STRUGGLE_MOVE } from '../lib/pokeapi';
 import { BattleHUD } from './battle/BattleHUD';
 import { BattleControls } from './battle/BattleControls';
@@ -30,6 +31,7 @@ import { getBadgeForBoss } from '../lib/badges';
 import { CatchOverlay } from './CatchOverlay';
 import { ZONES } from '../constants/game';
 import { LEGENDARY_BOSSES, generateBossRewardPokemon } from '../data/legendaryBosses';
+import { getMoveByName } from '../data/movesData';
 import { BattleFXLayer, BattleFXData } from './BattleFXLayer';
 import { 
   playHit, 
@@ -145,19 +147,39 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
 
   // Moves with PP tracking
   const [playerMoves, setPlayerMoves] = useState<Move[]>(() => {
-    return playerActive.moves.map(m => ({
-      ...m,
-      pp: typeof m.pp === 'number' ? m.pp : (m.maxPp ?? 35),
-      maxPp: m.maxPp ?? m.pp ?? 35
-    }));
+    return playerActive.moves.map(m => {
+      const fullMove = getMoveByName(m.name);
+      return {
+        ...fullMove,
+        ...m,
+        type: fullMove.type,
+        category: fullMove.category,
+        power: fullMove.power,
+        accuracy: fullMove.accuracy,
+        stat_changes: fullMove.stat_changes,
+        stat_changes_target: (fullMove as any).stat_changes_target,
+        pp: typeof m.pp === 'number' ? m.pp : (fullMove.maxPp ?? 35),
+        maxPp: fullMove.maxPp ?? 35
+      };
+    });
   });
 
   const [enemyMoves, setEnemyMoves] = useState<Move[]>(() => {
-    return enemy.moves.map(m => ({
-      ...m,
-      pp: typeof m.pp === 'number' ? m.pp : (m.maxPp ?? 35),
-      maxPp: m.maxPp ?? m.pp ?? 35
-    }));
+    return enemy.moves.map(m => {
+      const fullMove = getMoveByName(m.name);
+      return {
+        ...fullMove,
+        ...m,
+        type: fullMove.type,
+        category: fullMove.category,
+        power: fullMove.power,
+        accuracy: fullMove.accuracy,
+        stat_changes: fullMove.stat_changes,
+        stat_changes_target: (fullMove as any).stat_changes_target,
+        pp: typeof m.pp === 'number' ? m.pp : (fullMove.maxPp ?? 35),
+        maxPp: fullMove.maxPp ?? 35
+      };
+    });
   });
 
   // Primary Status
@@ -570,6 +592,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
           const isFirstVictory = !state.player.defeatedBosses?.includes(bossSpec.id);
           if (isFirstVictory) {
             generateBossRewardPokemon(bossSpec).then(rewardPkmn => {
+              const cleanReward = normalizePokemon(rewardPkmn);
               setState(prev => {
                 const defeatedBosses = [...(prev.player.defeatedBosses || []), bossSpec.id];
                 const teamFull = prev.player.team.length >= 6;
@@ -578,13 +601,13 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
                   player: {
                     ...prev.player,
                     defeatedBosses,
-                    team: teamFull ? prev.player.team : [...prev.player.team, rewardPkmn],
-                    box: teamFull ? [...prev.player.box, rewardPkmn] : prev.player.box,
-                    pokedex: { ...prev.player.pokedex, [rewardPkmn.id]: 'caught' }
+                    team: teamFull ? prev.player.team : [...prev.player.team, cleanReward],
+                    box: teamFull ? [...prev.player.box, cleanReward] : prev.player.box,
+                    pokedex: { ...prev.player.pokedex, [cleanReward.id]: 'caught' }
                   }
                 };
               });
-              addLog(`🎁 PRIMA VITTORIA! Pokémon Speciale sbloccato: ${rewardPkmn.nickname}!`);
+              addLog(`🎁 PRIMA VITTORIA! Pokémon Speciale sbloccato: ${cleanReward.nickname}!`);
             });
           }
         }
@@ -874,9 +897,11 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
 
     const playerFirst = turnWinner === 'player';
 
-    // Local live state tracking for volatile conditions during the multi-phase turn
+    // Local live state tracking for volatile conditions & stat stages during the multi-phase turn
     let livePlayerVolatile: VolatileStatus = { ...playerVolatile };
     let liveEnemyVolatile: VolatileStatus = { ...enemyVolatile };
+    let livePlayerStages: BattleStages = { ...playerStages };
+    let liveEnemyStages: BattleStages = { ...enemyStages };
 
     // Helper for executing an individual combatant's attack within this turn
     const runCombatantAttack = async (
@@ -921,10 +946,28 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       const setAttackerStatus = attackerIsPlayer ? setPlayerStatus : setEnemyStatus;
       const defenderStatus = attackerIsPlayer ? enemyStatus : playerStatus;
       const setDefenderStatus = attackerIsPlayer ? setEnemyStatus : setPlayerStatus;
-      const attackerStages = attackerIsPlayer ? playerStages : enemyStages;
-      const setAttackerStages = attackerIsPlayer ? setPlayerStages : setEnemyStages;
-      const defenderStages = attackerIsPlayer ? enemyStages : playerStages;
-      const setDefenderStages = attackerIsPlayer ? setEnemyStages : setPlayerStages;
+      
+      const attackerStages = attackerIsPlayer ? livePlayerStages : liveEnemyStages;
+      const setAttackerStages = (updater: React.SetStateAction<BattleStages>) => {
+        if (attackerIsPlayer) {
+          livePlayerStages = typeof updater === 'function' ? updater(livePlayerStages) : updater;
+          setPlayerStages(livePlayerStages);
+        } else {
+          liveEnemyStages = typeof updater === 'function' ? updater(liveEnemyStages) : updater;
+          setEnemyStages(liveEnemyStages);
+        }
+      };
+
+      const defenderStages = attackerIsPlayer ? liveEnemyStages : livePlayerStages;
+      const setDefenderStages = (updater: React.SetStateAction<BattleStages>) => {
+        if (attackerIsPlayer) {
+          liveEnemyStages = typeof updater === 'function' ? updater(liveEnemyStages) : updater;
+          setEnemyStages(liveEnemyStages);
+        } else {
+          livePlayerStages = typeof updater === 'function' ? updater(livePlayerStages) : updater;
+          setPlayerStages(livePlayerStages);
+        }
+      };
 
       const userHp = attackerIsPlayer ? cPlayerHp : cEnemyHp;
       const setUserHp = attackerIsPlayer ? setPlayerHp : setEnemyHp;
@@ -1372,11 +1415,21 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     }
     setPlayerSideHazards(hazardRes.updatedSideHazards);
     setPlayerHp(switchedHp);
-    setPlayerMoves(nextPkmn.moves.map(m => ({
-      ...m,
-      pp: typeof m.pp === 'number' ? m.pp : (m.maxPp ?? 35),
-      maxPp: m.maxPp ?? m.pp ?? 35
-    })));
+    setPlayerMoves(nextPkmn.moves.map(m => {
+      const fullMove = getMoveByName(m.name);
+      return {
+        ...fullMove,
+        ...m,
+        type: fullMove.type,
+        category: fullMove.category,
+        power: fullMove.power,
+        accuracy: fullMove.accuracy,
+        stat_changes: fullMove.stat_changes,
+        stat_changes_target: (fullMove as any).stat_changes_target,
+        pp: typeof m.pp === 'number' ? m.pp : (fullMove.maxPp ?? 35),
+        maxPp: fullMove.maxPp ?? 35
+      };
+    }));
     setPlayerStatus({ 
       status: switchedStatus, 
       duration: hazardRes.nextStatusDuration ?? nextPkmn.statusDuration 

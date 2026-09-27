@@ -5,6 +5,7 @@ import { isImmuneToStatus, VolatileStatus } from './statusEffects';
 import { checkAbility } from './abilities';
 import { playProtect, playHit } from '../sound';
 import { SideHazards, setHazardFromMove } from './hazards';
+import { getMoveByName } from '../../data/movesData';
 
 export interface ExecuteMoveResult {
   nextUserHp: number;
@@ -17,7 +18,7 @@ export interface ExecuteMoveResult {
 
 function isSelfStatChange(move: Move, sc: { change: number; target?: string }, defaultSelf: boolean): boolean {
   if (sc.target === 'user') return true;
-  if (sc.target === 'target') return false;
+  if (sc.target === 'target' || sc.target === 'selected-pokemon' || sc.target === 'opponent') return false;
   if (move.stat_changes_target === 'user') return true;
   if (move.stat_changes_target === 'target') return false;
   if (move.target === 'user' || defaultSelf) return true;
@@ -36,7 +37,20 @@ function isSelfStatChange(move: Move, sc: { change: number; target?: string }, d
     'ferrartigli', 'metal-claw',
     'forzantica', 'ancient-power',
     'ventombra', 'ominous-wind',
-    'eterevento', 'silver-wind'
+    'eterevento', 'silver-wind',
+    'danzaspada', 'swords-dance',
+    'agilit', 'agility',
+    'calmamente', 'calm-mind',
+    'congiura', 'nasty-plot',
+    'dragodanza', 'dragon-dance',
+    'maledizione', 'curse',
+    'granfisico', 'bulk-up',
+    'ferroscudo', 'iron-defense',
+    'acidarmatura', 'acid-armor',
+    'amnesia',
+    'guscioforza', 'shell-smash',
+    'meteorpugno', 'meteor-mash',
+    'controfuoco', 'headlong-rush'
   ];
   if (selfMoves.some(sm => mName.includes(sm))) return true;
 
@@ -44,7 +58,7 @@ function isSelfStatChange(move: Move, sc: { change: number; target?: string }, d
 }
 
 export function executeMoveAction(
-  move: Move,
+  rawMove: Move,
   user: Pokemon,
   target: Pokemon,
   userStages: BattleStages,
@@ -76,6 +90,31 @@ export function executeMoveAction(
     setTargetSideHazards?: React.Dispatch<React.SetStateAction<SideHazards>>;
   }
 ): ExecuteMoveResult {
+  // Enrich move with authoritative database definition to ensure secondary effects (stat_changes, recoil, drain) are always guaranteed
+  const moveDef = getMoveByName(rawMove.name || (rawMove as any).title || '');
+  const move: Move = {
+    ...moveDef,
+    ...rawMove,
+    name: moveDef.name || rawMove.name,
+    category: rawMove.category || moveDef.category,
+    type: moveDef.type || rawMove.type,
+    power: (typeof rawMove.power === 'number' && (rawMove.power > 0 || moveDef.power === 0)) ? rawMove.power : moveDef.power,
+    accuracy: moveDef.accuracy || rawMove.accuracy,
+    pp: rawMove.pp ?? moveDef.pp,
+    maxPp: moveDef.maxPp || rawMove.maxPp,
+    priority: moveDef.priority ?? rawMove.priority,
+    stat_changes: (moveDef.stat_changes && moveDef.stat_changes.length > 0) ? moveDef.stat_changes : rawMove.stat_changes,
+    stat_changes_target: (moveDef as any).stat_changes_target || rawMove.stat_changes_target,
+    drain: moveDef.drain !== undefined ? moveDef.drain : rawMove.drain,
+    healing: moveDef.healing !== undefined ? moveDef.healing : rawMove.healing,
+    recoil: moveDef.recoil !== undefined ? moveDef.recoil : rawMove.recoil,
+    recoilMaxHp: moveDef.recoilMaxHp !== undefined ? moveDef.recoilMaxHp : rawMove.recoilMaxHp,
+    statusEffect: moveDef.statusEffect,
+    effectChance: moveDef.effectChance !== undefined ? moveDef.effectChance : 100,
+    flinchChance: moveDef.flinchChance,
+    confusionChance: moveDef.confusionChance,
+    multiTurn: moveDef.multiTurn || rawMove.multiTurn,
+  };
   // Quantum Dodge Check
   if (options?.dodgeChance && !isPlayer && Math.random() * 100 < options.dodgeChance) {
     addLog(`${user.name} usa ${move.name}!`);
@@ -185,12 +224,35 @@ export function executeMoveAction(
     if (!changes || changes.length === 0) return;
     const STAT_MAP: Record<string, keyof BattleStages> = {
       'attack': 'attack',
+      'atk': 'attack',
+      'attacco': 'attack',
       'defense': 'defense',
+      'def': 'defense',
+      'difesa': 'defense',
       'special-attack': 'spAtk',
+      'special_attack': 'spAtk',
+      'spatk': 'spAtk',
+      'sp-atk': 'spAtk',
+      'spa': 'spAtk',
+      'attacco-speciale': 'spAtk',
       'special-defense': 'spDef',
+      'special_defense': 'spDef',
+      'spdef': 'spDef',
+      'sp-def': 'spDef',
+      'spd': 'spDef',
+      'difesa-speciale': 'spDef',
       'speed': 'speed',
+      'spe': 'speed',
+      'vel': 'speed',
+      'velocita': 'speed',
       'accuracy': 'accuracy',
-      'evasion': 'evasion'
+      'acc': 'accuracy',
+      'prec': 'accuracy',
+      'precisione': 'accuracy',
+      'evasion': 'evasion',
+      'eva': 'evasion',
+      'elus': 'evasion',
+      'elusione': 'evasion'
     };
     const STAT_LABELS: Record<string, string> = {
       attack: 'Attacco',
@@ -203,7 +265,10 @@ export function executeMoveAction(
     };
 
     for (const sc of changes) {
-      const statKey = STAT_MAP[sc.stat?.name || ''];
+      const rawStatName = (typeof (sc as any).stat === 'string'
+        ? (sc as any).stat
+        : sc.stat?.name || (sc as any).statName || (sc as any).name || '').toLowerCase().trim();
+      const statKey = STAT_MAP[rawStatName];
       if (!statKey) continue;
       const isSelf = isSelfStatChange(move, sc, defaultSelf);
       const recipient = isSelf ? user : target;
@@ -445,11 +510,11 @@ export function executeMoveAction(
   }
 
   // 4c. SECONDARY EFFECTS (Status, Stat Changes, Confusion, Flinch)
-  // Stat changes proc (Self stat changes like Zuffa, Overheat, Superpower occur even if target fainted)
+  // Stat changes proc (Self stat changes like Zuffa, Overheat, Superpower occur 100% guaranteed even if target fainted)
   if (move.stat_changes && move.stat_changes.length > 0) {
-    const chance = move.effectChance ?? 100;
+    const isSelf = isSelfStatChange(move, move.stat_changes[0], move.target === 'user');
+    const chance = isSelf ? (moveDef.effectChance !== undefined ? moveDef.effectChance : 100) : (move.effectChance ?? 100);
     if (Math.random() * 100 < chance) {
-      const isSelf = isSelfStatChange(move, move.stat_changes[0], move.target === 'user');
       if (isSelf || curTargetHp > 0) {
         applyStatChanges(move.stat_changes, move.target === 'user');
       }

@@ -104,6 +104,16 @@ export function parseMoveObject(moveData: any, fallbackName?: string): Move {
       stat_changes = [{ change: 1, stat: { name: 'special-attack' } }, { change: 1, stat: { name: 'special-defense' } }];
     } else if (rawNameLower.includes('dragon-dance') || rawNameLower.includes('dragodanza')) {
       stat_changes = [{ change: 1, stat: { name: 'attack' } }, { change: 1, stat: { name: 'speed' } }];
+    } else if (rawNameLower.includes('close-combat') || rawNameLower.includes('zuffa')) {
+      stat_changes = [{ change: -1, stat: { name: 'defense' } }, { change: -1, stat: { name: 'special-defense' } }];
+    } else if (rawNameLower.includes('superpower') || rawNameLower.includes('troppoforte')) {
+      stat_changes = [{ change: -1, stat: { name: 'attack' } }, { change: -1, stat: { name: 'defense' } }];
+    } else if (rawNameLower.includes('overheat') || rawNameLower.includes('vampata') || rawNameLower.includes('draco-meteor') || rawNameLower.includes('dragometeora') || rawNameLower.includes('leaf-storm') || rawNameLower.includes('verdebufera')) {
+      stat_changes = [{ change: -2, stat: { name: 'special-attack' } }];
+    } else if (rawNameLower.includes('hammer-arm') || rawNameLower.includes('mazzabrutta') || rawNameLower.includes('mazzazucca')) {
+      stat_changes = [{ change: -1, stat: { name: 'speed' } }];
+    } else if (rawNameLower.includes('shell-smash') || rawNameLower.includes('guscioforza')) {
+      stat_changes = [{ change: -1, stat: { name: 'defense' } }, { change: -1, stat: { name: 'special-defense' } }, { change: 2, stat: { name: 'attack' } }, { change: 2, stat: { name: 'special-attack' } }, { change: 2, stat: { name: 'speed' } }];
     }
   }
 
