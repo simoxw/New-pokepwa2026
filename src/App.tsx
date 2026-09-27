@@ -28,6 +28,7 @@ import { Sfidofono } from './components/Sfidofono';
 import { StarterSelection } from './components/StarterSelection';
 import { LeagueHub } from './components/LeagueHub';
 import { BattleTower } from './components/BattleTower';
+import { BossBattles } from './components/BossBattles';
 import { playBgm } from './lib/sound';
 
 function GameContent() {
@@ -96,7 +97,7 @@ function GameContent() {
   const [activeTrainer, setActiveTrainer] = useState<Trainer | undefined>();
   const [showEvolution, setShowEvolution] = useState<Pokemon | null>(null);
   const [showMoveLearning, setShowMoveLearning] = useState<{ pokemon: Pokemon, move: Move } | null>(null);
-  const [currentScreen, setCurrentScreen] = useState<'game' | 'pokedex' | 'inventory' | 'team' | 'box' | 'trade' | 'local-battle' | 'settings' | 'badgecase' | 'shop' | 'profile' | 'quests' | 'sfidofono' | 'league' | 'tower'>('game');
+  const [currentScreen, setCurrentScreen] = useState<'game' | 'pokedex' | 'inventory' | 'team' | 'box' | 'trade' | 'local-battle' | 'settings' | 'badgecase' | 'shop' | 'profile' | 'quests' | 'sfidofono' | 'league' | 'tower' | 'bosses'>('game');
   const [lastTowerBattleResult, setLastTowerBattleResult] = useState<'win' | 'lose' | null>(null);
   const [activeBattleModifiers, setActiveBattleModifiers] = useState<any>(null);
 
@@ -329,6 +330,18 @@ function GameContent() {
             setActiveTrainer(trainer);
             setActiveBattle(trainer.team[0]);
             setActiveBattleModifiers(modifiers);
+          }}
+        />
+      )}
+      {currentScreen === 'bosses' && (
+        <BossBattles 
+          key="bosses-screen"
+          onBack={() => setCurrentScreen('game')} 
+          onStartBattle={(trainer, modifiers) => {
+            setActiveTrainer(trainer);
+            setActiveBattle(trainer.team[0]);
+            setActiveBattleModifiers(modifiers);
+            setCurrentScreen('game');
           }}
         />
       )}

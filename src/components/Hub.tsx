@@ -66,6 +66,15 @@ export const Hub: React.FC = () => {
     (window as any).onNavigate('league');
   };
 
+  const openBosses = () => {
+    const leagueVictories = state.player.leagueVictories || 0;
+    if (leagueVictories < 1) {
+      setDialogue(`⚡ Le Sfide Leggendarie contro gli Allenatori Iconici (Lvl 100) si sbloccano solo dopo aver sconfitto la Lega Pokémon per la prima volta e conquistato il titolo di Campione!`);
+      return;
+    }
+    (window as any).onNavigate('bosses');
+  };
+
   const healTeam = async () => {
     if (isHealing) return;
     setIsHealing(true);
@@ -288,6 +297,14 @@ export const Hub: React.FC = () => {
           color="border-emerald-400"
           isNight={isNight}
           badge="ROGUELIKE"
+        />
+        <ActionButton 
+          icon={<span className="text-xl">⚡</span>} 
+          label={(state.player.leagueVictories || 0) > 0 ? "Boss Iconici" : "Boss (Post-Lega)"} 
+          onClick={openBosses}
+          color={(state.player.leagueVictories || 0) > 0 ? "border-amber-500" : "border-gray-500 opacity-70 grayscale"}
+          isNight={isNight}
+          badge="LVL 100"
         />
         <ActionButton 
           icon={<span className="text-xl">👑</span>} 

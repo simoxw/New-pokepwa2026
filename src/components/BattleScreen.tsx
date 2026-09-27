@@ -29,6 +29,7 @@ import { BattleBag } from './battle/BattleBag';
 import { getBadgeForBoss } from '../lib/badges';
 import { CatchOverlay } from './CatchOverlay';
 import { ZONES } from '../constants/game';
+import { LEGENDARY_BOSSES, generateBossRewardPokemon } from '../data/legendaryBosses';
 import { BattleFXLayer, BattleFXData } from './BattleFXLayer';
 import { 
   playHit, 
@@ -42,12 +43,15 @@ import {
   playPokemonCry
 } from '../lib/sound';
 
-interface BattleScreenProps {
+  interface BattleScreenProps {
   enemy: Pokemon;
-  trainer?: Trainer & { bossMutation?: any };
+  trainer?: Trainer & { bossMutation?: any; bossBuff?: string; bossBuffName?: string; bossBuffDescription?: string };
   modifiers?: {
     activeCards?: any[];
     bossMutation?: any;
+    bossBuff?: string;
+    bossBuffName?: string;
+    bossBuffDescription?: string;
   };
   onEnd: (
     result: 'win' | 'lose' | 'escape' | 'catch', 
@@ -63,6 +67,9 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
 
   const activeCards: any[] = modifiers?.activeCards || [];
   const bossMutation = (trainer as any)?.bossMutation || modifiers?.bossMutation;
+  const bossBuff = modifiers?.bossBuff || (trainer as any)?.bossBuff;
+  const bossBuffName = modifiers?.bossBuffName || (trainer as any)?.bossBuffName;
+  const bossBuffDescription = modifiers?.bossBuffDescription || (trainer as any)?.bossBuffDescription;
 
   // Tower Card Multipliers
   const towerAttackMult = activeCards.reduce((acc, c) => acc * (c.attackMultiplier || 1), 1);
@@ -92,7 +99,20 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     if (playerActive) playPokemonCry(playerActive.id);
     if (initialEnemy) setTimeout(() => playPokemonCry(initialEnemy.id), 500);
 
-    // Initial battle start notifications for Tower Modifiers & Boss Mutations
+    // Initial battle start notifications for Tower Modifiers & Boss Mutations & Legendary Buffs
+    if (bossBuff) {
+      addLog(`👑 BUFF BOSS [${(bossBuffName || bossBuff).toUpperCase()}]: ${bossBuffDescription || 'Buff Attivo'}`);
+      if (bossBuff === 'rosso_aura') {
+        setPlayerStatus({ status: 'paralyzed', duration: undefined });
+        addLog(`⚡ L'Aura del Monte Argento paralizza il tuo Pokémon all'inizio del combattimento!`);
+      } else if (bossBuff === 'camilla_presence') {
+        setPlayerStages(s => ({ ...s, attack: Math.max(-6, s.attack - 1) }));
+        addLog(`👑 Lo Sguardo Insuperabile di Camilla riduce l'Attacco del tuo Pokémon (-1)!`);
+      } else if (bossBuff === 'blu_arrogance') {
+        addLog(`🏆 La Presunzione di Blu riduce la precisione delle tue mosse!`);
+      }
+    }
+
     if (bossMutation) {
       addLog(`⚠️ MUTAZIONE BOSS [${bossMutation.name.toUpperCase()}]: ${bossMutation.description}`);
       if (bossMutation.type === 'corrotto') {
@@ -504,6 +524,33 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       // End of trainer battle: rewards & badge
       const moneyReward = trainer.moneyReward;
       const badge = getBadgeForBoss(trainer.name);
+
+      // Check for Legendary Boss First Victory Reward
+      if (trainer.id?.startsWith('boss-')) {
+        const bossSpec = LEGENDARY_BOSSES.find(b => b.id === trainer.id);
+        if (bossSpec) {
+          const isFirstVictory = !state.player.defeatedBosses?.includes(bossSpec.id);
+          if (isFirstVictory) {
+            generateBossRewardPokemon(bossSpec).then(rewardPkmn => {
+              setState(prev => {
+                const defeatedBosses = [...(prev.player.defeatedBosses || []), bossSpec.id];
+                const teamFull = prev.player.team.length >= 6;
+                return {
+                  ...prev,
+                  player: {
+                    ...prev.player,
+                    defeatedBosses,
+                    team: teamFull ? prev.player.team : [...prev.player.team, rewardPkmn],
+                    box: teamFull ? [...prev.player.box, rewardPkmn] : prev.player.box,
+                    pokedex: { ...prev.player.pokedex, [rewardPkmn.id]: 'caught' }
+                  }
+                };
+              });
+              addLog(`🎁 PRIMA VITTORIA! Pokémon Speciale sbloccato: ${rewardPkmn.nickname}!`);
+            });
+          }
+        }
+      }
       
       setState(prev => {
         let badges = [...prev.player.badges];
@@ -514,13 +561,18 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
         if (trainer.id && !defeatedTrainers.includes(trainer.id)) {
           defeatedTrainers.push(trainer.id);
         }
+        const defeatedBosses = [...(prev.player.defeatedBosses || [])];
+        if (trainer.id?.startsWith('boss-') && !defeatedBosses.includes(trainer.id)) {
+          defeatedBosses.push(trainer.id);
+        }
         return {
           ...prev,
           player: {
             ...prev.player,
             money: prev.player.money + moneyReward,
             badges,
-            defeatedTrainers
+            defeatedTrainers,
+            defeatedBosses
           }
         };
       });
@@ -718,6 +770,13 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     if (nextEnemyHp <= 0) {
       await handleWin(nextPlayerHp);
       return;
+    }
+
+    if (bossBuff === 'n_harmony' && nextEnemyHp > 0 && nextEnemyHp < enemy.maxHp) {
+      const healAmount = Math.max(1, Math.floor(enemy.maxHp * 0.05));
+      nextEnemyHp = Math.min(enemy.maxHp, nextEnemyHp + healAmount);
+      setEnemyHp(nextEnemyHp);
+      addLog(`🕊️ Armonia Filosofica rigenera ${healAmount} PS a ${enemy.name}!`);
     }
 
     setIsAnimating(false);
@@ -972,18 +1031,32 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
 
       // 6. Execute Move Action
       const currentLowHpBonus = (cPlayerHp / playerActive.maxHp) < 0.35 ? towerLowHpBonus : 1;
+      
+      let bossAtkMult = 1;
+      let bossDefMult = 1;
+      if (!attackerIsPlayer && bossBuff) {
+        if (bossBuff === 'rosso_aura' || bossBuff === 'lance_dragon' || bossBuff === 'nardo_spirit') bossAtkMult = 1.12;
+        if (bossBuff === 'dandel_gigamax' || bossBuff === 'perla_origins' || bossBuff === 'iridio_synthesis') bossAtkMult = 1.10;
+        if (bossBuff === 'blu_arrogance') bossAtkMult = 1.10;
+
+        if (bossBuff === 'camilla_presence') bossDefMult = 1.12;
+        if (bossBuff === 'rocco_steel' || bossBuff === 'baldo_fortress') bossDefMult = 1.15;
+        if (bossBuff === 'blu_arrogance' || bossBuff === 'iridio_synthesis') bossDefMult = 1.10;
+      }
+
       const combatOptions = attackerIsPlayer ? {
         attackMultiplier: towerAttackMult * currentLowHpBonus,
         critChanceBonus: towerCritChanceBonus,
         lifestealPercent: towerLifeStealPercent,
-        accuracyPenalty: towerAccuracyPenalty,
+        accuracyPenalty: towerAccuracyPenalty + (bossBuff === 'blu_arrogance' ? 8 : 0),
         bossMutationType: bossMutation?.type,
         userSideHazards: playerSideHazards,
         setUserSideHazards: setPlayerSideHazards,
         targetSideHazards: enemySideHazards,
         setTargetSideHazards: setEnemySideHazards
       } : {
-        defenseMultiplier: towerDefMult,
+        attackMultiplier: bossAtkMult,
+        defenseMultiplier: towerDefMult * bossDefMult,
         incomingDamageMultiplier: towerIncomingDmgMult,
         dodgeChance: towerDodgeChance,
         bossMutationType: bossMutation?.type,
