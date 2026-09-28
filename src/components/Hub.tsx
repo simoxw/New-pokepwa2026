@@ -387,17 +387,39 @@ export const Hub: React.FC = () => {
 
       {/* Zone Selector Overlay */}
       {showMap && (
-        <div className="fixed inset-0 z-50 bg-black/60 flex items-end">
+        <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-xs flex items-end">
           <motion.div 
             initial={{ y: '100%' }}
             animate={{ y: 0 }}
-            className="w-full bg-white rounded-t-3xl p-6 pb-12"
+            className={`w-full ${
+              isNight 
+                ? 'bg-slate-900 border-t border-purple-500/40 text-white' 
+                : isSunset 
+                  ? 'bg-slate-900 border-t border-amber-500/40 text-white' 
+                  : 'bg-white text-slate-900'
+            } rounded-t-3xl p-6 pb-12 shadow-2xl`}
           >
             <div className="flex justify-between items-center mb-6">
-              <h2 className="text-xl font-bold">Mappa delle Zone</h2>
-              <button onClick={() => setShowMap(false)} className="p-2 bg-gray-100 rounded-full">✕</button>
+              <h2 className={`text-xl font-bold flex items-center gap-2 ${
+                isNight || isSunset ? 'text-white' : 'text-slate-900'
+              }`}>
+                <span>🗺️ Mappa delle Zone</span>
+                {isNight && (
+                  <span className="text-[10px] bg-purple-500/20 text-purple-300 border border-purple-500/40 px-2 py-0.5 rounded-full font-mono font-bold">
+                    NEON
+                  </span>
+                )}
+              </h2>
+              <button 
+                onClick={() => setShowMap(false)} 
+                className={`p-2 rounded-full cursor-pointer transition-colors ${
+                  isNight || isSunset ? 'bg-white/10 hover:bg-white/20 text-white' : 'bg-gray-100 hover:bg-gray-200 text-gray-800'
+                }`}
+              >
+                ✕
+              </button>
             </div>
-            <div className="space-y-4 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
+            <div className="space-y-3.5 max-h-[60vh] overflow-y-auto pr-2 custom-scrollbar">
               {ZONES.filter(z => z.id !== 'villaggio').map(zone => {
                 const isPostGame = ['area-zero', 'santuario-glitch', 'abisso-codice', 'arcipelago-regionale'].includes(zone.id);
                 const isUnlocked = isAreaUnlocked(zone.id, state.player.badges, state.player.leagueVictories || 0);
@@ -409,32 +431,48 @@ export const Hub: React.FC = () => {
                   <button
                     key={zone.id}
                     onClick={() => goToZone(zone.id)}
-                    className={`w-full flex items-center justify-between p-4 rounded-2xl border-2 transition-all shrink-0 text-left ${
+                    className={`w-full flex items-center justify-between p-4 rounded-2xl border-2 transition-all shrink-0 text-left cursor-pointer ${
                       isPostGame && isUnlocked
-                        ? 'border-purple-300 bg-gradient-to-r from-purple-50 via-indigo-50 to-pink-50 shadow-md shadow-purple-100'
+                        ? (isNight || isSunset
+                            ? 'border-purple-500/60 bg-gradient-to-r from-purple-950/70 via-indigo-950/70 to-pink-950/70 text-white shadow-md shadow-purple-950/50'
+                            : 'border-purple-300 bg-gradient-to-r from-purple-50 via-indigo-50 to-pink-50 text-slate-900 shadow-md shadow-purple-100')
                         : isUnlocked 
-                          ? 'border-gray-100 active:bg-blue-50' 
-                          : 'border-gray-200 bg-gray-50 opacity-60'
+                          ? (isNight || isSunset 
+                              ? 'border-slate-700/80 bg-slate-800/90 hover:bg-slate-750 active:bg-slate-700 text-white shadow-xs' 
+                              : 'border-gray-100 bg-white hover:bg-blue-50/50 active:bg-blue-50 text-slate-900 shadow-xs') 
+                          : (isNight || isSunset 
+                              ? 'border-slate-800/50 bg-slate-950/50 opacity-60 text-slate-400' 
+                              : 'border-gray-200 bg-gray-50 opacity-60 text-gray-500')
                     }`}
                   >
                     <div className="text-left pr-2">
-                      <h4 className="font-bold flex items-center gap-2">
-                        <span>{zone.name}</span>
+                      <h4 className={`font-bold flex items-center gap-2 ${
+                        isUnlocked 
+                          ? (isNight || isSunset ? 'text-white' : 'text-slate-900') 
+                          : (isNight || isSunset ? 'text-slate-400' : 'text-gray-500')
+                      }`}>
+                        <span className="text-base">{zone.name}</span>
                         {isPostGame && isUnlocked && (
                           <span className="text-[10px] bg-purple-600 text-white font-black px-2 py-0.5 rounded-full uppercase tracking-wider">
                             Post-Game
                           </span>
                         )}
-                        {!isUnlocked && <Lock className="w-3 h-3 text-gray-400 shrink-0" />}
+                        {!isUnlocked && <Lock className="w-3.5 h-3.5 text-gray-400 shrink-0" />}
                       </h4>
-                      <p className="text-xs text-gray-500 mt-0.5">{isUnlocked ? zone.description : lockReason}</p>
+                      <p className={`text-xs mt-1 ${
+                        isNight || isSunset 
+                          ? (isUnlocked ? 'text-slate-300 font-medium' : 'text-slate-500') 
+                          : (isUnlocked ? 'text-gray-600 font-medium' : 'text-gray-400')
+                      }`}>
+                        {isUnlocked ? zone.description : lockReason}
+                      </p>
                     </div>
                     {isUnlocked ? (
-                      <div className={`p-2 rounded-xl shrink-0 ${isPostGame ? 'bg-purple-600 text-white' : 'bg-blue-500 text-white'}`}>
+                      <div className={`p-2.5 rounded-xl shrink-0 ${isPostGame ? 'bg-purple-600 text-white shadow-sm' : 'bg-blue-500 text-white shadow-sm'}`}>
                         <Play className="w-4 h-4 fill-current" />
                       </div>
                     ) : (
-                      <div className="p-2 rounded-xl bg-gray-200 text-gray-400 shrink-0">
+                      <div className={`p-2.5 rounded-xl shrink-0 ${isNight || isSunset ? 'bg-slate-800 text-slate-500' : 'bg-gray-200 text-gray-400'}`}>
                         <Lock className="w-4 h-4" />
                       </div>
                     )}
