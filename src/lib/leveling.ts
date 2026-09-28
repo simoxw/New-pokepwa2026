@@ -31,16 +31,24 @@ export function checkLevelUp(pokemon: Pokemon): {
   let leveledUp = false;
   const newMoves: { name: string; url: string }[] = [];
 
+  // Hard level cap at 100: cannot level up beyond 100 and exp is reset to 0
+  if (currentPokemon.level >= 100) {
+    currentPokemon.level = 100;
+    currentPokemon.experience = 0;
+    currentPokemon.nextLevelExp = 0;
+    currentPokemon = recalculateStats(currentPokemon);
+    return { leveledUp: false, newPokemon: currentPokemon, canEvolve: canEvolve(currentPokemon), newMoves };
+  }
+
   // Official Medium Fast curve: n^3
   const getNextLevelExp = (lvl: number) => {
-    // We calculate the difference between (lvl+1)^3 and lvl^3
-    // to get the experience needed to progress to the next level.
+    if (lvl >= 100) return 0;
     const currentTotal = Math.pow(lvl, 3);
     const nextTotal = Math.pow(lvl + 1, 3);
     return Math.floor(nextTotal - currentTotal);
   };
 
-  while (currentPokemon.experience >= currentPokemon.nextLevelExp) {
+  while (currentPokemon.level < 100 && currentPokemon.nextLevelExp > 0 && currentPokemon.experience >= currentPokemon.nextLevelExp) {
     leveledUp = true;
     currentPokemon.level += 1;
     currentPokemon.experience -= currentPokemon.nextLevelExp;
@@ -62,7 +70,20 @@ export function checkLevelUp(pokemon: Pokemon): {
     // Heal slightly on level up
     currentPokemon.hp = Math.min(currentPokemon.hp + 5, currentPokemon.maxHp);
     
+    if (currentPokemon.level >= 100) {
+      currentPokemon.level = 100;
+      currentPokemon.experience = 0;
+      currentPokemon.nextLevelExp = 0;
+      break;
+    }
+
     currentPokemon.nextLevelExp = getNextLevelExp(currentPokemon.level);
+  }
+
+  if (currentPokemon.level >= 100) {
+    currentPokemon.level = 100;
+    currentPokemon.experience = 0;
+    currentPokemon.nextLevelExp = 0;
   }
 
   return { leveledUp, newPokemon: currentPokemon, canEvolve: canEvolve(currentPokemon), newMoves };

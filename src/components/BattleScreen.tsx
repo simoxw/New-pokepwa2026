@@ -381,7 +381,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     // Clone active pokemon with updated HP, status, and experience
     let activeClone = { 
       ...playerActive, 
-      experience: playerActive.experience + exp,
+      experience: playerActive.level >= 100 ? 0 : playerActive.experience + exp,
       hp: finalPlayerHp,
       status: playerStatus.status,
       statusDuration: playerStatus.duration,

@@ -2,6 +2,7 @@ import { Pokemon, GameState } from '../types/game';
 import { getMoveByName } from '../data/movesData';
 import { resolveCanonicalPokemonId } from '../data/pokemonSpeciesMap';
 import { POKEMON_FALLBACKS } from '../data/pokemonFallbacks';
+import { recalculateStats } from './leveling';
 
 /**
  * Normalizes any raw Pokemon object (from storage or N64/Base64 import)
@@ -110,31 +111,37 @@ export function normalizePokemon(raw: any): Pokemon {
     };
   });
 
-  // Experience & Level normalization (handles Pokedesk 'exp' vs native 'experience' & 'nextLevelExp')
-  const level = typeof raw.level === 'number' && raw.level > 0 ? raw.level : 5;
+  // Experience & Level normalization (strictly capped between 1 and 100)
+  const rawLevel = typeof raw.level === 'number' && raw.level > 0 ? raw.level : 5;
+  const level = Math.max(1, Math.min(100, rawLevel));
   const getNextLevelExpNeeded = (lvl: number) => {
+    if (lvl >= 100) return 0;
     const currentTotal = Math.pow(lvl, 3);
     const nextTotal = Math.pow(lvl + 1, 3);
     return Math.floor(nextTotal - currentTotal);
   };
 
-  const nextLevelExp = typeof raw.nextLevelExp === 'number' && raw.nextLevelExp > 0
-    ? raw.nextLevelExp
-    : getNextLevelExpNeeded(level);
+  const nextLevelExp = level >= 100 
+    ? 0 
+    : (typeof raw.nextLevelExp === 'number' && raw.nextLevelExp > 0
+        ? raw.nextLevelExp
+        : getNextLevelExpNeeded(level));
 
   let experience = 0;
-  if (typeof raw.experience === 'number' && !isNaN(raw.experience)) {
-    experience = raw.experience;
-  } else if (typeof raw.exp === 'number' && !isNaN(raw.exp)) {
-    const baseTotalForLevel = Math.pow(level, 3);
-    if (raw.exp >= baseTotalForLevel) {
-      experience = raw.exp - baseTotalForLevel;
-    } else {
-      experience = raw.exp;
+  if (level < 100) {
+    if (typeof raw.experience === 'number' && !isNaN(raw.experience)) {
+      experience = raw.experience;
+    } else if (typeof raw.exp === 'number' && !isNaN(raw.exp)) {
+      const baseTotalForLevel = Math.pow(level, 3);
+      if (raw.exp >= baseTotalForLevel) {
+        experience = raw.exp - baseTotalForLevel;
+      } else {
+        experience = raw.exp;
+      }
     }
   }
 
-  return {
+  let finalPokemon: Pokemon = {
     ...raw,
     id: pokemonId,
     instanceId: raw.instanceId || (typeof raw.id === 'string' && raw.id.length > 3 ? raw.id : `${pokemonId}_${Math.random().toString(36).substring(2, 11)}_${Date.now()}`),
@@ -157,6 +164,12 @@ export function normalizePokemon(raw: any): Pokemon {
     ivs: raw.ivs || { hp: 15, attack: 15, defense: 15, spAtk: 15, spDef: 15, speed: 15 },
     evs: raw.evs || { hp: 0, attack: 0, defense: 0, spAtk: 0, spDef: 0, speed: 0 }
   };
+
+  if (rawLevel > 100 || finalPokemon.level >= 100) {
+    finalPokemon = recalculateStats(finalPokemon);
+  }
+
+  return finalPokemon;
 }
 
 /**

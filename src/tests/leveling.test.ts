@@ -65,4 +65,19 @@ describe('Leveling System', () => {
     expect(newPokemon.nextLevelExp).toBe(8**3 - 7**3); // 169
     expect(newPokemon.nextLevelExp).toBeLessThan(500);
   });
+
+  it('should strictly never exceed level 100 even with huge experience', () => {
+    const p100 = mockPokemon({ level: 100, experience: 500000, nextLevelExp: 100 });
+    const { leveledUp, newPokemon } = checkLevelUp(p100);
+    expect(leveledUp).toBe(false);
+    expect(newPokemon.level).toBe(100);
+    expect(newPokemon.experience).toBe(0);
+
+    const p99 = mockPokemon({ level: 99, experience: 999999, nextLevelExp: 100 });
+    const res99 = checkLevelUp(p99);
+    expect(res99.leveledUp).toBe(true);
+    expect(res99.newPokemon.level).toBe(100);
+    expect(res99.newPokemon.experience).toBe(0);
+    expect(res99.newPokemon.nextLevelExp).toBe(0);
+  });
 });

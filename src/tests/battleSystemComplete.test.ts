@@ -3,6 +3,7 @@ import { calculateDamage, getStageMultiplier, getAccuracyMultiplier } from '../l
 import { isImmuneToStatus, applyStatusStatModifiers, getStatusEffect, canMove } from '../lib/battle/statusEffects';
 import { getEffectiveness } from '../lib/battle/typeChart';
 import { parseMoveObject } from '../lib/pokeapi';
+import { getMoveByName } from '../data/movesData';
 import { Pokemon, Move } from '../types/game';
 
 const createMockPokemon = (overrides: Partial<Pokemon> = {}): Pokemon => ({
@@ -357,6 +358,25 @@ describe('Battle System - Complete Engine Verification', () => {
       const parsed = parseMoveObject(rawSwordsDance);
       expect(parsed.target).toBe('user');
       expect(parsed.power).toBe(0);
+    });
+
+    it('correctly resolves schiacciacorpo and velenopuntura via getMoveByName', () => {
+      const schiacciacorpo = getMoveByName('schiacciacorpo');
+      expect(schiacciacorpo.name).toBe('Schiacciacorpo');
+      expect(schiacciacorpo.type).toBe('fighting');
+      expect(schiacciacorpo.power).toBe(80);
+      expect(schiacciacorpo.category).toBe('physical');
+
+      const bodyPress = getMoveByName('body-press');
+      expect(bodyPress.name).toBe('Schiacciacorpo');
+      expect(bodyPress.type).toBe('fighting');
+      expect(bodyPress.power).toBe(80);
+
+      const velenopuntura = getMoveByName('velenopuntura');
+      expect(velenopuntura.name).toBe('Velenocolpo');
+      expect(velenopuntura.type).toBe('poison');
+      expect(velenopuntura.power).toBe(80);
+      expect(velenopuntura.statusEffect).toBe('poisoned');
     });
   });
 });
