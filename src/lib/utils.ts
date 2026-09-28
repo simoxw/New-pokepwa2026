@@ -82,7 +82,9 @@ export function normalizePokemon(raw: any): Pokemon {
 
     let effectivePower = 0;
     if (effectiveCategory !== 'status') {
-      if (typeof m.power === 'number' && m.power > 0) {
+      if (typeof baseMove.power === 'number' && baseMove.power > 0 && baseMove.power !== 45) {
+        effectivePower = baseMove.power;
+      } else if (typeof m.power === 'number' && m.power > 0) {
         effectivePower = m.power;
       } else if (typeof baseMove.power === 'number' && baseMove.power > 0) {
         effectivePower = baseMove.power;

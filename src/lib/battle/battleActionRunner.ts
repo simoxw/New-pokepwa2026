@@ -92,14 +92,22 @@ export function executeMoveAction(
 ): ExecuteMoveResult {
   // Enrich move with authoritative database definition to ensure secondary effects (stat_changes, recoil, drain) are always guaranteed
   const moveDef = getMoveByName(rawMove.name || (rawMove as any).title || '');
+  const effectiveCategory = rawMove.category || moveDef.category || (rawMove.power || moveDef.power ? 'physical' : 'status');
+  const effectiveType = (rawMove.type && typeof rawMove.type === 'string' && rawMove.type !== 'normal')
+    ? rawMove.type
+    : (moveDef.type && moveDef.type !== 'normal' ? moveDef.type : (rawMove.type || moveDef.type || 'normal'));
+  const effectivePower = (typeof rawMove.power === 'number' && (rawMove.power > 0 || effectiveCategory === 'status'))
+    ? rawMove.power
+    : (typeof moveDef.power === 'number' ? moveDef.power : (effectiveCategory === 'status' ? 0 : 40));
+
   const move: Move = {
     ...moveDef,
     ...rawMove,
     name: moveDef.name || rawMove.name,
-    category: rawMove.category || moveDef.category,
-    type: moveDef.type || rawMove.type,
-    power: (typeof rawMove.power === 'number' && (rawMove.power > 0 || moveDef.power === 0)) ? rawMove.power : moveDef.power,
-    accuracy: moveDef.accuracy || rawMove.accuracy,
+    category: effectiveCategory,
+    type: effectiveType,
+    power: effectivePower,
+    accuracy: typeof rawMove.accuracy === 'number' ? rawMove.accuracy : (moveDef.accuracy || 100),
     pp: rawMove.pp ?? moveDef.pp,
     maxPp: moveDef.maxPp || rawMove.maxPp,
     priority: moveDef.priority ?? rawMove.priority,

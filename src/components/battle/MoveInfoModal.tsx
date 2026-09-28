@@ -191,14 +191,22 @@ export const MoveInfoModal: React.FC<MoveInfoModalProps> = ({ move: rawMove, onC
 
   // Authoritative database resolution
   const dbMove = getMoveByName(rawMove.name || (rawMove as any).title || '');
+  const effectiveCategory = rawMove.category || dbMove.category || (rawMove.power || dbMove.power ? 'physical' : 'status');
+  const effectiveType = (rawMove.type && typeof rawMove.type === 'string' && rawMove.type !== 'normal')
+    ? rawMove.type
+    : (dbMove.type && dbMove.type !== 'normal' ? dbMove.type : (rawMove.type || dbMove.type || 'normal'));
+  const effectivePower = (typeof rawMove.power === 'number' && (rawMove.power > 0 || effectiveCategory === 'status'))
+    ? rawMove.power
+    : (typeof dbMove.power === 'number' ? dbMove.power : (effectiveCategory === 'status' ? 0 : 40));
+
   const move: Move = {
     ...dbMove,
     ...rawMove,
     name: rawMove.name || dbMove.name,
-    category: rawMove.category || dbMove.category,
-    type: dbMove.type || rawMove.type,
-    power: (typeof rawMove.power === 'number' && (rawMove.power > 0 || dbMove.power === 0)) ? rawMove.power : dbMove.power,
-    accuracy: dbMove.accuracy || rawMove.accuracy,
+    category: effectiveCategory,
+    type: effectiveType,
+    power: effectivePower,
+    accuracy: typeof rawMove.accuracy === 'number' ? rawMove.accuracy : (dbMove.accuracy || 100),
     pp: rawMove.pp ?? dbMove.pp,
     maxPp: dbMove.maxPp || rawMove.maxPp,
     priority: dbMove.priority ?? rawMove.priority,

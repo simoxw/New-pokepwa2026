@@ -45,7 +45,60 @@ import {
   playPokemonCry
 } from '../lib/sound';
 
-  interface BattleScreenProps {
+  // Helper to safely enrich a move for battle without overriding existing valid types, powers, or categories
+const resolveBattleMove = (m: any): Move => {
+  if (!m) return getMoveByName('Azione');
+  if (typeof m === 'string') return getMoveByName(m);
+  const baseMove = getMoveByName(m.name || (m as any).title || 'Azione');
+  
+  const effectiveType = (m.type && typeof m.type === 'string' && m.type !== 'normal')
+    ? m.type
+    : (baseMove.type && baseMove.type !== 'normal' ? baseMove.type : (m.type || baseMove.type || 'normal'));
+
+  const effectiveCategory = m.category || baseMove.category || (m.power || baseMove.power ? 'physical' : 'status');
+
+  let effectivePower = 0;
+  if (effectiveCategory !== 'status') {
+    if (typeof m.power === 'number' && m.power > 0) {
+      effectivePower = m.power;
+    } else if (typeof baseMove.power === 'number' && baseMove.power > 0) {
+      effectivePower = baseMove.power;
+    } else {
+      effectivePower = 40;
+    }
+  }
+
+  const maxPp = m.maxPp || m.pp || baseMove.maxPp || baseMove.pp || 35;
+  const currentPp = typeof m.pp === 'number' ? Math.min(Math.max(0, m.pp), maxPp) : maxPp;
+
+  return {
+    ...baseMove,
+    ...m,
+    name: m.name || baseMove.name,
+    type: effectiveType,
+    category: effectiveCategory,
+    power: effectivePower,
+    accuracy: typeof m.accuracy === 'number' ? m.accuracy : (baseMove.accuracy || 100),
+    pp: currentPp,
+    maxPp: maxPp,
+    priority: typeof m.priority === 'number' ? m.priority : (baseMove.priority || 0),
+    stat_changes: (m.stat_changes && m.stat_changes.length > 0) ? m.stat_changes : baseMove.stat_changes,
+    stat_changes_target: m.stat_changes_target || (baseMove as any).stat_changes_target,
+    description: m.description || (baseMove as any).description,
+    statusEffect: m.statusEffect || baseMove.statusEffect,
+    effectChance: m.effectChance !== undefined ? m.effectChance : baseMove.effectChance,
+    drain: m.drain !== undefined ? m.drain : baseMove.drain,
+    healing: m.healing !== undefined ? m.healing : baseMove.healing,
+    recoil: m.recoil !== undefined ? m.recoil : baseMove.recoil,
+    recoilMaxHp: m.recoilMaxHp !== undefined ? m.recoilMaxHp : baseMove.recoilMaxHp,
+    flinchChance: m.flinchChance !== undefined ? m.flinchChance : baseMove.flinchChance,
+    confusionChance: m.confusionChance !== undefined ? m.confusionChance : baseMove.confusionChance,
+    multiTurn: m.multiTurn || baseMove.multiTurn,
+    target: m.target || baseMove.target
+  };
+};
+
+interface BattleScreenProps {
   enemy: Pokemon;
   trainer?: Trainer & { bossMutation?: any; bossBuff?: string; bossBuffName?: string; bossBuffDescription?: string };
   modifiers?: {
@@ -147,39 +200,11 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
 
   // Moves with PP tracking
   const [playerMoves, setPlayerMoves] = useState<Move[]>(() => {
-    return playerActive.moves.map(m => {
-      const fullMove = getMoveByName(m.name);
-      return {
-        ...fullMove,
-        ...m,
-        type: fullMove.type,
-        category: fullMove.category,
-        power: fullMove.power,
-        accuracy: fullMove.accuracy,
-        stat_changes: fullMove.stat_changes,
-        stat_changes_target: (fullMove as any).stat_changes_target,
-        pp: typeof m.pp === 'number' ? m.pp : (fullMove.maxPp ?? 35),
-        maxPp: fullMove.maxPp ?? 35
-      };
-    });
+    return playerActive.moves.map(resolveBattleMove);
   });
 
   const [enemyMoves, setEnemyMoves] = useState<Move[]>(() => {
-    return enemy.moves.map(m => {
-      const fullMove = getMoveByName(m.name);
-      return {
-        ...fullMove,
-        ...m,
-        type: fullMove.type,
-        category: fullMove.category,
-        power: fullMove.power,
-        accuracy: fullMove.accuracy,
-        stat_changes: fullMove.stat_changes,
-        stat_changes_target: (fullMove as any).stat_changes_target,
-        pp: typeof m.pp === 'number' ? m.pp : (fullMove.maxPp ?? 35),
-        maxPp: fullMove.maxPp ?? 35
-      };
-    });
+    return enemy.moves.map(resolveBattleMove);
   });
 
   // Primary Status
@@ -1415,21 +1440,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     }
     setPlayerSideHazards(hazardRes.updatedSideHazards);
     setPlayerHp(switchedHp);
-    setPlayerMoves(nextPkmn.moves.map(m => {
-      const fullMove = getMoveByName(m.name);
-      return {
-        ...fullMove,
-        ...m,
-        type: fullMove.type,
-        category: fullMove.category,
-        power: fullMove.power,
-        accuracy: fullMove.accuracy,
-        stat_changes: fullMove.stat_changes,
-        stat_changes_target: (fullMove as any).stat_changes_target,
-        pp: typeof m.pp === 'number' ? m.pp : (fullMove.maxPp ?? 35),
-        maxPp: fullMove.maxPp ?? 35
-      };
-    }));
+    setPlayerMoves(nextPkmn.moves.map(resolveBattleMove));
     setPlayerStatus({ 
       status: switchedStatus, 
       duration: hazardRes.nextStatusDuration ?? nextPkmn.statusDuration 

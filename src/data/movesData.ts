@@ -2467,6 +2467,51 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
     maxPp: 5,
     description: "Schiaccia il bersaglio con una forza micidiale. Più PS ha il bersaglio, maggiore è il danno."
   },
+  'dynamax-cannon': {
+    englishName: 'dynamax-cannon',
+    name: 'Cannone Dynamax',
+    type: 'dragon',
+    category: 'special',
+    power: 100,
+    accuracy: 100,
+    pp: 5,
+    maxPp: 5,
+    description: "Spara un raggio di luce dal nucleo. Infligge ingenti danni di tipo Drago concentrando l'energia Dynamax."
+  },
+  'eternabeam': {
+    englishName: 'eternabeam',
+    name: 'Raggio Infinito',
+    type: 'dragon',
+    category: 'special',
+    power: 160,
+    accuracy: 90,
+    pp: 5,
+    maxPp: 5,
+    multiTurn: { type: 'recharge' },
+    description: "La mossa più potente di Eternatus nella sua forma originale. Chi la usa deve ricaricarsi nel turno successivo."
+  },
+  'behemoth-blade': {
+    englishName: 'behemoth-blade',
+    name: 'Taglio Supremo',
+    type: 'steel',
+    category: 'physical',
+    power: 100,
+    accuracy: 100,
+    pp: 5,
+    maxPp: 5,
+    description: "La spada gigante fende il bersaglio con una potenza inaudita."
+  },
+  'behemoth-bash': {
+    englishName: 'behemoth-bash',
+    name: 'Scudo Reale',
+    type: 'steel',
+    category: 'physical',
+    power: 100,
+    accuracy: 100,
+    pp: 5,
+    maxPp: 5,
+    description: "Carica il bersaglio con lo scudo mastodontico con enorme forza distruttiva."
+  },
   'crabhammer': {
     englishName: 'crabhammer',
     name: 'Martellata',
@@ -2803,10 +2848,23 @@ const ALIAS_MAP: Record<string, string> = {
   'poison-fang': 'poison-fang',
   'velenocroce': 'cross-poison',
   'cross-poison': 'cross-poison',
+  'velencroce': 'cross-poison',
   'schiacciacorpo': 'body-press',
   'body-press': 'body-press',
   'stritolamento': 'crush-grip',
   'crush-grip': 'crush-grip',
+  'cannone-dynamax': 'dynamax-cannon',
+  'cannonedynamax': 'dynamax-cannon',
+  'dynamax-cannon': 'dynamax-cannon',
+  'raggio-infinito': 'eternabeam',
+  'raggioinfinito': 'eternabeam',
+  'eternabeam': 'eternabeam',
+  'taglio-supremo': 'behemoth-blade',
+  'tagliosupremo': 'behemoth-blade',
+  'behemoth-blade': 'behemoth-blade',
+  'scudo-reale': 'behemoth-bash',
+  'scudoreale': 'behemoth-bash',
+  'behemoth-bash': 'behemoth-bash',
   'corposcontro': 'body-slam',
   'schiacciata': 'body-slam',
   'martellata': 'crabhammer',
@@ -2998,7 +3056,7 @@ export function getMoveByName(rawName: string): Move {
   else if (key.includes('dark') || key.includes('buio') || key.includes('ombra') || key.includes('shadow') || key.includes('neropulsar') || key.includes('morso') || key.includes('sgranocchio') || key.includes('notte')) inferredType = 'dark';
   else if (key.includes('flying') || key.includes('ala') || key.includes('becc') || key.includes('volo') || key.includes('aero') || key.includes('gust') || key.includes('vento') || key.includes('aria') || key.includes('balzo') || key.includes('piuma')) inferredType = 'flying';
   else if (key.includes('poison') || key.includes('veleno') || key.includes('tossic') || key.includes('toxic') || key.includes('fango') || key.includes('sludge') || key.includes('fiele') || key.includes('acido')) inferredType = 'poison';
-  else if (key.includes('dragon') || key.includes('drago') || key.includes('draco') || key.includes('oltraggio')) inferredType = 'dragon';
+  else if (key.includes('dragon') || key.includes('drago') || key.includes('draco') || key.includes('oltraggio') || key.includes('dynamax') || key.includes('infinito') || key.includes('eternabeam')) inferredType = 'dragon';
   else if (key.includes('steel') || key.includes('acciaio') || key.includes('metal') || key.includes('ferro') || key.includes('iron') || key.includes('lama') || key.includes('scudo')) inferredType = 'steel';
   else if (key.includes('fairy') || key.includes('folletto') || key.includes('pixie') || key.includes('charm') || key.includes('bacio') || key.includes('kiss') || key.includes('magi') || key.includes('luna') || key.includes('fatato')) inferredType = 'fairy';
   else if (key.includes('rock') || key.includes('roccia') || key.includes('pietra') || key.includes('stone') || key.includes('cadutamassi') || key.includes('frana') || key.includes('masso')) inferredType = 'rock';

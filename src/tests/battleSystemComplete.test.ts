@@ -378,5 +378,33 @@ describe('Battle System - Complete Engine Verification', () => {
       expect(velenopuntura.power).toBe(80);
       expect(velenopuntura.statusEffect).toBe('poisoned');
     });
+
+    it('correctly resolves Eternatus signature moves and poison moves', () => {
+      const raggioInfinito = getMoveByName('Raggio Infinito');
+      expect(raggioInfinito.name).toBe('Raggio Infinito');
+      expect(raggioInfinito.type).toBe('dragon');
+      expect(raggioInfinito.power).toBe(160);
+      expect(raggioInfinito.category).toBe('special');
+
+      const cannoneDynamax = getMoveByName('Cannone Dynamax');
+      expect(cannoneDynamax.name).toBe('Cannone Dynamax');
+      expect(cannoneDynamax.type).toBe('dragon');
+      expect(cannoneDynamax.power).toBe(100);
+      expect(cannoneDynamax.category).toBe('special');
+
+      const velenocroce = getMoveByName('Velenocroce');
+      expect(velenocroce.name).toBe('Velenocroce');
+      expect(velenocroce.type).toBe('poison');
+      expect(velenocroce.power).toBe(70);
+
+      const velencroce = getMoveByName('velencroce');
+      expect(velencroce.name).toBe('Velenocroce');
+      expect(velencroce.type).toBe('poison');
+
+      const fangobomba = getMoveByName('Fangobomba');
+      expect(fangobomba.name).toBe('Fangobomba');
+      expect(fangobomba.type).toBe('poison');
+      expect(fangobomba.power).toBe(90);
+    });
   });
 });
