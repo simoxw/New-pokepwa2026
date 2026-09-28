@@ -1,5 +1,5 @@
 import { Trainer, Pokemon, GameState } from '../types/game';
-import { fetchPokemonData } from '../lib/pokeapi';
+import { fetchPokemonData, generateFallbackPokemon } from '../lib/pokeapi';
 import { getMoveByName } from './movesData';
 
 export interface LegendaryBoss {
@@ -548,10 +548,9 @@ export const LEGENDARY_BOSSES: LegendaryBoss[] = [
 ];
 
 export async function buildBossTrainer(boss: LegendaryBoss): Promise<Trainer & { bossBuff: string; bossBuffName: string }> {
-  const team: Pokemon[] = [];
-
-  for (const entry of boss.teamPokemon) {
-    const p = await fetchPokemonData(entry.id, 100, `Sfida Boss - ${boss.name}`);
+  const teamPromises = boss.teamPokemon.map(async (entry) => {
+    // Generate instantly from local dataset
+    const p = generateFallbackPokemon(entry.id, 100, `Sfida Boss - ${boss.name}`);
     
     // Override IVs to perfect 31/31/31/31/31/31
     const maxIvs = { hp: 31, attack: 31, defense: 31, spAtk: 31, spDef: 31, speed: 31 };
@@ -565,6 +564,7 @@ export async function buildBossTrainer(boss: LegendaryBoss): Promise<Trainer & {
     const calcSpDef = Math.floor((((2 * p.baseStats.spDef + 31 + Math.floor(4 / 4)) * 100) / 100) + 5);
     const calcSpeed = Math.floor((((2 * p.baseStats.speed + 31 + Math.floor(252 / 4)) * 100) / 100) + 5);
 
+    p.name = entry.name || p.name;
     p.ivs = maxIvs;
     p.evs = maxEvs;
     p.maxHp = calcHp;
@@ -577,13 +577,15 @@ export async function buildBossTrainer(boss: LegendaryBoss): Promise<Trainer & {
       speed: calcSpeed
     };
 
-    // If custom moves specified, fetch real move data
+    // If custom moves specified, map directly to getMoveByName
     if (entry.customMoves && entry.customMoves.length > 0) {
       p.moves = entry.customMoves.map((mName) => getMoveByName(mName));
     }
 
-    team.push(p);
-  }
+    return p;
+  });
+
+  const team = await Promise.all(teamPromises);
 
   return {
     id: boss.id,
@@ -601,7 +603,8 @@ export async function buildBossTrainer(boss: LegendaryBoss): Promise<Trainer & {
 
 export async function generateBossRewardPokemon(boss: LegendaryBoss): Promise<Pokemon> {
   const spec = boss.rewardPokemon;
-  const p = await fetchPokemonData(spec.id, spec.level, `Premio Primo Trionfo: ${boss.name}`);
+  const targetLevel = Math.min(100, Math.max(1, spec.level));
+  const p = generateFallbackPokemon(spec.id, targetLevel, `Premio Primo Trionfo: ${boss.name}`);
   
   p.name = spec.nickname || p.name;
   p.nickname = spec.nickname;
@@ -612,8 +615,9 @@ export async function generateBossRewardPokemon(boss: LegendaryBoss): Promise<Po
   // Set Perfect IVs
   p.ivs = { hp: 31, attack: 31, defense: 31, spAtk: 31, spDef: 31, speed: 31 };
   
-  // Recalculate Stats for Level 70 with max IVs
-  const lvl = spec.level;
+  // Recalculate Stats for Level with max IVs
+  const lvl = targetLevel;
+  p.level = lvl;
   p.maxHp = Math.floor(((2 * p.baseStats.hp + 31 + 16) * lvl) / 100) + lvl + 10;
   p.hp = p.maxHp;
   p.stats = {

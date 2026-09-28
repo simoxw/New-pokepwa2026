@@ -1,14 +1,16 @@
 import { Trainer, Pokemon } from '../types/game';
-import { fetchPokemonData } from '../lib/pokeapi';
+import { fetchPokemonData, generateFallbackPokemon } from '../lib/pokeapi';
 import { SPRITES } from '../constants/sprites';
 
 export async function generateTrainerTeam(pokemonIds: {id: number, level: number}[]): Promise<Pokemon[]> {
-  const team: Pokemon[] = [];
-  for (const p of pokemonIds) {
-    const pokemon = await fetchPokemonData(p.id, p.level, 'Sfida Allenatore');
-    team.push(pokemon);
-  }
-  return team;
+  const promises = pokemonIds.map(async (p) => {
+    try {
+      return await fetchPokemonData(p.id, Math.min(100, Math.max(1, p.level)), 'Sfida Allenatore');
+    } catch {
+      return generateFallbackPokemon(p.id, Math.min(100, Math.max(1, p.level)), 'Sfida Allenatore');
+    }
+  });
+  return Promise.all(promises);
 }
 
 export const TRAINERS_DATA = {

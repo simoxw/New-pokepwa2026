@@ -1,5 +1,5 @@
 import { Pokemon, Trainer } from '../types/game';
-import { fetchPokemonData, calculateStats } from './pokeapi';
+import { fetchPokemonData, generateFallbackPokemon, calculateStats } from './pokeapi';
 
 export interface TowerCard {
   id: string;
@@ -498,7 +498,6 @@ export async function generateTowerOpponent(floor: number): Promise<Trainer & { 
     npcTemplates = TIER_4_NPCS;
   }
 
-  const team: Pokemon[] = [];
   const usedPokes = new Set<number>();
 
   // Select boss mutation if boss floor
@@ -509,6 +508,7 @@ export async function generateTowerOpponent(floor: number): Promise<Trainer & { 
     bossMutation = BOSS_MUTATIONS[chosenType];
   }
 
+  const floorPokeSpecs: { id: number; level: number }[] = [];
   for (let i = 0; i < teamSize; i++) {
     let pokeId: number;
     let attempts = 0;
@@ -519,38 +519,43 @@ export async function generateTowerOpponent(floor: number): Promise<Trainer & { 
     usedPokes.add(pokeId);
 
     const level = isBoss ? Math.min(100, baseLevel + 2) : Math.min(100, baseLevel + Math.floor(Math.random() * 3) - 1);
-    try {
-      let poke = await fetchPokemonData(pokeId, Math.max(1, level));
-
-      // Boss Pokemon optimization: Perfect IVs (31) and Max EVs (252) + 15% Boss HP
-      if (isBoss) {
-        const perfectIvs = { hp: 31, attack: 31, defense: 31, spAtk: 31, spDef: 31, speed: 31 };
-        const maxEvs = { hp: 128, attack: 252, defense: 0, spAtk: 252, spDef: 0, speed: 252 };
-        const updatedStats = calculateStats(poke.baseStats, level, perfectIvs, maxEvs, poke.nature);
-        const bossHp = Math.floor(updatedStats.hp * 1.15);
-        poke = {
-          ...poke,
-          ivs: perfectIvs,
-          evs: maxEvs,
-          hp: bossHp,
-          maxHp: bossHp,
-          stats: {
-            attack: updatedStats.attack,
-            defense: updatedStats.defense,
-            spAtk: updatedStats.spAtk,
-            spDef: updatedStats.spDef,
-            speed: updatedStats.speed
-          }
-        };
-      }
-
-      team.push(poke);
-    } catch (e) {
-      const fallbackId = pokemonPool[0] || 137;
-      const poke = await fetchPokemonData(fallbackId, Math.max(1, level));
-      team.push(poke);
-    }
+    floorPokeSpecs.push({ id: pokeId, level: Math.max(1, level) });
   }
+
+  const team = await Promise.all(
+    floorPokeSpecs.map(async ({ id: pokeId, level }) => {
+      try {
+        let poke = await fetchPokemonData(pokeId, level);
+
+        // Boss Pokemon optimization: Perfect IVs (31) and Max EVs (252) + 15% Boss HP
+        if (isBoss) {
+          const perfectIvs = { hp: 31, attack: 31, defense: 31, spAtk: 31, spDef: 31, speed: 31 };
+          const maxEvs = { hp: 128, attack: 252, defense: 0, spAtk: 252, spDef: 0, speed: 252 };
+          const updatedStats = calculateStats(poke.baseStats, level, perfectIvs, maxEvs, poke.nature);
+          const bossHp = Math.floor(updatedStats.hp * 1.15);
+          poke = {
+            ...poke,
+            ivs: perfectIvs,
+            evs: maxEvs,
+            hp: bossHp,
+            maxHp: bossHp,
+            stats: {
+              attack: updatedStats.attack,
+              defense: updatedStats.defense,
+              spAtk: updatedStats.spAtk,
+              spDef: updatedStats.spDef,
+              speed: updatedStats.speed
+            }
+          };
+        }
+
+        return poke;
+      } catch (e) {
+        const fallbackId = pokemonPool[0] || 137;
+        return generateFallbackPokemon(fallbackId, level);
+      }
+    })
+  );
 
   // Generazione Dati Allenatore (Boss o NPC procedurale della fascia)
   let name: string;
