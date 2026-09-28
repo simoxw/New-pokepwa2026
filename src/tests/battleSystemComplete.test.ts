@@ -406,5 +406,18 @@ describe('Battle System - Complete Engine Verification', () => {
       expect(fangobomba.type).toBe('poison');
       expect(fangobomba.power).toBe(90);
     });
+
+    it('correctly resolves Tifone (Hurricane) as flying type with 110 power', () => {
+      const tifone = getMoveByName('Tifone');
+      expect(tifone.name).toBe('Tifone');
+      expect(tifone.type).toBe('flying');
+      expect(tifone.power).toBe(110);
+      expect(tifone.category).toBe('special');
+
+      const hurricane = getMoveByName('hurricane');
+      expect(hurricane.name).toBe('Tifone');
+      expect(hurricane.type).toBe('flying');
+      expect(hurricane.power).toBe(110);
+    });
   });
 });

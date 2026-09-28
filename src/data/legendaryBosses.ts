@@ -549,8 +549,12 @@ export const LEGENDARY_BOSSES: LegendaryBoss[] = [
 
 export async function buildBossTrainer(boss: LegendaryBoss): Promise<Trainer & { bossBuff: string; bossBuffName: string }> {
   const teamPromises = boss.teamPokemon.map(async (entry) => {
-    // Generate instantly from local dataset
-    const p = generateFallbackPokemon(entry.id, 100, `Sfida Boss - ${boss.name}`);
+    let p: Pokemon;
+    try {
+      p = await fetchPokemonData(entry.id, 100, `Sfida Boss - ${boss.name}`);
+    } catch {
+      p = generateFallbackPokemon(entry.id, 100, `Sfida Boss - ${boss.name}`);
+    }
     
     // Override IVs to perfect 31/31/31/31/31/31
     const maxIvs = { hp: 31, attack: 31, defense: 31, spAtk: 31, spDef: 31, speed: 31 };
@@ -604,7 +608,12 @@ export async function buildBossTrainer(boss: LegendaryBoss): Promise<Trainer & {
 export async function generateBossRewardPokemon(boss: LegendaryBoss): Promise<Pokemon> {
   const spec = boss.rewardPokemon;
   const targetLevel = Math.min(100, Math.max(1, spec.level));
-  const p = generateFallbackPokemon(spec.id, targetLevel, `Premio Primo Trionfo: ${boss.name}`);
+  let p: Pokemon;
+  try {
+    p = await fetchPokemonData(spec.id, targetLevel, `Premio Primo Trionfo: ${boss.name}`);
+  } catch {
+    p = generateFallbackPokemon(spec.id, targetLevel, `Premio Primo Trionfo: ${boss.name}`);
+  }
   
   p.name = spec.nickname || p.name;
   p.nickname = spec.nickname;

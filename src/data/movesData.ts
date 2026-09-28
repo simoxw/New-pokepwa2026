@@ -2512,6 +2512,18 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
     maxPp: 5,
     description: "Carica il bersaglio con lo scudo mastodontico con enorme forza distruttiva."
   },
+  'hurricane': {
+    englishName: 'hurricane',
+    name: 'Tifone',
+    type: 'flying',
+    category: 'special',
+    power: 110,
+    accuracy: 70,
+    pp: 10,
+    maxPp: 10,
+    confusionChance: 30,
+    description: "Intrappola il bersaglio in un violento tifone scatenato dalle ali. Può causare confusione."
+  },
   'crabhammer': {
     englishName: 'crabhammer',
     name: 'Martellata',
@@ -3054,7 +3066,7 @@ export function getMoveByName(rawName: string): Move {
   else if (key.includes('ice') || key.includes('ghiaccio') || key.includes('gelo') || key.includes('frost') || key.includes('freeze') || key.includes('neve') || key.includes('bora') || key.includes('brivido')) inferredType = 'ice';
   else if (key.includes('psy') || key.includes('psico') || key.includes('mind') || key.includes('zen') || key.includes('mente') || key.includes('tele')) inferredType = 'psychic';
   else if (key.includes('dark') || key.includes('buio') || key.includes('ombra') || key.includes('shadow') || key.includes('neropulsar') || key.includes('morso') || key.includes('sgranocchio') || key.includes('notte')) inferredType = 'dark';
-  else if (key.includes('flying') || key.includes('ala') || key.includes('becc') || key.includes('volo') || key.includes('aero') || key.includes('gust') || key.includes('vento') || key.includes('aria') || key.includes('balzo') || key.includes('piuma')) inferredType = 'flying';
+  else if (key.includes('flying') || key.includes('ala') || key.includes('becc') || key.includes('volo') || key.includes('aero') || key.includes('gust') || key.includes('vento') || key.includes('aria') || key.includes('balzo') || key.includes('piuma') || key.includes('tifone') || key.includes('hurricane') || key.includes('ciclone') || key.includes('uragano') || key.includes('tornado') || key.includes('eterelama') || key.includes('folata')) inferredType = 'flying';
   else if (key.includes('poison') || key.includes('veleno') || key.includes('tossic') || key.includes('toxic') || key.includes('fango') || key.includes('sludge') || key.includes('fiele') || key.includes('acido')) inferredType = 'poison';
   else if (key.includes('dragon') || key.includes('drago') || key.includes('draco') || key.includes('oltraggio') || key.includes('dynamax') || key.includes('infinito') || key.includes('eternabeam')) inferredType = 'dragon';
   else if (key.includes('steel') || key.includes('acciaio') || key.includes('metal') || key.includes('ferro') || key.includes('iron') || key.includes('lama') || key.includes('scudo')) inferredType = 'steel';
