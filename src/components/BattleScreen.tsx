@@ -859,7 +859,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     }
 
     if (bossBuff === 'n_harmony' && nextEnemyHp > 0 && nextEnemyHp < enemy.maxHp) {
-      const healAmount = Math.max(1, Math.floor(enemy.maxHp * 0.05));
+      const healAmount = Math.max(1, Math.floor(enemy.maxHp * 0.07));
       nextEnemyHp = Math.min(enemy.maxHp, nextEnemyHp + healAmount);
       setEnemyHp(nextEnemyHp);
       addLog(`🕊️ Armonia Filosofica rigenera ${healAmount} PS a ${enemy.name}!`);
@@ -900,7 +900,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     );
 
     // Calculate effective speeds
-    const bossSpeedBonus = (bossBuff === 'dandel_gigamax' || bossBuff === 'nardo_spirit' || bossBuff === 'nemona_passion') ? 1.10 : 1.0;
+    const bossSpeedBonus = (bossBuff === 'dandel_gigamax' || bossBuff === 'nardo_spirit' || bossBuff === 'nemona_passion') ? 1.12 : 1.0;
     const effPlayerSpeed = getEffectiveSpeed(playerActive.stats.speed, playerStages.speed ?? 0, playerStatus.status) * towerSpeedMult;
     const effEnemySpeed = getEffectiveSpeed(enemy.stats.speed, enemyStages.speed ?? 0, enemyStatus.status) * (bossMutation?.type === 'overclocked' ? 1.20 : 1) * bossSpeedBonus;
 
@@ -1142,13 +1142,13 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       let bossAtkMult = 1;
       let bossDefMult = 1;
       if (!attackerIsPlayer && bossBuff) {
-        if (bossBuff === 'rosso_aura' || bossBuff === 'lance_dragon' || bossBuff === 'nardo_spirit' || bossBuff === 'nemona_passion') bossAtkMult = 1.12;
-        if (bossBuff === 'dandel_gigamax' || bossBuff === 'perla_origins' || bossBuff === 'iridio_synthesis' || bossBuff === 'oak_wisdom' || bossBuff === 'volo_shadow') bossAtkMult = 1.10;
-        if (bossBuff === 'blu_arrogance') bossAtkMult = 1.10;
+        if (bossBuff === 'rosso_aura' || bossBuff === 'lance_dragon' || bossBuff === 'nardo_spirit' || bossBuff === 'nemona_passion') bossAtkMult = 1.14;
+        if (bossBuff === 'dandel_gigamax' || bossBuff === 'perla_origins' || bossBuff === 'iridio_synthesis' || bossBuff === 'oak_wisdom' || bossBuff === 'volo_shadow') bossAtkMult = 1.12;
+        if (bossBuff === 'blu_arrogance') bossAtkMult = 1.12;
 
-        if (bossBuff === 'camilla_presence' || bossBuff === 'oak_wisdom' || bossBuff === 'palmer_tower') bossDefMult = 1.12;
-        if (bossBuff === 'rocco_steel' || bossBuff === 'baldo_fortress') bossDefMult = 1.15;
-        if (bossBuff === 'blu_arrogance' || bossBuff === 'iridio_synthesis') bossDefMult = 1.10;
+        if (bossBuff === 'camilla_presence' || bossBuff === 'oak_wisdom' || bossBuff === 'palmer_tower') bossDefMult = 1.14;
+        if (bossBuff === 'rocco_steel' || bossBuff === 'baldo_fortress') bossDefMult = 1.17;
+        if (bossBuff === 'blu_arrogance' || bossBuff === 'iridio_synthesis') bossDefMult = 1.12;
       }
 
       const combatOptions = attackerIsPlayer ? {

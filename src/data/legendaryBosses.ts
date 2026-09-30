@@ -60,7 +60,7 @@ export const LEGENDARY_BOSSES: LegendaryBoss[] = [
     sprite: 'https://play.pokemonshowdown.com/sprites/trainers/red.png',
     avatar: '⚡',
     buffName: 'Aura del Monte Argento',
-    buffDescription: 'Attacco e Attacco Speciale aumentati del +12%. La bufera gelida paralizza il Pokémon del giocatore all\'inizio della battaglia.',
+    buffDescription: 'Attacco e Attacco Speciale aumentati del +14%. La bufera gelida paralizza il Pokémon del giocatore all\'inizio della battaglia.',
     buffType: 'rosso_aura',
     teamPokemon: [
       { id: 25, name: 'Pikachu', level: 100, customMoves: ['Locomovolt', 'Fulmine', 'Cozzata Furia', 'Coda di Ferro'] },
@@ -91,7 +91,7 @@ export const LEGENDARY_BOSSES: LegendaryBoss[] = [
     sprite: 'https://play.pokemonshowdown.com/sprites/trainers/cynthia.png',
     avatar: '🐉',
     buffName: 'Sguardo Insuperabile',
-    buffDescription: 'Difesa e Difesa Speciale aumentate del +12%. La sua presenza regale intimidisce l\'avversario all\'ingresso.',
+    buffDescription: 'Difesa e Difesa Speciale aumentate del +14%. La sua presenza regale intimidisce l\'avversario all\'ingresso.',
     buffType: 'camilla_presence',
     teamPokemon: [
       { id: 445, name: 'Garchomp', level: 100, customMoves: ['Terremoto', 'Oltraggio', 'Pietrataglio', 'Danzaspada'] },
@@ -122,7 +122,7 @@ export const LEGENDARY_BOSSES: LegendaryBoss[] = [
     sprite: 'https://play.pokemonshowdown.com/sprites/trainers/steven.png',
     avatar: '💎',
     buffName: 'Fortezza d\'Acciaio',
-    buffDescription: 'Difesa aumentata del +15%. I suoi Pokémon sono immuni ai brutti colpi.',
+    buffDescription: 'Difesa aumentata del +17%. I suoi Pokémon sono immuni ai brutti colpi.',
     buffType: 'rocco_steel',
     teamPokemon: [
       { id: 376, name: 'Metagross', level: 100, customMoves: ['Meteorpugno', 'Cozzata Zen', 'Terremoto', 'Agilità'] },
@@ -153,7 +153,7 @@ export const LEGENDARY_BOSSES: LegendaryBoss[] = [
     sprite: 'https://play.pokemonshowdown.com/sprites/trainers/lance.png',
     avatar: '🔥',
     buffName: 'Furia Draconica',
-    buffDescription: 'Attacco +12%. I suoi Pokémon subiscono il 10% in meno di danno dalle mosse Super Efficaci.',
+    buffDescription: 'Attacco +14%. I suoi Pokémon subiscono il 10% in meno di danno dalle mosse Super Efficaci.',
     buffType: 'lance_dragon',
     teamPokemon: [
       { id: 149, name: 'Dragonite', level: 100, customMoves: ['Extrarapido', 'Oltraggio', 'Tifone', 'Dragodanza'] },
@@ -184,7 +184,7 @@ export const LEGENDARY_BOSSES: LegendaryBoss[] = [
     sprite: 'https://play.pokemonshowdown.com/sprites/trainers/leon.png',
     avatar: '👑',
     buffName: 'Ritmo Gigamax',
-    buffDescription: 'Velocità +10% e +10% di potenza su ogni attacco eseguito dai suoi Pokémon.',
+    buffDescription: 'Velocità +12% e +12% di potenza su ogni attacco eseguito dai suoi Pokémon.',
     buffType: 'dandel_gigamax',
     teamPokemon: [
       { id: 6, name: 'Charizard', level: 100, customMoves: ['Fuocobomba', 'Eterelama', 'Solarraggio', 'Focalcolpo'] },
@@ -215,7 +215,7 @@ export const LEGENDARY_BOSSES: LegendaryBoss[] = [
     sprite: 'https://play.pokemonshowdown.com/sprites/trainers/blue.png',
     avatar: '🏆',
     buffName: 'Presunzione Assoluta',
-    buffDescription: 'Tutte le statistiche aumentate del +10%. Riduce la precisione delle mosse nemiche dell\'8%.',
+    buffDescription: 'Tutte le statistiche aumentate del +12%. Riduce la precisione delle mosse nemiche dell\'8%.',
     buffType: 'blu_arrogance',
     teamPokemon: [
       { id: 18, name: 'Pidgeot', level: 100, customMoves: ['Tifone', 'Eterelama', 'Elettropalla', 'Balia'] },
@@ -246,7 +246,7 @@ export const LEGENDARY_BOSSES: LegendaryBoss[] = [
     sprite: 'https://play.pokemonshowdown.com/sprites/trainers/giovanni.png',
     avatar: '🚀',
     buffName: 'Morsa della Malavita',
-    buffDescription: 'Immunità totale ai cali di statistiche. I suoi colpi fisici hanno una piccola possibilità di avvelenare l\'avversario (15%).',
+    buffDescription: 'Immunità totale ai cali di statistiche. I suoi colpi fisici hanno una piccola possibilità di avvelenare l\'avversario (17%).',
     buffType: 'giovanni_mafia',
     teamPokemon: [
       { id: 150, name: 'Mewtwo', level: 100, customMoves: ['Psicostroncatura', 'Palla Ombra', 'Baffo d\'Aura', 'Ripresa'] },
@@ -277,7 +277,7 @@ export const LEGENDARY_BOSSES: LegendaryBoss[] = [
     sprite: 'https://play.pokemonshowdown.com/sprites/trainers/n.png',
     avatar: '🕊️',
     buffName: 'Armonia Filosofica',
-    buffDescription: 'Rigenera il 5% dei PS massimi alla fine di ogni turno. Immunità alle trappole di campo.',
+    buffDescription: 'Rigenera il 7% dei PS massimi alla fine di ogni turno. Immunità alle trappole di campo.',
     buffType: 'n_harmony',
     teamPokemon: [
       { id: 643, name: 'Reshiram', level: 100, customMoves: ['Fiammabrdata', 'Dragopulsar', 'Focalcolpo', 'Geoforza'] },
@@ -308,7 +308,7 @@ export const LEGENDARY_BOSSES: LegendaryBoss[] = [
     sprite: 'https://play.pokemonshowdown.com/sprites/trainers/brandon.png',
     avatar: '🗿',
     buffName: 'Fortezza Gigante',
-    buffDescription: 'I suoi Pokémon subiscono il 10% in meno di danno ed hanno immunità ai brutti colpi.',
+    buffDescription: 'I suoi Pokémon subiscono il 12% in meno di danno ed hanno immunità ai brutti colpi.',
     buffType: 'baldo_fortress',
     teamPokemon: [
       { id: 377, name: 'Regirock', level: 100, customMoves: ['Pietrataglio', 'Terremoto', 'Pesobomba', 'Tossina'] },
@@ -339,7 +339,7 @@ export const LEGENDARY_BOSSES: LegendaryBoss[] = [
     sprite: 'https://play.pokemonshowdown.com/sprites/trainers/alder.png',
     avatar: '🦋',
     buffName: 'Spirito della Natura',
-    buffDescription: '+12% Attacco Fisico e +10% Velocità a tutti i Pokémon della sua squadra.',
+    buffDescription: '+14% Attacco Fisico e +12% Velocità a tutti i Pokémon della sua squadra.',
     buffType: 'nardo_spirit',
     teamPokemon: [
       { id: 637, name: 'Volcarona', level: 100, customMoves: ['Eterelama', 'Vampata', 'Gigassorbimento', 'Elettrotela'] },
@@ -370,7 +370,7 @@ export const LEGENDARY_BOSSES: LegendaryBoss[] = [
     sprite: 'https://play.pokemonshowdown.com/sprites/trainers/irida.png',
     avatar: '❄️',
     buffName: 'Benedizione delle Origini',
-    buffDescription: '+10% Attacco Speciale ed aumento del 10% della probabilità di sferrare Brutti Colpi.',
+    buffDescription: '+12% Attacco Speciale ed aumento del 10% della probabilità di sferrare Brutti Colpi.',
     buffType: 'perla_origins',
     teamPokemon: [
       { id: 571, name: 'Zoroark Hisui', level: 100, customMoves: ['UrtoOscuro', 'Palla Ombra', 'Focalcolpo', 'Lanciafiamme'] },
@@ -401,7 +401,7 @@ export const LEGENDARY_BOSSES: LegendaryBoss[] = [
     sprite: 'https://play.pokemonshowdown.com/sprites/trainers/gladion.png',
     avatar: '⚙️',
     buffName: 'Sintesi Alchemica',
-    buffDescription: '+10% Attacco e +10% Difesa a tutti i suoi Pokémon.',
+    buffDescription: '+12% Attacco e +12% Difesa a tutti i suoi Pokémon.',
     buffType: 'iridio_synthesis',
     teamPokemon: [
       { id: 773, name: 'Silvally', level: 100, customMoves: ['Multiattacco', 'Sgranocchio', 'Terremoto', 'Danzaspada'] },
@@ -432,7 +432,7 @@ export const LEGENDARY_BOSSES: LegendaryBoss[] = [
     sprite: 'https://play.pokemonshowdown.com/sprites/trainers/oak.png',
     avatar: '📜',
     buffName: 'Sapienza Suprema',
-    buffDescription: '+10% Attacco Speciale e +12% Difesa Speciale. Immunità ai problemi di stato.',
+    buffDescription: '+12% Attacco Speciale e +14% Difesa Speciale. Immunità ai problemi di stato.',
     buffType: 'oak_wisdom',
     teamPokemon: [
       { id: 128, name: 'Tauros', level: 100, customMoves: ['Capocciata', 'Terremoto', 'Pietrataglio', 'Zuffa'] },
@@ -463,7 +463,7 @@ export const LEGENDARY_BOSSES: LegendaryBoss[] = [
     sprite: 'https://play.pokemonshowdown.com/sprites/trainers/nemona-masters.png',
     avatar: '⚡',
     buffName: 'Entusiasmo Inesauribile',
-    buffDescription: '+12% Velocità e +10% Attacco Fisico a tutti i suoi Pokémon.',
+    buffDescription: '+14% Velocità e +12% Attacco Fisico a tutti i suoi Pokémon.',
     buffType: 'nemona_passion',
     teamPokemon: [
       { id: 908, name: 'Meowscarada', level: 100, customMoves: ['Prestigiatore', 'Forzaforbice', 'Zuffa', 'Acquajet'] },
@@ -494,7 +494,7 @@ export const LEGENDARY_BOSSES: LegendaryBoss[] = [
     sprite: 'https://play.pokemonshowdown.com/sprites/trainers/palmer.png',
     avatar: '🏰',
     buffName: 'Determinazione Infrangibile',
-    buffDescription: '+12% Difesa e Difesa Speciale. Immunità ai cali di precisione.',
+    buffDescription: '+14% Difesa e Difesa Speciale. Immunità ai cali di precisione.',
     buffType: 'palmer_tower',
     teamPokemon: [
       { id: 464, name: 'Rhyperior', level: 100, customMoves: ['Devastoroccia', 'Terremoto', 'Megacorno', 'Pietrataglio'] },
@@ -525,7 +525,7 @@ export const LEGENDARY_BOSSES: LegendaryBoss[] = [
     sprite: 'https://play.pokemonshowdown.com/sprites/trainers/volo.png',
     avatar: '👻',
     buffName: 'Ombra del Destino',
-    buffDescription: '+10% Attacco e +10% Attacco Speciale. Potenza di mosse Spettro e Buio +15%.',
+    buffDescription: '+12% Attacco e +12% Attacco Speciale. Potenza di mosse Spettro e Buio +17%.',
     buffType: 'volo_shadow',
     teamPokemon: [
       { id: 442, name: 'Spiritomb', level: 100, customMoves: ['Neropulsar', 'Palla Ombra', 'Fuocofatuo', 'Psichico'] },

@@ -107,31 +107,31 @@ export const Team: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               />
             </div>
             
-            <div className="flex-1 relative z-10">
+            <div className="flex-1 relative z-10 min-w-0">
               <div className="flex justify-between items-start mb-2">
-                <div>
-                  <div className="flex items-center gap-2 mb-1">
-                    <h3 className="font-black text-lg uppercase leading-none flex items-center gap-1">
-                      <span>{pokemon.nickname || pokemon.name}</span>
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-1.5 mb-1">
+                    <h3 className="font-black text-lg uppercase leading-none truncate flex items-center gap-1">
+                      <span className="truncate">{pokemon.nickname || pokemon.name}</span>
                       {pokemon.isFavorite && (
                         <Star className="w-4 h-4 text-amber-400 fill-amber-400 shrink-0 inline" />
                       )}
                     </h3>
-                    <div className="flex gap-1">
+                  </div>
+                  <div className="flex items-center gap-2 flex-wrap mt-0.5">
+                    <span className="text-xs font-bold text-gray-500 shrink-0">Lv. {pokemon.level}</span>
+                    <div className="flex gap-1 items-center">
                       {pokemon.types.map(t => {
                         const typeLower = t.toLowerCase();
                         const colorClass = TYPE_COLORS[typeLower] || 'bg-slate-500';
                         const typeLabel = TYPE_TRANSLATIONS[typeLower] || typeLower.toUpperCase();
                         return (
-                          <span key={t} className={`${colorClass} text-[7px] font-black text-white px-1 py-0.5 rounded shadow-xs uppercase tracking-wider`}>
+                          <span key={t} className={`${colorClass} text-[8px] font-black text-white px-1.5 py-0.5 rounded shadow-xs uppercase tracking-wider`}>
                             {typeLabel}
                           </span>
                         );
                       })}
                     </div>
-                  </div>
-                  <div className="flex items-center gap-2 mt-0.5">
-                    <span className="text-xs font-bold text-gray-400">Lv. {pokemon.level}</span>
                     {pokemon.status && (
                       <span className={`text-[8px] font-black text-white px-2 py-0.5 rounded shadow-xs uppercase tracking-wider ${
                         pokemon.status === 'poisoned' ? 'bg-purple-500' :
