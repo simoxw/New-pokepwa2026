@@ -198,7 +198,7 @@ export const POKEMON_SPECIES_TO_ID: Record<string, number> = {
   'corsola di galar': 10173, 'zigzagoon di galar': 10174, 'linoone di galar': 10175, 'darumaka di galar': 10176,
   'yamask di galar': 10179, 'stunfisk di galar': 10180,
   'growlithe di hisui': 10229, 'arcanine di hisui': 10230, 'voltorb di hisui': 10231, 'electrode di hisui': 10232,
-  'qwilfish di hisui': 10234, 'sneasel di hisui': 10235, 'samurott di hisui': 10236, 'lilligant di hisui': 10237,
+  'typhlosion di hisui': 10233, 'qwilfish di hisui': 10234, 'sneasel di hisui': 10235, 'samurott di hisui': 10236, 'lilligant di hisui': 10237,
   'zorua di hisui': 10238, 'zoroark di hisui': 10239, 'braviary di hisui': 10240, 'sliggoo di hisui': 10241,
   'goodra di hisui': 10242, 'avalugg di hisui': 10243, 'decidueye di hisui': 10244,
   'wooper di paldea': 10253, 'tauros di paldea': 10250

@@ -173,6 +173,15 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
         addLog(`🏰 La Determinazione Infrangibile di Palmer aumenta le Difese della sua squadra!`);
       } else if (bossBuff === 'volo_shadow') {
         addLog(`👻 L'Ombra del Destino di Volo potenzia la forza del suo team e delle mosse oscure!`);
+      } else if (bossBuff === 'diantea_grace') {
+        addLog(`✨ La Grazia Splendente di Diantea esalta le difese speciali e la potenza delle sue mosse!`);
+      } else if (bossBuff === 'cyrus_void') {
+        setPlayerStages(s => ({ ...s, spDef: Math.max(-6, (s.spDef ?? 0) - 1) }));
+        addLog(`🌌 Il Vuoto Cosmico di Cyrus distorce lo spazio e riduce la Difesa Speciale del tuo Pokémon (-1)!`);
+      } else if (bossBuff === 'ghetsis_tyranny') {
+        addLog(`👁️ La Furia Tirannica di Ghecis amplifica la ferocia offensiva dei suoi Pokémon!`);
+      } else if (bossBuff === 'silver_instinct') {
+        addLog(`🐺 L'Istinto Ribelle di Silver accresce la rapidità e l'aggressività della sua squadra!`);
       }
     }
 
@@ -900,7 +909,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     );
 
     // Calculate effective speeds
-    const bossSpeedBonus = (bossBuff === 'dandel_gigamax' || bossBuff === 'nardo_spirit' || bossBuff === 'nemona_passion') ? 1.12 : 1.0;
+    const bossSpeedBonus = (bossBuff === 'dandel_gigamax' || bossBuff === 'nardo_spirit' || bossBuff === 'nemona_passion' || bossBuff === 'cyrus_void' || bossBuff === 'silver_instinct') ? 1.12 : 1.0;
     const effPlayerSpeed = getEffectiveSpeed(playerActive.stats.speed, playerStages.speed ?? 0, playerStatus.status) * towerSpeedMult;
     const effEnemySpeed = getEffectiveSpeed(enemy.stats.speed, enemyStages.speed ?? 0, enemyStatus.status) * (bossMutation?.type === 'overclocked' ? 1.20 : 1) * bossSpeedBonus;
 
@@ -1142,11 +1151,12 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       let bossAtkMult = 1;
       let bossDefMult = 1;
       if (!attackerIsPlayer && bossBuff) {
-        if (bossBuff === 'rosso_aura' || bossBuff === 'lance_dragon' || bossBuff === 'nardo_spirit' || bossBuff === 'nemona_passion') bossAtkMult = 1.14;
-        if (bossBuff === 'dandel_gigamax' || bossBuff === 'perla_origins' || bossBuff === 'iridio_synthesis' || bossBuff === 'oak_wisdom' || bossBuff === 'volo_shadow') bossAtkMult = 1.12;
+        if (bossBuff === 'ghetsis_tyranny') bossAtkMult = 1.16;
+        if (bossBuff === 'rosso_aura' || bossBuff === 'lance_dragon' || bossBuff === 'nardo_spirit' || bossBuff === 'nemona_passion' || bossBuff === 'cyrus_void' || bossBuff === 'silver_instinct') bossAtkMult = 1.14;
+        if (bossBuff === 'dandel_gigamax' || bossBuff === 'perla_origins' || bossBuff === 'iridio_synthesis' || bossBuff === 'oak_wisdom' || bossBuff === 'volo_shadow' || bossBuff === 'diantea_grace') bossAtkMult = 1.12;
         if (bossBuff === 'blu_arrogance') bossAtkMult = 1.12;
 
-        if (bossBuff === 'camilla_presence' || bossBuff === 'oak_wisdom' || bossBuff === 'palmer_tower') bossDefMult = 1.14;
+        if (bossBuff === 'camilla_presence' || bossBuff === 'oak_wisdom' || bossBuff === 'palmer_tower' || bossBuff === 'diantea_grace') bossDefMult = 1.14;
         if (bossBuff === 'rocco_steel' || bossBuff === 'baldo_fortress') bossDefMult = 1.17;
         if (bossBuff === 'blu_arrogance' || bossBuff === 'iridio_synthesis') bossDefMult = 1.12;
       }

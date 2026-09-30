@@ -1640,6 +1640,57 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
     stat_changes_target: 'user',
     stat_changes: [{ change: -2, stat: { name: 'special-attack' } }]
   },
+  'roar-of-time': {
+    englishName: 'roar-of-time',
+    name: 'Fragortempo',
+    type: 'dragon',
+    category: 'special',
+    power: 150,
+    accuracy: 90,
+    pp: 5,
+    maxPp: 5
+  },
+  'sucker-punch': {
+    englishName: 'sucker-punch',
+    name: 'Sbigoattacco',
+    type: 'dark',
+    category: 'physical',
+    power: 70,
+    accuracy: 100,
+    pp: 5,
+    maxPp: 5,
+    priority: 1
+  },
+  'freeze-dry': {
+    englishName: 'freeze-dry',
+    name: 'Liofilizzazione',
+    type: 'ice',
+    category: 'special',
+    power: 70,
+    accuracy: 100,
+    pp: 20,
+    maxPp: 20
+  },
+  'flying-press': {
+    englishName: 'flying-press',
+    name: 'Schiacciatuffo',
+    type: 'fighting',
+    category: 'physical',
+    power: 100,
+    accuracy: 95,
+    pp: 10,
+    maxPp: 10
+  },
+  'volt-switch': {
+    englishName: 'volt-switch',
+    name: 'Invertivolt',
+    type: 'electric',
+    category: 'special',
+    power: 70,
+    accuracy: 100,
+    pp: 20,
+    maxPp: 20
+  },
   'venoshock': {
     englishName: 'venoshock',
     name: 'Velenoshock',
@@ -2941,7 +2992,21 @@ const ALIAS_MAP: Record<string, string> = {
   'corazzaurto': 'armor-cannon',
   'armor-cannon': 'armor-cannon',
   'cantoardente': 'torch-song',
-  'torch-song': 'torch-song'
+  'torch-song': 'torch-song',
+  'fragortempo': 'roar-of-time',
+  'roar-of-time': 'roar-of-time',
+  'sbigoattacco': 'sucker-punch',
+  'sucker-punch': 'sucker-punch',
+  'liofilizzazione': 'freeze-dry',
+  'freeze-dry': 'freeze-dry',
+  'schiacciatuffo': 'flying-press',
+  'flying-press': 'flying-press',
+  'invertivolt': 'volt-switch',
+  'volt-switch': 'volt-switch',
+  'metaltestata': 'iron-head',
+  'iron-head': 'iron-head',
+  'dragobolide': 'draco-meteor',
+  'draco-meteor': 'draco-meteor'
 };
 
 /**

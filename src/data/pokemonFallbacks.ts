@@ -204,6 +204,7 @@ export const POKEMON_FALLBACKS: Record<number, FallbackPokemonInfo> = {
   10230: { name: 'Arcanine di Hisui', types: ['fire', 'rock'], baseStats: { hp: 95, attack: 115, defense: 80, spAtk: 95, spDef: 80, speed: 90 }, moves: ['raging-fury', 'rock-slide', 'flare-blitz', 'extreme-speed'] },
   10231: { name: 'Voltorb di Hisui', types: ['electric', 'grass'], baseStats: { hp: 40, attack: 30, defense: 50, spAtk: 55, spDef: 55, speed: 100 }, moves: ['thunder-shock', 'bullet-seed', 'tackle', 'screech'] },
   10232: { name: 'Electrode di Hisui', types: ['electric', 'grass'], baseStats: { hp: 60, attack: 50, defense: 70, spAtk: 80, spDef: 80, speed: 150 }, moves: ['chloroblast', 'thunderbolt', 'energy-ball', 'volt-switch'] },
+  10233: { name: 'Typhlosion di Hisui', types: ['fire', 'ghost'], baseStats: { hp: 73, attack: 84, defense: 78, spAtk: 119, spDef: 85, speed: 95 }, moves: ['infernal-parade', 'shadow-ball', 'fire-blast', 'flamethrower'] },
   10234: { name: 'Qwilfish di Hisui', types: ['dark', 'poison'], baseStats: { hp: 65, attack: 95, defense: 85, spAtk: 55, spDef: 55, speed: 85 }, moves: ['poison-jab', 'bite', 'toxic-spikes', 'water-pulse'] },
   904: { name: 'Overqwil', types: ['dark', 'poison'], baseStats: { hp: 85, attack: 115, defense: 95, spAtk: 65, spDef: 65, speed: 85 }, moves: ['barb-barrage', 'crunch', 'poison-jab', 'waterfall'] },
   10235: { name: 'Sneasel di Hisui', types: ['fighting', 'poison'], baseStats: { hp: 55, attack: 95, defense: 55, spAtk: 35, spDef: 75, speed: 115 }, moves: ['poison-jab', 'brick-break', 'quick-attack', 'taunt'] },
@@ -327,6 +328,15 @@ export const POKEMON_FALLBACKS: Record<number, FallbackPokemonInfo> = {
   894: { name: 'Regieleki', types: ['electric'], baseStats: { hp: 80, attack: 100, defense: 50, spAtk: 100, spDef: 50, speed: 200 }, moves: ['thunder-cage', 'thunderbolt', 'volt-switch', 'ancient-power'] },
   895: { name: 'Regidrago', types: ['dragon'], baseStats: { hp: 200, attack: 100, defense: 50, spAtk: 100, spDef: 50, speed: 80 }, moves: ['dragon-energy', 'outrage', 'dragon-claw', 'hammer-arm'] },
   53: { name: 'Persian', types: ['normal'], baseStats: { hp: 65, attack: 70, defense: 60, spAtk: 65, spDef: 65, speed: 115 }, moves: ['fake-out', 'slash', 'bite', 'play-rough'] },
+  160: { name: 'Feraligatr', types: ['water'], baseStats: { hp: 85, attack: 105, defense: 100, spAtk: 79, spDef: 83, speed: 78 }, moves: ['waterfall', 'ice-punch', 'earthquake', 'dragon-dance'] },
+  483: { name: 'Dialga', types: ['steel', 'dragon'], baseStats: { hp: 100, attack: 120, defense: 120, spAtk: 150, spDef: 100, speed: 90 }, moves: ['roar-of-time', 'flash-cannon', 'earth-power', 'draco-meteor'] },
+  537: { name: 'Seismitoad', types: ['water', 'ground'], baseStats: { hp: 105, attack: 95, defense: 75, spAtk: 85, spDef: 75, speed: 74 }, moves: ['hydro-pump', 'earth-power', 'sludge-bomb', 'muddy-water'] },
+  563: { name: 'Cofagrigus', types: ['ghost'], baseStats: { hp: 58, attack: 50, defense: 145, spAtk: 95, spDef: 105, speed: 30 }, moves: ['shadow-ball', 'energy-ball', 'will-o-wisp', 'toxic'] },
+  604: { name: 'Eelektross', types: ['electric'], baseStats: { hp: 85, attack: 115, defense: 80, spAtk: 105, spDef: 80, speed: 50 }, moves: ['thunderbolt', 'flamethrower', 'giga-drain', 'dragon-pulse'] },
+  635: { name: 'Hydreigon', types: ['dark', 'dragon'], baseStats: { hp: 92, attack: 105, defense: 90, spAtk: 125, spDef: 90, speed: 98 }, moves: ['draco-meteor', 'dark-pulse', 'flamethrower', 'earth-power'] },
+  697: { name: 'Tyrantrum', types: ['rock', 'dragon'], baseStats: { hp: 82, attack: 121, defense: 119, spAtk: 69, spDef: 59, speed: 71 }, moves: ['head-smash', 'earthquake', 'crunch', 'dragon-dance'] },
+  699: { name: 'Aurorus', types: ['rock', 'ice'], baseStats: { hp: 123, attack: 77, defense: 72, spAtk: 99, spDef: 92, speed: 58 }, moves: ['blizzard', 'freeze-dry', 'earth-power', 'flash-cannon'] },
+  711: { name: 'Gourgeist', types: ['ghost', 'grass'], baseStats: { hp: 65, attack: 90, defense: 122, spAtk: 58, spDef: 75, speed: 84 }, moves: ['wood-hammer', 'shadow-ball', 'will-o-wisp', 'synthesis'] },
 };
 
 export function getFallbackPokemonData(id: number): FallbackPokemonInfo {

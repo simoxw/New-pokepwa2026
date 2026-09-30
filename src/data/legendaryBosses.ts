@@ -30,7 +30,11 @@ export interface LegendaryBoss {
     | 'oak_wisdom'
     | 'nemona_passion'
     | 'palmer_tower'
-    | 'volo_shadow';
+    | 'volo_shadow'
+    | 'diantea_grace'
+    | 'cyrus_void'
+    | 'ghetsis_tyranny'
+    | 'silver_instinct';
   teamPokemon: {
     id: number;
     name: string;
@@ -137,7 +141,7 @@ export const LEGENDARY_BOSSES: LegendaryBoss[] = [
       name: 'Metagross',
       level: 70,
       isShiny: true,
-      nickname: 'Metagross "Cromatico"',
+      nickname: 'Metagross "Argento"',
       moves: ['Meteorpugno', 'Cozzata Zen', 'Terremoto', 'Agilità'],
       description: 'Il famosissimo Metagross Cromatico d\'Argento di Rocco con IV al massimo!'
     }
@@ -192,7 +196,7 @@ export const LEGENDARY_BOSSES: LegendaryBoss[] = [
       { id: 612, name: 'Haxorus', level: 100, customMoves: ['Oltraggio', 'Terremoto', 'Pietrataglio', 'Danzaspada'] },
       { id: 681, name: 'Aegislash', level: 100, customMoves: ['Spada Reale', 'Palla Ombra', 'Sacraforza', 'Danzaspada'] },
       { id: 812, name: 'Rillaboom', level: 100, customMoves: ['Mazzabrutta', 'Privazione', 'Terremoto', 'Martellata'] },
-      { id: 122, name: 'Mr. Mime (Galar)', level: 100, customMoves: ['Gelaraggio', 'Psichico', 'Pulsarforza', 'Geleripiego'] }
+      { id: 10168, name: 'Mr. Mime di Galar', level: 100, customMoves: ['Gelaraggio', 'Psichico', 'Pulsarforza', 'Geleripiego'] }
     ],
     rewardPokemon: {
       id: 6,
@@ -292,7 +296,7 @@ export const LEGENDARY_BOSSES: LegendaryBoss[] = [
       name: 'Zoroark',
       level: 70,
       isShiny: true,
-      nickname: 'Zoroark "Cromatico"',
+      nickname: 'Zoroark "Ideale"',
       moves: ['UrtoOscuro', 'Focalcolpo', 'Lanciafiamme', 'Congiura'],
       description: 'Zoroark Cromatico d\'Inestimabile Valore donato da N con IV 31/31/31/31/31/31.'
     }
@@ -373,16 +377,16 @@ export const LEGENDARY_BOSSES: LegendaryBoss[] = [
     buffDescription: '+12% Attacco Speciale ed aumento del 10% della probabilità di sferrare Brutti Colpi.',
     buffType: 'perla_origins',
     teamPokemon: [
-      { id: 571, name: 'Zoroark Hisui', level: 100, customMoves: ['UrtoOscuro', 'Palla Ombra', 'Focalcolpo', 'Lanciafiamme'] },
-      { id: 706, name: 'Goodra Hisui', level: 100, customMoves: ['Dragopulsar', 'Meteorpugno', 'Gelaraggio', 'Ripresa'] },
-      { id: 59, name: 'Arcanine Hisui', level: 100, customMoves: ['Fuococarica', 'Pietrataglio', 'Zuffa', 'Extrarapido'] },
-      { id: 157, name: 'Typhlosion Hisui', level: 100, customMoves: ['Fuocobomba', 'Palla Ombra', 'Focalcolpo', 'Eterelama'] },
+      { id: 10239, name: 'Zoroark di Hisui', level: 100, customMoves: ['UrtoOscuro', 'Palla Ombra', 'Focalcolpo', 'Lanciafiamme'] },
+      { id: 10242, name: 'Goodra di Hisui', level: 100, customMoves: ['Dragopulsar', 'Meteorpugno', 'Gelaraggio', 'Ripresa'] },
+      { id: 10230, name: 'Arcanine di Hisui', level: 100, customMoves: ['Fuococarica', 'Pietrataglio', 'Zuffa', 'Extrarapido'] },
+      { id: 10233, name: 'Typhlosion di Hisui', level: 100, customMoves: ['Fuocobomba', 'Palla Ombra', 'Focalcolpo', 'Eterelama'] },
       { id: 471, name: 'Glaceon', level: 100, customMoves: ['Gelaraggio', 'Pulsarforza', 'Palla Ombra', 'Luminomossa'] },
       { id: 484, name: 'Palkia', level: 100, customMoves: ['Fendispazio', 'Idropompa', 'Gelaraggio', 'Pulsarforza'] }
     ],
     rewardPokemon: {
-      id: 571,
-      name: 'Zoroark Hisui',
+      id: 10239,
+      name: 'Zoroark di Hisui',
       level: 70,
       isShiny: true,
       nickname: 'Zoroark Hisui "Ancestrale"',
@@ -468,7 +472,7 @@ export const LEGENDARY_BOSSES: LegendaryBoss[] = [
     teamPokemon: [
       { id: 908, name: 'Meowscarada', level: 100, customMoves: ['Prestigiatore', 'Forzaforbice', 'Zuffa', 'Acquajet'] },
       { id: 923, name: 'Pawmot', level: 100, customMoves: ['Pugnoscarica', 'Elettropugno', 'Zuffa', 'Preghiera'] },
-      { id: 706, name: 'Goodra Hisui', level: 100, customMoves: ['Dragopulsar', 'Meteorpugno', 'Gelaraggio', 'Ripresa'] },
+      { id: 10242, name: 'Goodra di Hisui', level: 100, customMoves: ['Dragopulsar', 'Meteorpugno', 'Gelaraggio', 'Ripresa'] },
       { id: 745, name: 'Lycanroc', level: 100, customMoves: ['Pietrataglio', 'Zuffa', 'Sgranocchio', 'Controfuoco'] },
       { id: 968, name: 'Orthworm', level: 100, customMoves: ['Pesobomba', 'Terremoto', 'Pietrataglio', 'Tossina'] },
       { id: 998, name: 'Baxcalibur', level: 100, customMoves: ['Sciabola di Ghiaccio', 'Oltraggio', 'Terremoto', 'Danzadrago'] }
@@ -532,7 +536,7 @@ export const LEGENDARY_BOSSES: LegendaryBoss[] = [
       { id: 407, name: 'Roserade', level: 100, customMoves: ['Gigassorbimento', 'Fangobomba', 'Palla Ombra', 'Sintesi'] },
       { id: 468, name: 'Togekiss', level: 100, customMoves: ['Eterelama', 'Magibrillio', 'Lanciafiamme', 'Forzasfera'] },
       { id: 448, name: 'Lucario', level: 100, customMoves: ['Zuffa', 'Pulsarforza', 'Geleripiego', 'Danzaspada'] },
-      { id: 59, name: 'Arcanine Hisui', level: 100, customMoves: ['Fuococarica', 'Pietrataglio', 'Zuffa', 'Extrarapido'] },
+      { id: 10230, name: 'Arcanine di Hisui', level: 100, customMoves: ['Fuococarica', 'Pietrataglio', 'Zuffa', 'Extrarapido'] },
       { id: 487, name: 'Giratina', level: 100, customMoves: ['Oscurotuffo', 'Dragopulsar', 'Palla Ombra', 'Geoforza'] }
     ],
     rewardPokemon: {
@@ -540,14 +544,138 @@ export const LEGENDARY_BOSSES: LegendaryBoss[] = [
       name: 'Giratina',
       level: 70,
       isShiny: true,
-      nickname: 'Giratina "Forma Cromatico"',
+      nickname: 'Giratina "Origine"',
       moves: ['Oscurotuffo', 'Dragopulsar', 'Palla Ombra', 'Geoforza'],
       description: 'Giratina Cromatico di Volo in Forma Originale con IV perfetti 100%!'
+    }
+  },
+  {
+    id: 'boss-diantea',
+    name: 'Campionessa Diantea',
+    title: 'La Campionessa Radiosa di Kalos',
+    region: 'Kalos',
+    quote: 'Il legame che crei con i tuoi Pokémon è la forma più sublime d\'arte.',
+    winQuote: 'Una performance semplicemente magnifica... Mi inchino con profondo rispetto!',
+    moneyReward: 55000,
+    sprite: 'https://play.pokemonshowdown.com/sprites/trainers/diantha.png',
+    avatar: '✨',
+    buffName: 'Grazia Splendente',
+    buffDescription: '+12% Attacco Speciale e +14% Difesa Speciale. Le mosse speciali della sua squadra infliggono danno maggiorato.',
+    buffType: 'diantea_grace',
+    teamPokemon: [
+      { id: 701, name: 'Hawlucha', level: 100, customMoves: ['Schiacciatuffo', 'Forzaforbice', 'Pietrataglio', 'Danzaspada'] },
+      { id: 697, name: 'Tyrantrum', level: 100, customMoves: ['Zuccata', 'Terremoto', 'Sgranocchio', 'Dragodanza'] },
+      { id: 699, name: 'Aurorus', level: 100, customMoves: ['Bora', 'Liofilizzazione', 'Geoforza', 'Luminomossa'] },
+      { id: 711, name: 'Gourgeist', level: 100, customMoves: ['Mazzabrutta', 'Palla Ombra', 'Fuocofatuo', 'Sintesi'] },
+      { id: 706, name: 'Goodra', level: 100, customMoves: ['Dragopulsar', 'Fangobomba', 'Gelaraggio', 'Lanciafiamme'] },
+      { id: 282, name: 'Gardevoir', level: 100, customMoves: ['Magibrillio', 'Psichico', 'Palla Ombra', 'Calmamente'] }
+    ],
+    rewardPokemon: {
+      id: 282,
+      name: 'Gardevoir',
+      level: 70,
+      isShiny: true,
+      nickname: 'Gardevoir "Aura Nobile"',
+      moves: ['Magibrillio', 'Psichico', 'Palla Ombra', 'Calmamente'],
+      description: 'Gardevoir Cromatico della Campionessa Diantea con IV al massimo 31/31/31/31/31/31.'
+    }
+  },
+  {
+    id: 'boss-cyrus',
+    name: 'Cyrus',
+    title: 'Il Dominatore del Team Galassia',
+    region: 'Sinnoh / Mondo Distorto',
+    quote: 'Le emozioni umane sono un errore. Creerò un nuovo universo privo di cuore e imperfezioni!',
+    winQuote: 'Il mio mondo perfetto... infranto per colpa di un insignificante legame d\'affetto?!',
+    moneyReward: 60000,
+    sprite: 'https://play.pokemonshowdown.com/sprites/trainers/cyrus.png',
+    avatar: '🌌',
+    buffName: 'Vuoto Cosmico',
+    buffDescription: '+14% Attacco e +12% Velocità. All\'inizio del duello distorce lo spazio riducendo la Difesa Speciale nemica (-1).',
+    buffType: 'cyrus_void',
+    teamPokemon: [
+      { id: 461, name: 'Weavile', level: 100, customMoves: ['Scagliagelo', 'Nottesferza', 'Zuffa', 'Danzaspada'] },
+      { id: 430, name: 'Honchkrow', level: 100, customMoves: ['Eterelama', 'Neropulsar', 'Onda Calda', 'Balzo'] },
+      { id: 229, name: 'Houndoom', level: 100, customMoves: ['Lanciafiamme', 'Neropulsar', 'Fangobomba', 'Congiura'] },
+      { id: 169, name: 'Crobat', level: 100, customMoves: ['Eterelama', 'Velenocolpo', 'Privazione', 'Tossina'] },
+      { id: 130, name: 'Gyarados', level: 100, customMoves: ['Cascata', 'Pietrataglio', 'Terremoto', 'Dragodanza'] },
+      { id: 483, name: 'Dialga', level: 100, customMoves: ['Fragortempo', 'Cannonflash', 'Geoforza', 'Dragobolide'] }
+    ],
+    rewardPokemon: {
+      id: 483,
+      name: 'Dialga',
+      level: 70,
+      isShiny: true,
+      nickname: 'Dialga "Tempodiamante"',
+      moves: ['Fragortempo', 'Cannonflash', 'Geoforza', 'Dragobolide'],
+      description: 'Dialga Cromatico signore del Tempo con IV leggendari 31/31/31/31/31/31.'
+    }
+  },
+  {
+    id: 'boss-ghetsis',
+    name: 'Ghecis',
+    title: 'La Mente Oscura del Team Plasma',
+    region: 'Unima / Palazzo di N',
+    quote: 'Gli stolti credono nella liberazione dei Pokémon... mentre io sarò l\'unico vero sovrano del mondo!',
+    winQuote: 'Maledetto! Non osare distruggere la mia assoluta e spietata supremazia!',
+    moneyReward: 65000,
+    sprite: 'https://play.pokemonshowdown.com/sprites/trainers/ghetsis.png',
+    avatar: '👁️',
+    buffName: 'Furia Tirannica',
+    buffDescription: '+16% Attacco e +14% Attacco Speciale. Gli attacchi della sua squadra travolgono ogni difesa.',
+    buffType: 'ghetsis_tyranny',
+    teamPokemon: [
+      { id: 563, name: 'Cofagrigus', level: 100, customMoves: ['Palla Ombra', 'Energipalla', 'Fuocofatuo', 'Tossina'] },
+      { id: 626, name: 'Bouffalant', level: 100, customMoves: ['Capocciata', 'Terremoto', 'Zuffa', 'Pietrataglio'] },
+      { id: 537, name: 'Seismitoad', level: 100, customMoves: ['Idropompa', 'Geoforza', 'Fangobomba', 'Fanghiglia'] },
+      { id: 604, name: 'Eelektross', level: 100, customMoves: ['Fulmine', 'Lanciafiamme', 'Gigassorbimento', 'Dragopulsar'] },
+      { id: 625, name: 'Bisharp', level: 100, customMoves: ['Sbigoattacco', 'Metaltestata', 'Forzaforbice', 'Danzaspada'] },
+      { id: 635, name: 'Hydreigon', level: 100, customMoves: ['Dragobolide', 'Neropulsar', 'Lanciafiamme', 'Geoforza'] }
+    ],
+    rewardPokemon: {
+      id: 635,
+      name: 'Hydreigon',
+      level: 70,
+      isShiny: true,
+      nickname: 'Hydreigon "Tre Furore"',
+      moves: ['Dragobolide', 'Neropulsar', 'Lanciafiamme', 'Geoforza'],
+      description: 'Hydreigon Cromatico di Ghecis dalle tre teste con IV perfetti 31/31/31/31/31/31.'
+    }
+  },
+  {
+    id: 'boss-silver',
+    name: 'Rivale Silver',
+    title: 'Il Guerriero Indomito di Johto',
+    region: 'Johto',
+    quote: 'Non mi interessa dei deboli! Dimostrami se la tua squadra possiede vera forza bruta!',
+    winQuote: 'Ho capito... Ciò che mi mancava non era la forza, ma la sincera fiducia nei miei Pokémon.',
+    moneyReward: 50000,
+    sprite: 'https://play.pokemonshowdown.com/sprites/trainers/silver.png',
+    avatar: '🐺',
+    buffName: 'Istinto Ribelle',
+    buffDescription: '+14% Attacco Fisico e +12% Velocità. I suoi Pokémon attaccano con ferocia inaudita.',
+    buffType: 'silver_instinct',
+    teamPokemon: [
+      { id: 461, name: 'Weavile', level: 100, customMoves: ['Scagliagelo', 'Nottesferza', 'Zuffa', 'Pugnoscarica'] },
+      { id: 169, name: 'Crobat', level: 100, customMoves: ['Eterelama', 'Velenocolpo', 'Privazione', 'Tossina'] },
+      { id: 462, name: 'Magnezone', level: 100, customMoves: ['Fulmine', 'Cannonflash', 'Invertivolt', 'Geoforza'] },
+      { id: 94, name: 'Gengar', level: 100, customMoves: ['Palla Ombra', 'Fangobomba', 'Focalcolpo', 'Fuocofatuo'] },
+      { id: 65, name: 'Alakazam', level: 100, customMoves: ['Psichico', 'Palla Ombra', 'Focalcolpo', 'Calmamente'] },
+      { id: 160, name: 'Feraligatr', level: 100, customMoves: ['Cascata', 'Gelopugno', 'Terremoto', 'Danzadrago'] }
+    ],
+    rewardPokemon: {
+      id: 160,
+      name: 'Feraligatr',
+      level: 70,
+      isShiny: true,
+      nickname: 'Feraligatr "Furiazzurra"',
+      moves: ['Cascata', 'Gelopugno', 'Terremoto', 'Danzadrago'],
+      description: 'Feraligatr Cromatico del Rivale Silver con IV perfetti 31/31/31/31/31/31.'
     }
   }
 ];
 
-export async function buildBossTrainer(boss: LegendaryBoss): Promise<Trainer & { bossBuff: string; bossBuffName: string }> {
+export async function buildBossTrainer(boss: LegendaryBoss): Promise<Trainer & { bossBuff: string; bossBuffName: string; bossBuffDescription?: string }> {
   const teamPromises = boss.teamPokemon.map(async (entry) => {
     let p: Pokemon;
     try {
@@ -601,7 +729,8 @@ export async function buildBossTrainer(boss: LegendaryBoss): Promise<Trainer & {
     winQuote: boss.winQuote,
     moneyReward: boss.moneyReward,
     bossBuff: boss.buffType,
-    bossBuffName: boss.buffName
+    bossBuffName: boss.buffName,
+    bossBuffDescription: boss.buffDescription
   };
 }
 

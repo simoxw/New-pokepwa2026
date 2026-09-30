@@ -350,11 +350,12 @@ export const REGIONAL_INDEX_ITEMS: PokedexIndexItem[] = [
   { id: 867, name: 'Runerigus', formattedId: '#0867' },
   { id: 10167, name: 'Weezing di Galar', formattedId: '#10167' },
   { id: 10180, name: 'Stunfisk di Galar', formattedId: '#10180' },
-  // Hisui (14)
+  // Hisui (15)
   { id: 10229, name: 'Growlithe di Hisui', formattedId: '#10229' },
   { id: 10230, name: 'Arcanine di Hisui', formattedId: '#10230' },
   { id: 10231, name: 'Voltorb di Hisui', formattedId: '#10231' },
   { id: 10232, name: 'Electrode di Hisui', formattedId: '#10232' },
+  { id: 10233, name: 'Typhlosion di Hisui', formattedId: '#10233' },
   { id: 10234, name: 'Qwilfish di Hisui', formattedId: '#10234' },
   { id: 904, name: 'Overqwil', formattedId: '#0904' },
   { id: 10235, name: 'Sneasel di Hisui', formattedId: '#10235' },
