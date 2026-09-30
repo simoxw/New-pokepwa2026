@@ -148,4 +148,56 @@ describe('Battle Math', () => {
     expect(thunderWave.statusEffect).toBe('paralyzed');
     expect(thunderWave.power).toBe(0);
   });
+
+  it('Riposo should heal only the user and put only the user to sleep, never the opponent', async () => {
+    const { executeMoveAction } = await import('../lib/battle/battleActionRunner');
+    let userHp = 30;
+    let targetHp = 100;
+    let userStatus: { status?: any; duration?: number } = {};
+    let targetStatus: { status?: any; duration?: number } = {};
+
+    const user = mockPokemon({ hp: 30, maxHp: 100 });
+    const target = mockPokemon({ hp: 100, maxHp: 100 });
+    const defaultStages = { attack: 0, defense: 0, spAtk: 0, spDef: 0, speed: 0, accuracy: 0, evasion: 0 };
+    const riposoMove: Move = {
+      name: 'Riposo',
+      power: 0,
+      accuracy: 100,
+      type: 'psychic',
+      category: 'status',
+      target: 'user',
+      healing: 1.0,
+      statusEffect: 'sleep'
+    };
+
+    const res = executeMoveAction(
+      riposoMove,
+      user,
+      target,
+      defaultStages, () => {},
+      defaultStages, () => {},
+      userStatus, (val: any) => { userStatus = typeof val === 'function' ? val(userStatus) : val; },
+      targetStatus, (val: any) => { targetStatus = typeof val === 'function' ? val(targetStatus) : val; },
+      {}, () => {},
+      {}, () => {},
+      userHp, (val: any) => { userHp = typeof val === 'function' ? val(userHp) : val; },
+      targetHp, (val: any) => { targetHp = typeof val === 'function' ? val(targetHp) : val; },
+      false, // opponent using Riposo
+      true,
+      () => {}
+    );
+
+    // User must be fully healed and asleep
+    expect(res.nextUserHp).toBe(100);
+    expect(userHp).toBe(100);
+    expect(res.nextUserStatus?.status).toBe('sleep');
+    expect(res.nextUserStatus?.duration).toBe(2);
+    expect(userStatus.status).toBe('sleep');
+
+    // Target must NOT be asleep and HP unchanged!
+    expect(res.nextTargetHp).toBe(100);
+    expect(targetHp).toBe(100);
+    expect(res.nextTargetStatus?.status).toBeUndefined();
+    expect(targetStatus.status).toBeUndefined();
+  });
 });

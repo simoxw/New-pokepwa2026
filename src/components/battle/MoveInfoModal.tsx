@@ -154,17 +154,21 @@ function generateDynamicDescription(move: Move): string {
   }
 
   if (move.statusEffect) {
-    const statusMap: Record<string, string> = {
-      poisoned: 'avvelenare',
-      'badly-poisoned': 'iperavvelenare',
-      paralyzed: 'paralizzare',
-      burned: 'scottare',
-      sleep: 'addormentare',
-      frozen: 'congelare'
-    };
-    const sVerb = statusMap[move.statusEffect] || 'alterare lo stato di';
-    const sChance = move.effectChance ? ` (${move.effectChance}% probabilità)` : '';
-    parts.push(`Può ${sVerb} il bersaglio${sChance}.`);
+    if (move.name.toLowerCase().includes('riposo') || move.name.toLowerCase().includes('rest') || move.target === 'user') {
+      parts.push(`L'utilizzatore recupera tutti i PS e cade in un sonno profondo per 2 turni, curando ogni problema di stato.`);
+    } else {
+      const statusMap: Record<string, string> = {
+        poisoned: 'avvelenare',
+        'badly-poisoned': 'iperavvelenare',
+        paralyzed: 'paralizzare',
+        burned: 'scottare',
+        sleep: 'addormentare',
+        frozen: 'congelare'
+      };
+      const sVerb = statusMap[move.statusEffect] || 'alterare lo stato di';
+      const sChance = move.effectChance ? ` (${move.effectChance}% probabilità)` : '';
+      parts.push(`Può ${sVerb} il bersaglio${sChance}.`);
+    }
   }
 
   if (move.drain) {
@@ -372,13 +376,19 @@ export const MoveInfoModal: React.FC<MoveInfoModalProps> = ({ move: rawMove, onC
                 <div className="flex items-center gap-1.5 text-purple-800 bg-purple-50 p-2 rounded-xl border border-purple-200">
                   <Zap className="w-4 h-4 text-purple-600 shrink-0" />
                   <span>
-                    Infligge <strong>{
-                      move.statusEffect === 'poisoned' ? 'Avvelenamento' :
-                      move.statusEffect === 'badly-poisoned' ? 'Iperavvelenamento' :
-                      move.statusEffect === 'paralyzed' ? 'Paralisi' :
-                      move.statusEffect === 'burned' ? 'Scottatura' :
-                      move.statusEffect === 'sleep' ? 'Sonno' : 'Congelamento'
-                    }</strong>{move.effectChance ? ` (${move.effectChance}% probabilità)` : ''}
+                    {move.target === 'user' || move.name.toLowerCase().includes('riposo') || move.name.toLowerCase().includes('rest') ? (
+                      <>Addormenta l'utilizzatore per 2 turni curando ogni stato alterato</>
+                    ) : (
+                      <>
+                        Infligge <strong>{
+                          move.statusEffect === 'poisoned' ? 'Avvelenamento' :
+                          move.statusEffect === 'badly-poisoned' ? 'Iperavvelenamento' :
+                          move.statusEffect === 'paralyzed' ? 'Paralisi' :
+                          move.statusEffect === 'burned' ? 'Scottatura' :
+                          move.statusEffect === 'sleep' ? 'Sonno' : 'Congelamento'
+                        }</strong>{move.effectChance ? ` (${move.effectChance}% probabilità)` : ''}
+                      </>
+                    )}
                   </span>
                 </div>
               )}

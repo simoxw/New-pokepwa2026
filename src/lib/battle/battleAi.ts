@@ -61,7 +61,9 @@ export function selectEnemyMove(
 
     // 3. STATUS MOVES & DEBUFFS
     if (move.category === 'status') {
-      if (move.statusEffect) {
+      const isRestMove = move.name.toLowerCase().includes('riposo') || move.name.toLowerCase().includes('rest');
+
+      if (move.statusEffect && move.target !== 'user' && !isRestMove) {
         if (playerStatus.status) {
           // Player already has a primary status condition
           score -= 80;
@@ -71,9 +73,11 @@ export function selectEnemyMove(
         }
       }
 
-      // Healing moves
+      // Healing moves (including Rest/Riposo)
       if (move.healing && move.healing > 0) {
-        if (enemyHpPercent < 0.45) {
+        if (isRestMove && enemyStatus.status === 'sleep') {
+          score -= 100; // Cannot rest while already asleep
+        } else if (enemyHpPercent < 0.45) {
           score += 60; // Desperately needs healing
         } else if (enemyHpPercent > 0.8) {
           score -= 60; // Waste of a turn to heal when nearly full

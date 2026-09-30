@@ -334,18 +334,41 @@ export function executeMoveAction(
   };
 
   // 2. HEALING / RECOVERY MOVES (e.g. Recover, Synthesis, Rest)
-  if (move.healing && move.healing > 0) {
+  const isRest = move.name.toLowerCase().includes('riposo') || move.name.toLowerCase().includes('rest');
+
+  if (isRest) {
+    if (userStatus.status === 'sleep') {
+      addLog(`Ma non ha avuto effetto! ${user.name} sta già dormendo!`);
+      return {
+        nextUserHp: curUserHp,
+        nextTargetHp: curTargetHp,
+        targetFainted: curTargetHp <= 0,
+        userFainted: curUserHp <= 0,
+        nextUserStatus: nextUserStatusObj,
+        nextTargetStatus: nextTargetStatusObj
+      };
+    }
+    const healAmount = user.maxHp - curUserHp;
+    curUserHp = user.maxHp;
+    setUserHp(curUserHp);
+    nextUserStatusObj = { status: 'sleep', duration: 2 };
+    setUserStatus({ status: 'sleep', duration: 2 });
+    addLog(`${user.name} ha recuperato tutti i PS (+${healAmount} PS), cade in un sonno profondo per 2 turni e guarisce da ogni problema di stato!`);
+
+    // Riposo has completely resolved its effect; return immediately to ensure target is NEVER affected
+    return {
+      nextUserHp: curUserHp,
+      nextTargetHp: curTargetHp,
+      targetFainted: curTargetHp <= 0,
+      userFainted: curUserHp <= 0,
+      nextUserStatus: nextUserStatusObj,
+      nextTargetStatus: nextTargetStatusObj
+    };
+  } else if (move.healing && move.healing > 0) {
     const healAmount = Math.max(1, Math.floor(user.maxHp * move.healing));
     curUserHp = Math.min(user.maxHp, curUserHp + healAmount);
     setUserHp(curUserHp);
     addLog(`${user.name} ha recuperato le forze! (+${healAmount} PS)`);
-
-    // Special case: Rest (Riposo) cures status and induces 2 turns of sleep
-    if (move.name.toLowerCase().includes('riposo') || move.name.toLowerCase().includes('rest')) {
-      nextUserStatusObj = { status: 'sleep', duration: 2 };
-      setUserStatus({ status: 'sleep', duration: 2 });
-      addLog(`${user.name} cade in un sonno profondo e guarisce da ogni problema di stato!`);
-    }
   }
 
   // 3. STATUS MOVES (Deal NO damage directly)
@@ -353,7 +376,7 @@ export function executeMoveAction(
     if (move.stat_changes && move.stat_changes.length > 0) {
       applyStatChanges(move.stat_changes, move.target === 'user');
     }
-    if (move.statusEffect) {
+    if (move.statusEffect && move.target !== 'user' && !isRest) {
       applyStatusCondition(move.statusEffect, move.effectChance);
     }
     // Hazard setting status moves (e.g., Stealth Rock, Spikes, Toxic Spikes, Sticky Web)
