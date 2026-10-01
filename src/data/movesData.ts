@@ -1599,13 +1599,64 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
   },
   'flash-cannon': {
     englishName: 'flash-cannon',
-    name: 'Cannonlampo',
+    name: 'Cannonflash',
     type: 'steel',
     category: 'special',
     power: 80,
     accuracy: 100,
     pp: 10,
     maxPp: 10
+  },
+  'icicle-crash': {
+    englishName: 'icicle-crash',
+    name: 'Scagliagelo',
+    type: 'ice',
+    category: 'physical',
+    power: 85,
+    accuracy: 90,
+    pp: 10,
+    maxPp: 10,
+    flinchChance: 30
+  },
+  'sleep-powder': {
+    englishName: 'sleep-powder',
+    name: 'Sonnifero',
+    type: 'grass',
+    category: 'status',
+    power: 0,
+    accuracy: 75,
+    pp: 15,
+    maxPp: 15,
+    statusEffect: 'sleep'
+  },
+  'stun-spore': {
+    englishName: 'stun-spore',
+    name: 'Paralizzante',
+    type: 'grass',
+    category: 'status',
+    power: 0,
+    accuracy: 75,
+    pp: 30,
+    maxPp: 30,
+    statusEffect: 'paralyzed'
+  },
+  'shell-smash': {
+    englishName: 'shell-smash',
+    name: 'Guscioforza',
+    type: 'normal',
+    category: 'status',
+    power: 0,
+    accuracy: 100,
+    pp: 15,
+    maxPp: 15,
+    stat_changes_target: 'user',
+    stat_changes: [
+      { change: 2, stat: { name: 'attack' } },
+      { change: 2, stat: { name: 'special-attack' } },
+      { change: 2, stat: { name: 'speed' } },
+      { change: -1, stat: { name: 'defense' } },
+      { change: -1, stat: { name: 'special-defense' } }
+    ]
   },
   'iron-tail': {
     englishName: 'iron-tail',
@@ -3006,7 +3057,18 @@ const ALIAS_MAP: Record<string, string> = {
   'metaltestata': 'iron-head',
   'iron-head': 'iron-head',
   'dragobolide': 'draco-meteor',
-  'draco-meteor': 'draco-meteor'
+  'draco-meteor': 'draco-meteor',
+  'gelaraggio': 'ice-beam',
+  'cannonflash': 'flash-cannon',
+  'scagliagelo': 'icicle-crash',
+  'icicle-crash': 'icicle-crash',
+  'sonnifero': 'sleep-powder',
+  'sleep-powder': 'sleep-powder',
+  'paralizzante': 'stun-spore',
+  'paralizzaspore': 'stun-spore',
+  'stun-spore': 'stun-spore',
+  'fanghiglia': 'muddy-water',
+  'baffo-daura': 'aura-sphere'
 };
 
 /**

@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
 import { useGame } from '../contexts/GameContext';
 import { 
-  ChevronLeft, Save, Trash2, RotateCcw, FileJson, Zap, User, 
-  RefreshCw, Smartphone, CheckCircle, Volume2, VolumeX, Database, Sparkles, Upload, Play, X, Music, Lock, Key
+  ChevronLeft, ChevronRight, Save, Trash2, RotateCcw, FileJson, Zap, User, 
+  RefreshCw, Smartphone, CheckCircle, Volume2, VolumeX, Database, Sparkles, Upload, Play, X, Music, Lock, Key, Gift
 } from 'lucide-react';
 import { exportGameState, validateGameState } from '../lib/utils';
 import { INITIAL_STATE, Pokemon } from '../types/game';
@@ -11,12 +11,14 @@ import { calculateStats } from '../lib/pokeapi';
 import { isSoundEnabled, setSoundEnabled, playMenuClick, playLevelUp, playFaint, getCustomBgm, setCustomBgm, playBgm } from '../lib/sound';
 import { getStorageEstimate, removeStorageItem, setStorageItem } from '../lib/storage';
 import { SPRITES } from '../constants/sprites';
+import { BossRewardsCheatModal } from './BossRewardsCheatModal';
 
 export const Settings: React.FC<{ onBack: () => void, onProfile: () => void }> = ({ onBack, onProfile }) => {
   const { state, setState } = useGame();
 
   const [showConfirm, setShowConfirm] = React.useState(false);
   const [showCheats, setShowCheats] = React.useState(false);
+  const [showBossRewardsModal, setShowBossRewardsModal] = useState(false);
   const [showPasscodeModal, setShowPasscodeModal] = useState(false);
   const [passcode, setPasscode] = useState('');
   const [passcodeError, setPasscodeError] = useState<string | null>(null);
@@ -683,10 +685,36 @@ export const Settings: React.FC<{ onBack: () => void, onProfile: () => void }> =
       {showCheats && (
         <div className="absolute inset-0 z-50 bg-white flex flex-col">
           <div className="p-4 border-b flex items-center gap-4">
-            <button onClick={() => setShowCheats(false)} className="p-2 hover:bg-gray-100 rounded-full"><ChevronLeft /></button>
-            <h2 className="font-bold text-xl uppercase">Trucchi</h2>
+            <button onClick={() => setShowCheats(false)} className="p-2 hover:bg-gray-100 rounded-full cursor-pointer"><ChevronLeft /></button>
+            <div>
+              <h2 className="font-bold text-xl uppercase leading-none">Trucchi</h2>
+              <span className="text-[10px] text-gray-400 font-bold uppercase tracking-wider">Pannello Sviluppatore</span>
+            </div>
           </div>
           <div className="flex-1 overflow-y-auto p-6 space-y-4">
+            {/* Special Boss Pokemon Summoner Button */}
+            <button
+              onClick={() => {
+                try { playMenuClick(); } catch { /* ignore */ }
+                setShowBossRewardsModal(true);
+              }}
+              className="w-full flex items-center justify-between p-4 rounded-2xl border-2 border-purple-200 bg-gradient-to-r from-purple-50 via-indigo-50 to-pink-50 hover:from-purple-100 hover:to-pink-100 text-purple-950 transition-all cursor-pointer shadow-sm active:scale-98 group text-left"
+            >
+              <div className="flex items-center gap-4 min-w-0">
+                <span className="text-2xl p-2 rounded-xl bg-purple-100/90 group-hover:scale-110 transition-transform shrink-0">🎁</span>
+                <div className="min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-black text-sm uppercase text-purple-900 truncate">Ottieni Pokémon Boss & Speciali</span>
+                    <span className="text-[9px] bg-purple-600 text-white font-bold px-2 py-0.5 rounded-full uppercase tracking-wider">Nuovo</span>
+                  </div>
+                  <p className="text-[11px] text-purple-700/80 font-medium leading-tight mt-0.5">
+                    Evoca nel tuo Box qualsiasi Pokémon ricompensa dei Boss (Shiny, IV 100% e mosse speciali)
+                  </p>
+                </div>
+              </div>
+              <ChevronRight className="w-5 h-5 text-purple-500 group-hover:translate-x-1 transition-transform shrink-0" />
+            </button>
+
             {[
               { id: 'money', label: '999.999 PokéDollari', icon: '💰' },
               { id: 'masterball', label: '50 Master Ball', icon: '💎' },
@@ -700,7 +728,7 @@ export const Settings: React.FC<{ onBack: () => void, onProfile: () => void }> =
               <button
                 key={cheat.id}
                 onClick={() => applyCheat(cheat.id)}
-                className="w-full flex items-center justify-between p-4 rounded-2xl border-2 border-gray-100 active:bg-yellow-50 active:border-yellow-200 transition-all"
+                className="w-full flex items-center justify-between p-4 rounded-2xl border-2 border-gray-100 active:bg-yellow-50 active:border-yellow-200 transition-all cursor-pointer"
               >
                 <div className="flex items-center gap-4">
                   <span className="text-2xl">{cheat.icon}</span>
@@ -710,6 +738,11 @@ export const Settings: React.FC<{ onBack: () => void, onProfile: () => void }> =
               </button>
             ))}
           </div>
+
+          {/* Sub-Modal for Boss Rewards / Special Pokemon */}
+          {showBossRewardsModal && (
+            <BossRewardsCheatModal onClose={() => setShowBossRewardsModal(false)} />
+          )}
         </div>
       )}
 

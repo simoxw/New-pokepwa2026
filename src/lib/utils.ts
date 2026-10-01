@@ -74,20 +74,21 @@ export function normalizePokemon(raw: any): Pokemon {
     const baseMove = getMoveByName(moveName);
     
     // Authoritative stats (Power, Category, Type, MaxPP, Effects)
-    const effectiveType = (m.type && typeof m.type === 'string' && m.type !== 'normal')
-      ? m.type
-      : (baseMove.type && baseMove.type !== 'normal' ? baseMove.type : (m.type || baseMove.type || 'normal'));
+    const isBaseMoveValid = baseMove.power !== 45 || baseMove.pp !== 35;
+    const effectiveType = isBaseMoveValid && baseMove.type
+      ? baseMove.type
+      : (m.type && typeof m.type === 'string' ? m.type : (baseMove.type || 'normal'));
 
-    const effectiveCategory = m.category || baseMove.category || (baseMove.power ? 'physical' : 'status');
+    const effectiveCategory = (isBaseMoveValid && baseMove.category) 
+      ? baseMove.category 
+      : (m.category || baseMove.category || (baseMove.power ? 'physical' : 'status'));
 
     let effectivePower = 0;
     if (effectiveCategory !== 'status') {
-      if (typeof baseMove.power === 'number' && baseMove.power > 0 && baseMove.power !== 45) {
+      if (isBaseMoveValid && typeof baseMove.power === 'number') {
         effectivePower = baseMove.power;
       } else if (typeof m.power === 'number' && m.power > 0) {
         effectivePower = m.power;
-      } else if (typeof baseMove.power === 'number' && baseMove.power > 0) {
-        effectivePower = baseMove.power;
       } else {
         effectivePower = 40;
       }

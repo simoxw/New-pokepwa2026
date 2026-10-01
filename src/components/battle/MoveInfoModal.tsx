@@ -195,13 +195,21 @@ export const MoveInfoModal: React.FC<MoveInfoModalProps> = ({ move: rawMove, onC
 
   // Authoritative database resolution
   const dbMove = getMoveByName(rawMove.name || (rawMove as any).title || '');
-  const effectiveCategory = rawMove.category || dbMove.category || (rawMove.power || dbMove.power ? 'physical' : 'status');
-  const effectiveType = (rawMove.type && typeof rawMove.type === 'string' && rawMove.type !== 'normal')
-    ? rawMove.type
-    : (dbMove.type && dbMove.type !== 'normal' ? dbMove.type : (rawMove.type || dbMove.type || 'normal'));
-  const effectivePower = (typeof rawMove.power === 'number' && (rawMove.power > 0 || effectiveCategory === 'status'))
-    ? rawMove.power
-    : (typeof dbMove.power === 'number' ? dbMove.power : (effectiveCategory === 'status' ? 0 : 40));
+  const isBaseMoveValid = dbMove.power !== 45 || dbMove.pp !== 35;
+
+  const effectiveCategory = (isBaseMoveValid && dbMove.category)
+    ? dbMove.category
+    : (rawMove.category || dbMove.category || (rawMove.power || dbMove.power ? 'physical' : 'status'));
+
+  const effectiveType = isBaseMoveValid && dbMove.type
+    ? dbMove.type
+    : (rawMove.type && typeof rawMove.type === 'string' ? rawMove.type : (dbMove.type || 'normal'));
+
+  const effectivePower = (isBaseMoveValid && typeof dbMove.power === 'number')
+    ? dbMove.power
+    : (typeof rawMove.power === 'number' && (rawMove.power > 0 || effectiveCategory === 'status')
+        ? rawMove.power
+        : (typeof dbMove.power === 'number' ? dbMove.power : (effectiveCategory === 'status' ? 0 : 40)));
 
   const move: Move = {
     ...dbMove,

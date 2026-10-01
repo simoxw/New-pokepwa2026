@@ -61,11 +61,15 @@ describe('Comprehensive Trainers, Bosses, and Moves Audit', () => {
   });
 
   it('all custom moves used by Bosses resolve to accurate non-fallback moves', () => {
+    const fallbackMoves: string[] = [];
     for (const boss of LEGENDARY_BOSSES) {
       for (const pkmn of boss.teamPokemon) {
         if (pkmn.customMoves) {
           for (const mName of pkmn.customMoves) {
             const move = getMoveByName(mName);
+            if (move.pp === 35 && move.power === 45) {
+              fallbackMoves.push(`Boss ${boss.name} (${pkmn.name}): "${mName}" -> type: ${move.type}, power: ${move.power}`);
+            }
             expect(move, `Boss ${boss.name} Pokemon ${pkmn.name} has invalid move: ${mName}`).toBeDefined();
             expect(move.name.toLowerCase()).not.toBe('azione');
             expect(move.type).toBeDefined();
@@ -80,9 +84,14 @@ describe('Comprehensive Trainers, Bosses, and Moves Audit', () => {
       // Check reward moves
       for (const mName of boss.rewardPokemon.moves) {
         const move = getMoveByName(mName);
+        if (move.pp === 35 && move.power === 45) {
+          fallbackMoves.push(`Boss ${boss.name} Reward (${boss.rewardPokemon.name}): "${mName}" -> type: ${move.type}, power: ${move.power}`);
+        }
         expect(move, `Boss ${boss.name} Reward Pokemon has invalid move: ${mName}`).toBeDefined();
         expect(move.name.toLowerCase()).not.toBe('azione');
       }
     }
+    console.log('Detected Fallback Moves:', fallbackMoves);
+    expect(fallbackMoves).toEqual([]);
   });
 });
