@@ -67,42 +67,38 @@ Questo documento descrive le principali funzioni, algoritmi e metodi esportati n
 
 ---
 
-## 2. Servizi Pokédex e Dati (`/src/lib/`)
+## 2. Servizi Pokédex e Dati (`/src/lib/` & `/src/data/`)
+
+### `movesData.ts`
+- **`STATIC_MOVES_DATABASE` & `ALIAS_MAP`**:  
+  Database delle mosse competitive contenente informazioni dettagliate su tipo elementale, categoria (*physical*, *special*, *status*), potenza, precisione e PP.  
+  Include mappatura bilingue rigorosa (inglese e italiano). In particolare, mosse come **`flash-cannon`** (*Cannonflash* / *Cannonlampo*, tipo Acciaio speciale, potenza 80), **`roar-of-time`** (*Fragortempo*, Drago speciale, potenza 150), **`sucker-punch`** (*Sbigoattacco*), **`freeze-dry`** (*Liofilizzazione*), **`icicle-crash`** (*Scagliagelo*) sono registrate sia con chiavi canoniche che con alias italiani per una risoluzione senza fallback generici.
+- **`getMoveByName(name)`**:  
+  Funzione di risoluzione che normalizza la chiave tramite `normalizeMoveKey` e garantisce che ogni mossa ritorni il tipo, la potenza e la categoria corretti.
 
 ### `pokedexService.ts`
 - **`fetchPokedexIndex()`**:  
   Restituisce l'indice compatto dei 1025 Pokémon nazionali con id, nome, e id formattato (es. `#0025`) per un rendering fluido a 60fps su dispositivi mobili.
 - **`fetchPokedexDetail(pokemonId)`**:  
   Scarica o recupera dalla cache i dati completi di una singola specie: descrizione in italiano, artwork ufficiale, sprite shiny, statistiche base con BST, mosse per livello con relative descrizioni tradotte, catena evolutiva e verso audio originale (*cry*).
-- **`getPokemonHabitatInGame(pokemonId)`**:  
-  Mappa l'ID di qualsiasi Pokémon alle 14 zone esplorabili del gioco in cui è possibile trovarlo selvatico.
 
 ### `pokeapi.ts`
 - **`fetchPokemonData(idOrName)`**:  
   Scarica le statistiche, i tipi e le mosse base di un Pokémon da PokéAPI, con cache persistente in memoria e LocalStorage.
 - **`fetchMoveData(moveNameOrUrl)`**:  
-  Recupera le proprietà competitive della mossa (potenza, precisione, tipo, PP, classe di danno) con traduzione automatica in italiano.
+  Recupera le proprietà competitive della mossa con traduzione automatica in italiano.
 
 ### `BattleFXLayer.tsx` (Animazioni Mosse GBA)
 - **`BattleFXLayer`**:
   - Renderizza un overlay grafico trasparente dinamico posizionato sopra l'arena di lotta.
-  - Genera effetti grafici tematici in base al tipo e alla categoria della mossa usata (fendenti luminosi, proiettili fiammeggianti, flussi d'acqua/ghiaccio, saette elettriche, onde psichiche, impatti fisici, aure di potenziamento).
-  - Sincronizzato con il ciclo di esecuzione dei turni (~650ms). Disattivabile all'istante dalle Impostazioni (`state.settings.moveAnimationsEnabled`).
+  - Genera effetti grafici tematici in base al tipo e alla categoria della mossa usata.
+  - Disattivabile all'istante dalle Impostazioni (`state.settings.moveAnimationsEnabled`).
 
 ### `utils.ts` & Scambio Codici (`Trade.tsx`)
 - **`normalizePokemon(raw)`**:
-  Normalizza qualsiasi oggetto Pokémon proveniente da LocalStorage, N64 o Pokedesk.
-  - Sincronizza `pokemonId`, `id` e genera un `instanceId` univoco.
-  - Genera automaticamente gli sprite mancanti (`artwork`, `front`, `back`, `home`, `animated`) facendo riferimento alle repository ufficiali HD di PokéAPI.
-  - Normalizza la curva di esperienza convertendo i campi esterni `exp` nei campi nativi `experience` e `nextLevelExp` (calcolati secondo la formula della curva di crescita $N^3$).
-  - Mappa e arricchisce tutte le mosse importate tramite `getMoveByName` garantendo la presenza di tipo, categoria, potenza, precisione e PP.
+  Normalizza qualsiasi oggetto Pokémon proveniente da LocalStorage, N64 o Pokedesk. Sincronizza sprite, curve di esperienza $N^3$, mosse e genera `instanceId` univoci.
 - **`decodePokemon(base64)`**:
-  Decodifica stringhe Base64 esterne con tolleranza avanzata agli errori.
-  - Gestisce l'assenza o l'errata formattazione del padding Base64 (`=`).
-  - **Riparazione Automatica JSON**: Tenta il ripristino di JSON incompleti o troncati (aggiungendo automaticamente virgolette o parentesi di chiusura mancanti).
-  - **Fallback Regex**: In caso di troncamenti severi, estrae tramite espressioni regolari ID specie, nome, livello e tipo del Pokémon per ricostruire un esemplare valido.
-- **`encodePokemon(pokemon)` / `decodeTeam(base64)` / `encodeTeam(team)`**:
-  Permettono la serializzazione e la deserializzazione sicura di singoli Pokémon o dell'intera squadra per le funzioni di scambio e Wonder Trade.
+  Decodifica stringhe Base64 esterne con tolleranza avanzata agli errori, gestione del padding, auto-riparazione JSON e fallback Regex.
 
 ---
 
@@ -110,99 +106,95 @@ Questo documento descrive le principali funzioni, algoritmi e metodi esportati n
 
 ### `leveling.ts`
 - **`calculateExpGain(winner, faintedEnemy, isWild)`**:  
-  Calcola i punti XP guadagnati al termine dello scontro in base al livello e alla specie del nemico sconfitto (con bonus 1.5x per le lotte contro allenatori).
+  Calcola i punti XP guadagnati al termine dello scontro in base al livello e alla specie del nemico sconfitto.
 - **`checkLevelUp(pokemon)`**:  
-  Verifica se il Pokémon ha superato la soglia di esperienza per salire di livello (secondo la curva di crescita assegnata) e ricalcola le statistiche massime:
-  $$\text{HP} = \left\lfloor \frac{(2 \times \text{Base} + \text{IV} + \lfloor \text{EV}/4 \rfloor) \times \text{Livello}}{100} \right\rfloor + \text{Livello} + 10$$
-  $$\text{Stat} = \left\lfloor \left( \left\lfloor \frac{(2 \times \text{Base} + \text{IV} + \lfloor \text{EV}/4 \rfloor) \times \text{Livello}}{100} \right\rfloor + 5 \right) \times \text{Natura} \right\rfloor$$
+  Verifica se il Pokémon ha superato la soglia di esperienza per salire di livello e ricalcola le statistiche massime secondo le formule ufficiali con IV ed EV.
 - **`applyEvs(pokemon, yieldEvs)`**:  
-  Aggiunge i punti Effort Values (EV) guadagnati dallo sconfitto, rispettando il tetto di 252 EV per singola statistica e 510 EV totali.
+  Aggiunge i punti Effort Values (EV) guadagnati, rispettando il cap di 252 EV per statistica e 510 totali.
 
 ### `evolution.ts`
 - **`checkEvolution(pokemon, itemUsed?)`**:  
-  Determina se un Pokémon possiede i requisiti per evolversi (raggiungimento del livello minimo o esposizione a una specifica pietra evolutiva). Per specie con evoluzioni ramificate (es. Eevee, Tyrogue, Slowpoke, Oddish, Poliwag), restituisce la lista di tutte le opzioni evolutive disponibili da mostrare nel modale di scelta dell'utente.
+  Determina se un Pokémon possiede i requisiti per evolversi (livello o pietra). Per specie con evoluzioni ramificate (Eevee, Tyrogue, Slowpoke, Oddish, Poliwag), restituisce la lista di tutte le opzioni per la scelta interattiva del giocatore.
 
 ### `sound.ts`
-- **`playBgm(type, forceReload?)`**:  
-  Gestisce la riproduzione in loop della colonna sonora BGM ('overworld' o 'battle'). Recupera la traccia audio salvata in `localStorage` o interrompe l'audio se si imposta `'stop'`.
-- **`getCustomBgm(type)` / `setCustomBgm(type, base64Audio)`**:  
-  Legge e aggiorna la musica di sottofondo personalizzata salvata in `localStorage` (`pokepwa_custom_bgm_overworld` e `pokepwa_custom_bgm_battle`), in modo del tutto indipendente dalla struttura dei dati di salvataggio del gioco.
-- **`playHit(type)`**:  
-  Riproduce istantaneamente i file audio WAV ufficiali per i colpi superefficaci (`/public/audio/super_effective.wav`) e non molto efficaci (`/public/audio/not_very_effective.wav`).
+- **`playBgm(type, forceReload?)`**: Gestisce la riproduzione musicale loopata per mappa e lotte con supporto a upload di brani personalizzati salvati in `localStorage`.
+- **`playHit(type)`**: Riproduce istantaneamente i file WAV ufficiali per i colpi superefficaci e non molto efficaci.
 
 ---
 
 ## 4. Torre Lotta & Competizione (`/src/lib/battleTower.ts`)
 
 - **`generateTowerOpponent(currentStreak)`**:  
-  Genera proceduralmente un allenatore rivale con Pokémon competitivi di livello pari a quello massimo della squadra del giocatore, assegnando mosse strategiche e bilanciate.
+  Genera proceduralmente un allenatore rivale con Pokémon competitivi di livello pari a quello massimo della squadra del giocatore.
 - **`calculateTowerRewards(streak)`**:  
   Calcola i Punti Lotta (PL) guadagnati in base alla serie di vittorie consecutive.
 
 ---
 
-## 5. Sfide Leggendarie - Boss Iconici (`/src/data/legendaryBosses.ts` & `/src/components/BossBattles.tsx`)
+## 5. Sfide Leggendarie - I 20 Boss Iconici (`/src/data/legendaryBosses.ts` & `/src/components/BossBattles.tsx`)
 
-### `LEGENDARY_BOSSES`
-- Array di configurazione dei **16 Boss Iconici** (Rosso, Camilla, Rocco, Lance, Dandel, Blu, Giovanni, N, Baldo, Nardo, Perla, Iridio, Prof. Oak, Nemona, Palmer, Volo).
-- Definisce per ciascun Boss: ID, nome, titolo, regione, citazione iniziale e di sconfitta, premio in denaro, sprite Showdown, avatar, nome e descrizione del buff passivo, tipo di buff e l'array di 6 Pokémon al Lvl 100 con relative mosse personalizzate.
+### `LEGENDARY_BOSSES` (20 Boss delle 9 Regioni)
+Configurazione dei **20 Boss Iconici**:
+1. ⚡ **Rosso** (*Monte Argento*) → Premio: **Pikachu Cromatico con Volo** (Lvl 70, IV 100%)
+2. 🐉 **Campionessa Camilla** (*Sinnoh*) → Premio: **Garchomp Titanico** (Lvl 70, IV 100%)
+3. 💎 **Rocco Petri** (*Hoenn*) → Premio: **Metagross "Argento"** (Lvl 70, IV 100%)
+4. 🔥 **Domadraghi Lance** (*Kanto/Johto*) → Premio: **Dragonite con Extrarapido** (Lvl 70, IV 100%)
+5. 👑 **Campione Dandel** (*Galar*) → Premio: **Charizard "Gigamax"** (Lvl 70, IV 100%)
+6. 🏆 **Eterno Rivale Blu** (*Kanto*) → Premio: **Arcanine Imperiale** (Lvl 70, IV 100%)
+7. 🚀 **Capo Giovanni** (*Team Rocket*) → Premio: **Mewtwo "Origine"** (Lvl 70, IV 100%)
+8. 🕊️ **Re N** (*Unima*) → Premio: **Zoroark "Ideale"** (Lvl 70, IV 100%)
+9. 🗿 **Baldo** (*Parco Lotta*) → Premio: **Regigigas Antico** (Lvl 70, IV 100%)
+10. 🦋 **Campione Nardo** (*Unima*) → Premio: **Volcarona del Sole** (Lvl 70, IV 100%)
+11. ❄️ **Perla & Eredi di Hisui** (*Hisui*) → Premio: **Zoroark di Hisui** (Lvl 70, IV 100%)
+12. ⚙️ **Iridio** (*Alola*) → Premio: **Silvally "Iride"** (Lvl 70, IV 100%)
+13. 📜 **Prof. Oak** (*Kanto*) → Premio: **Tauros del Professore** (Lvl 70, IV 100%)
+14. ⚡ **Campionessa Nemona** (*Paldea*) → Premio: **Baxcalibur "Furore"** (Lvl 70, IV 100%)
+15. 🏰 **Asso Palmer** (*Torre Lotta*) → Premio: **Heatran del Vulcano** (Lvl 70, IV 100%)
+16. 👻 **Volo** (*Ginkgo Guild*) → Premio: **Giratina "Origine"** (Lvl 70, IV 100%)
+17. 🌟 **Campionessa Diantea** (*Kalos*) → Premio: **Gardevoir "Aura Nobile"** (Lvl 70, IV 100%)
+18. 🌌 **Leader Cyrus** (*Mondo Distorto*) → Premio: **Dialga "Spaziotempo"** (Lvl 70, IV 100%)
+19. 👑 **Signore Ghecis** (*Team Plasma*) → Premio: **Hydreigon "Tiranno"** (Lvl 70, IV 100%)
+20. 🐺 **Rivale Silver** (*Johto*) → Premio: **Feraligatr "Ribelle"** (Lvl 70, IV 100%)
 
-### `buildBossTrainer(boss)`
-- Costruisce asincronamente la squadra avversaria di livello 100, scaricando i dati base tramite PokéAPI.
-- Applica la ricalcolazione precisa delle statistiche per il Livello 100 con IV perfetti a 31 ed EV max distribuiti (252/252/4).
-- Sovrascrive le mosse base con il set di 4 mosse competitive personalizzate specificate nella configurazione del Boss.
-
-### `generateBossRewardPokemon(boss)`
-- Genera il Pokémon premio per la prima vittoria (es. Pikachu Cromatico con Volo, Mewtwo Cromatico, Giratina Cromatico, ecc.) al Livello 70, impostando IV al 100% (31/31/31/31/31/31), nome dell'Allenatore Originale (`originalTrainer`), nickname e stato Shiny.
-
-### Gestione dei Buff e dei Turni in `BattleScreen.tsx`
-- **Integrazione dei Buff Boss**: All'inizio della lotta viene mostrata una notifica di avviso con il nome ed effetto del Buff Passivo del Boss. Vengono applicati eventuali effetti di ingresso (es. paralisi da *Aura del Monte Argento*, calo dell'Attacco da *Sguardo Insuperabile*).
-- **Moltiplicatori di Danno e Velocità**: Durante il calcolo delle mosse (`executeMoveAction`), vengono applicati in tempo reale i bonus di attacco (`bossAtkMult`), difesa (`bossDefMult`) e velocità (`bossSpeedBonus`) riservati al Boss.
-- **Risoluzione Danni da Stato a Fine Turno**: Applicazione garantita dei danni da Avvelenamento e Scottatura per il Pokémon sopravvissuto anche quando l'avversario viene mandato K.O. nello stesso turno.
+### `buildBossTrainer(boss)` & `generateBossRewardPokemon(boss)`
+- Costruisce squadre Lvl 100 con IV a 31 ed EV max distribuiti.
+- Genera i premi con `isShiny: true`, IV perfetti (31/31/31/31/31/31) e soprannomi puliti ed evocativi.
 
 ---
 
-## 6. Sistema di Progressione e Zone (`/src/lib/badges.ts` & `/src/constants/game.ts`)
+## 6. Sistema Trucchi & Catalogo Pokémon Speciali (`/src/components/BossRewardsCheatModal.tsx`)
 
-### `isAreaUnlocked(areaId, playerBadges, leagueVictories)`
-- **Progressione Lineare**: Implementa un sistema di sblocco sequenziale per le 10 zone principali del gioco. Ogni zona (tranne la prima) richiede il possesso della medaglia ottenuta nella zona precedente.
-- **Accesso alla Lega**: Il Datacenter della Lega Pokémon richiede obbligatoriamente il possesso di tutte le **10 Medaglie** dei Capipalestra.
-- **Post-Game (Area Zero & Arcipelago Regionale)**: Le aree speciali (Area Zero, Santuario dei Glitch, Abisso del Codice, Arcipelago Regionale) vengono sbloccate solo dopo aver ottenuto almeno una vittoria nella Lega Pokémon (`leagueVictories > 0`).
+- **`BossRewardsCheatModal`**:  
+  Pannello all'interno della sezione Trucchi protetta da PIN (`190693`).  
+  Permette al giocatore di visualizzare l'intero catalogo dei Pokémon premio dei Boss e di aggiungerli singolarmente al Box con un singolo tocco.
+- **`SPECIAL_CHEAT_POKEMON_CATALOG` & `ADDITIONAL_SPECIAL_POKEMON`**:  
+  Array estensibile progettato per ospitare in futuro qualsiasi Pokémon mitico, evento o speciale oltre alle ricompense dei Boss attuali.
+- **Garanzia di Unicità & Sicurezza**:  
+  Ogni Pokémon generato riceve un `instanceId` crittografico unico (`<id>_cheat_<timestamp>_<random>`), consentendo di ottenerne copie multiple nel Box senza alcun rischio di collisione, sovrascrittura o bug durante il ritiro o il deposito.
 
-### Sistema di Incontri (`/src/components/ZoneExplorer.tsx`)
-- **Pity System Capopalestra**: Se un giocatore si trova in una zona di cui non possiede ancora la medaglia, la probabilità di incontrare il Capopalestra aumenta di **8 volte** rispetto al normale, facilitando la progressione iniziale.
-- **Tabelle Allenatori Locali**: Ogni zona attinge a una `trainerTable` specifica definita in `game.ts`, garantendo che gli NPC incontrati siano tematicamente coerenti con l'ambiente (es. Pescatori in Spiaggia, Alpinisti in Montagna).
-- **Spawn Dinamico**: Il livello dei Pokémon selvatici e degli allenatori scala progressivamente tra le zone, partendo dal livello 2 nel Bosco dei Selfie fino al livello 100 nelle zone più profonde del Post-Game.
+---
 
-### `PokemonDetails.tsx` & `Pokemon` Model
-- **`handleToggleFavorite()`**:  
-  Attiva/disattiva la proprietà reattiva `isFavorite` sul Pokémon selezionato sia nella squadra (`state.player.team`) sia nel box (`state.player.box`) tramite confronto univoco `instanceId`. Mostra una stella dorata con glow sia nella scheda dettagliata, sia nel Box PC che nella lista Squadra.
+## 7. Sistema Memoria PC Box: Paginazione da 40 Pokémon (`/src/components/Box.tsx`)
 
-### `Settings.tsx`
-- **`handleVerifyPasscode(passcode)`**:  
-  Valida l'immissione del codice PIN segreto (`190693`) per l'accesso al Menù Trucchi. In caso di PIN errato, riproduce un suono di KO e scatena il fumetto di errore comico del **Prof. Scordarello** con il suo avatar e battute personalizzate.
+- **Paginazione da 40 Slot Stile Giochi Originali**:  
+  I Pokémon archiviati nel Box sono organizzati in pagine da **massimo 40 Pokémon** ciascuna (`BOX_PAGE_SIZE = 40`), simulando i classici "Box 1", "Box 2", "Box 3"... dei titoli Pokémon per console.
+- **Scroll e Navigazione Fluida**:  
+  Lo scorrimento verticale rimane fluido come sempre, consentendo di visualizzare chiaramente la griglia dei 40 Pokémon del Box selezionato.
+- **Intestazione e Navigazione Rapida**:  
+  Intestazione in stile PC di Bill con pulsanti `< Prec.` e `Succ. >`, contatore `BOX X / Y` con riassunto dei Pokémon visualizzati (es. `1 - 40 di 120`), e pillole interattive per saltare istantaneamente a qualsiasi Box.
+- **Barra di Navigazione Inferiore**:  
+  Pannello di navigazione a fondo pagina che consente di passare al Box successivo non appena si scorre fino al 40° Pokémon.
+- **Integrazione con Filtri e Ricerca**:  
+  Quando vengono applicati filtri per tipo, generazione, ricerca testuale o categorie (Preferiti, Shiny, Feriti, Pronti a Evolvere), la paginazione ricalcola istantaneamente il numero di pagine e riporta la vista in modo sicuro alla pagina 1, prevenendo pagine vuote o indici disallineati.
+- **Selezione Multipla Multibox**:  
+  In modalità selezione multipla è possibile selezionare con un tocco tutti i Pokémon del Box corrente oppure tutti i Pokémon filtrati nell'intero archivio, procedendo al rilascio sicuro con barriera di conferma per esemplari Shiny o di livello elevato.
 
-### `Box.tsx`
-- **`filteredBox` (useMemo)**:  
-  Filtra e ordina l'array dei Pokémon archiviati applicando contemporaneamente ricerca testuale (nome, nickname, #ID), filtro elementale sui 18 tipi, filtro generazioni (Gen 1-9), toggle per **Preferiti ⭐**, **Shiny ✨**, **Pronti a evolvere ⚡**, **Feriti ❤️**, e ordinamento a 8 vie (recenti, livello, nome, pokedex, statistiche, IV).
-- **`isMultiSelectMode` & Mass Release**:  
-  Consente la selezione multipla di Pokémon archiviati per la liberazione di massa, con riassunto delle specie selezionate, blocco di sicurezza automatica per Pokémon Shiny o di livello >= 30, e ripristino istantaneo dello spazio di memoria.
-- **`withdraw(targetPokemon)`**:  
-  Sposta in modo sicuro un Pokémon dal Box alla squadra attiva tramite confronto di `instanceId` univoco (`Crypto.randomUUID()`), garantendo che eventuali copie identiche della stessa specie mantengano statistiche e livelli indipendenti.
-- **`deposit(targetPokemon)`**:  
-  Sposta un Pokémon dalla squadra al Box tramite `instanceId`, verificando che rimanga almeno un Pokémon attivo in squadra.
+---
 
-### `Pokedex.tsx` & `PokedexDetailModal.tsx`
-- **`calculateTypeEffectiveness(types)`**:  
-  Esegue l'algoritmo di moltiplicazione incrociata delle debolezze per doppi tipi (es. tipo Fuoco/Volante riceve danno 4x da Roccia, 0.25x da Erba, 0x da Terra).
-- **`playPokemonCry(cryUrl)`**:  
-  Inizializza e riproduce l'audio nativo HTML5 del verso del Pokémon.
+## 8. Test Automatici & Audit di Integrità (`/src/tests/`)
 
-### `BattleControls.tsx` & `BattleScreen.tsx`
-- **Long-Press Move Inspection (600ms)**:  
-  Tenendo premuto il pulsante di una mossa per almeno 600ms si apre la scheda dettagliata della mossa (categoria Fisica/Speciale/Stato, potenza, precisione, priorità, moltiplicatore di efficacia sul nemico e descrizioni/effetti secondari). Non appena il pulsante viene rilasciato, l'overlay scompare senza eseguire la mossa. Il rilascio prima di 600ms invece attiva la mossa.
-- **Tipografia Ottimizzata Mosse**:  
-  Il nome della mossa è reso in corpo più compatto (`text-[11px] sm:text-xs`) per evitare troncamenti antiestetici, lasciando inalterati tutti gli altri indicatori (PP, Tipo, Potenza, Precisione).
-- **Ciclo Persistenza Status (Avvelenamento e Scottatura)**:  
-  Corretto il controllo di stato turn-by-turn in `canMove` e `executeMoveAction`, assicurando che l'avvelenamento e la scottatura rimangano attivi per tutta la durata dello scontro infliggendo danno alla fine di ogni turno (rispettivamente 1/8 e 1/16 dei PS max), e che non vengano rimossi prematuramente.
-
+La codebase è coperta da **12 suite di test** e **79 test unitari e di integrazione** eseguiti con Vitest:
+- **`allTrainersAndBossesAudit.test.ts`**: Verifica che tutte le specie e mosse di ogni Boss e Allenatore siano censite e non generino fallback o errori di tipo.
+- **`bossRewardsCheat.test.ts`**: Valida la generazione conforme e con IV perfetti dei Pokémon del menù trucchi.
+- **`boxPagination.test.ts`**: Verifica le formule di calcolo delle pagine, il ritaglio esatto dei 40 Pokémon per pagina e la resilienza ai filtri.
+- **`battleSystemComplete.test.ts`**, **`battleAdvancedMechanics.test.ts`**, **`multiTurnMoves.test.ts`**: Validazione rigorosa delle formule di danno, meteo, abilità e mosse multi-turno.

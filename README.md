@@ -26,7 +26,12 @@ Combina la fedeltà delle meccaniche competitive Pokémon ufficiali (formule mat
 
 ---
 
-### 2. 📦 Sistema Memoria PC (Box con Ricerca, Filtri Rapidi & Preferiti)
+### 2. 📦 Sistema Memoria PC (Box con Paginazione a 40 Pokémon & Filtri Rapidi)
+- **Paginazione a 40 Pokémon Stile Giochi Originali**:
+  - Suddivisione dell'archivio in comodi Box da **massimo 40 Pokémon ciascuno** (Box 1, Box 2, Box 3...), come nei grandi classici della saga.
+  - Selettore con pulsanti `< Prec.` e `Succ. >`, indicatori rapidi e pillole per saltare velocemente a qualsiasi Box.
+  - Barra di navigazione inferiore per passare al Box successivo subito dopo aver scorso i 40 Pokémon.
+  - Perfetta integrazione con i filtri: la ricerca o il filtro per tipo ricalcola le pagine istantaneamente tornando alla prima pagina senza rompere gli indici.
 - **Ricerca Istantanea Multi-Parametro**: Cerca per nome, soprannome o `#ID` Pokédex (es. `25` o `#025`).
 - **Filtri Rapidi a 1-Tap**:
   - **⭐ Preferiti**: Isola istantaneamente tutti i Pokémon contrassegnati con la stella.
@@ -36,8 +41,8 @@ Combina la fedeltà delle meccaniche competitive Pokémon ufficiali (formule mat
 - **Filtro per 18 Tipi Elementali**: Chip con colori e icone per visualizzare solo Pokémon di un elemento.
 - **Filtro per 9 Generazioni**: Filtro rapido da Kanto a Paldea.
 - **Ordinamento Intelligente a 8 Vie**: Più Recenti, Livello Max, Livello Min, # Pokédex, Alfabetico (A-Z), Statistiche Massime e Valori IV.
-- **Selezione Multipla e Rilascio di Massa**: Rilascia più Pokémon contemporaneamente con sistemi di protezione e conferma automatica per Shiny o Pokémon di alto livello.
-- **Gestione Sicura**: Spostamento rapido tra squadra attiva (6 slot) e Box tramite identificativi univoci (`instanceId`), immune a disallineamenti da filtri.
+- **Selezione Multipla e Rilascio di Massa**: Rilascia più Pokémon contemporaneamente con selezione del Box corrente o di tutti i Box filtrati, con sistemi di protezione per Shiny o Pokémon rari.
+- **Gestione Sicura**: Spostamento rapido tra squadra attiva (6 slot) e Box tramite identificativi univoci (`instanceId`), totalmente immune a disallineamenti.
 
 ---
 
@@ -48,7 +53,7 @@ Combina la fedeltà delle meccaniche competitive Pokémon ufficiali (formule mat
   - **HP Numerici in Tempo Reale** sia per il proprio Pokémon sia per il Pokémon avversario/selvatico.
 - **Sistema Audio e Colonna Sonora BGM**:
   - File audio ufficiali integrati direttamente nel progetto (`/public/audio/super_effective.wav` e `public/audio/not_very_effective.wav`) per un feedback sonoro immediato sui colpi.
-  - **Player BGM nelle Impostazioni**: Caricamento facoltativo di file MP3/WAV personalizzati per la musica della mappa/esplorazione e della battaglia. I brani BGM risiedono in `localStorage` in modo isolato, lasciando intatta la struttura dei salvataggi di gioco.
+  - **Player BGM nelle Impostazioni**: Caricamento facoltativo di file MP3/WAV personalizzati per la musica della mappa/esplorazione e della battaglia salvati in `localStorage`.
   - Effetti sonori reattivi per salita di livello, cattura Pokéball, fuga e K.O.
 - **Evoluzioni Ramificate e Identità Univoca**:
   - Finestra di scelta interattiva per Pokémon con evoluzioni multiple (es. Eevee, Tyrogue, Slowpoke, Oddish).
@@ -96,47 +101,50 @@ Combina la fedeltà delle meccaniche competitive Pokémon ufficiali (formule mat
 
 ---
 
-### 6. ⚙️ Impostazioni, Personalizzazione BGM & Menù Trucchi Protetto
-- **🔑 Menù Trucchi Protetto da PIN (`190693`)**: Accesso riservato al menù sviluppatore tramite codice PIN segreto. In caso di errore, viene mostrato un intervento comico e satirico del Prof. Scordarello.
+### 6. ⚙️ Impostazioni, Personalizzazione BGM & Menù Trucchi Avanzato
+- **🔑 Menù Trucchi Protetto da PIN (`190693`)**:
+  - Accesso riservato al menù sviluppatore tramite codice PIN segreto. In caso di errore, compare il fumetto ironico del Prof. Scordarello.
+  - **🎁 Ottieni Pokémon Boss & Speciali**: Nuova funzione per evocare nel Box qualsiasi ricompensa dei 20 Boss Iconici (con IV al 100%, Shiny, mosse speciali ed esclusivi) tutte le volte che si desidera, ideale per recuperare Pokémon trasferiti per sbaglio o collezionarne copie multiple senza bug.
+  - Cheat per PokéDollari, Master Ball, Caramelle Rare, Cura Totale, sblocco medaglie e completamento Pokédex.
 - **⚡ Animazioni Mosse in Stile GBA (Attivabili / Disattivabili)**:
   - Layer grafico isolato (`BattleFXLayer.tsx`) che riproduce fendenti, proiettili di fuoco/acqua, saette elettriche, bagliori e onde d'urto durante i turni di lotta.
-  - Sincronizzazione perfetta con la barra degli HP e i messaggi di log.
-  - Opzione toggle **ATTIVE/DISATTIVE** dedicata nelle Impostazioni per disabilitarle o riabilitarle istantaneamente in qualsiasi momento.
+  - Opzione toggle **ATTIVE/DISATTIVE** dedicata nelle Impostazioni.
 - **🔄 Sistema di Scambio e Import/Export Pokémon (Compatibile N64 & Pokedesk)**:
   - Generazione di codici stringa Base64 per scambiare o esportare qualsiasi Pokémon.
-  - **Motore di Normalizzazione `normalizePokemon`**: Decodifica automatica di codici esterni (Pokedesk / N64).
-  - Ricostruzione automatica di artwork ufficiali HD, sprite frontali/posteriori, mosse tradotte, curva d'esperienza ($N^3$), `experience` e `nextLevelExp`.
-  - **Riparazione Automatica JSON (JSON Auto-Repair & Fallback Regex)**: Ripara in automatico codici parziali o troncati da copia-incolla imperfetti, garantendo importazioni senza bug o crash.
-- **🎵 Lettore BGM Personalizzato**: Caricamento di tracce musicali MP3/WAV personalizzate per la musica di sottofondo dell'Overworld e della Lotta.
-- **💾 Gestione Salvataggi e Export JSON**: Salvataggio automatico continuo in `localStorage`, export/import del file di salvataggio in formato JSON, e cancellazione sicura.
+  - **Riparazione Automatica JSON (JSON Auto-Repair & Fallback Regex)** per scambi sempre stabili.
+- **🎵 Lettore BGM Personalizzato**: Caricamento di tracce musicali MP3/WAV personalizzate per l'Overworld e la Lotta.
+- **💾 Gestione Salvataggi e Export JSON**: Salvataggio automatico continuo in memoria locale, export/import del file di salvataggio in formato JSON.
 
 ---
 
-### 7. ⚡ Modalità Sfide Leggendarie (Boss Iconici Post-Lega)
-- **Sblocco Post-Lega Pokémon**: Pulsante **`⚡ Boss (Post-Lega)`** nel Hub centrale, accessibile con grafica bloccata finché non si completa la Lega Pokémon (`leagueVictories > 0`).
-- **16 Allenatori Iconici di Tutte le Generazioni**:
+### 7. ⚡ Modalità Sfide Leggendarie (20 Boss Iconici Post-Lega)
+- **Sblocco Post-Lega Pokémon**: Pulsante **`⚡ Boss (Post-Lega)`** nell'Hub centrale, accessibile una volta completata la Lega Pokémon (`leagueVictories > 0`).
+- **20 Allenatori Iconici di Tutte le 9 Generazioni**:
   1. ⚡ **Rosso** (*Leggenda del Monte Argento*) → Premio: **Pikachu Cromatico con Volo** (Lvl 70, IV 100%)
   2. 🐉 **Campionessa Camilla** (*La Campionessa Insuperabile di Sinnoh*) → Premio: **Garchomp Titanico** (Lvl 70, IV 100%)
-  3. 💎 **Rocco Petri** (*Maestro dell'Acciaio e delle Pietre Rare*) → Premio: **Metagross Cromatico** (Lvl 70, IV 100%)
+  3. 💎 **Rocco Petri** (*Maestro dell'Acciaio e delle Pietre Rare*) → Premio: **Metagross "Argento"** (Lvl 70, IV 100%)
   4. 🔥 **Domadraghi Lance** (*Campione Supremo dell'Altopiano Blu*) → Premio: **Dragonite con Extrarapido** (Lvl 70, IV 100%)
-  5. 👑 **Campione Dandel** (*L'Imbattibile Re di Galar*) → Premio: **Charizard Cromatico** (Lvl 70, IV 100%)
+  5. 👑 **Campione Dandel** (*L'Imbattibile Re di Galar*) → Premio: **Charizard "Gigamax"** (Lvl 70, IV 100%)
   6. 🏆 **Eterno Rivale Blu** (*Il Prodigio di Biancavilla*) → Premio: **Arcanine Imperiale** (Lvl 70, IV 100%)
-  7. 🚀 **Capo Giovanni** (*Il Boss Incontrastato del Team Rocket*) → Premio: **Mewtwo Cromatico** (Lvl 70, IV 100%)
-  8. 🕊️ **Re N** (*L'Eroe degli Ideali e della Verità*) → Premio: **Zoroark Cromatico** (Lvl 70, IV 100%)
-  9. 🗿 **Baldo** (*Asso del Parco Lotta di Hoenn*) → Premio: **Regigigas Cromatico** (Lvl 70, IV 100%)
-  10. 🦋 **Campione Nardo** (*Il Vagabondo Leggendario di Unima*) → Premio: **Volcarona Cromatico** (Lvl 70, IV 100%)
-  11. ❄️ **Perla & Eredi di Hisui** (*I Guardiani del Tempo e dello Spazio*) → Premio: **Zoroark Hisui Cromatico** (Lvl 70, IV 100%)
-  12. ⚙️ **Iridio** (*L'Alleato d'Argento della Fondazione Aether*) → Premio: **Silvally Cromatico** (Lvl 70, IV 100%)
-  13. 📜 **Prof. Oak** (*Il Grande Maestro Pokémon*) → Premio: **Tauros Cromatico** (Lvl 70, IV 100%)
-  14. ⚡ **Campionessa Nemona** (*La Rivelazione di Paldea*) → Premio: **Baxcalibur Cromatico** (Lvl 70, IV 100%)
-  15. 🏰 **Asso Palmer** (*Il Re della Torre Lotta*) → Premio: **Heatran Cromatico** (Lvl 70, IV 100%)
-  16. 👻 **Volo** (*Il Mercante della Ginkgo Guild*) → Premio: **Giratina Cromatico** (Lvl 70, IV 100%)
+  7. 🚀 **Capo Giovanni** (*Il Boss Incontrastato del Team Rocket*) → Premio: **Mewtwo "Origine"** (Lvl 70, IV 100%)
+  8. 🕊️ **Re N** (*L'Eroe degli Ideali e della Verità*) → Premio: **Zoroark "Ideale"** (Lvl 70, IV 100%)
+  9. 🗿 **Baldo** (*Asso del Parco Lotta di Hoenn*) → Premio: **Regigigas Antico** (Lvl 70, IV 100%)
+  10. 🦋 **Campione Nardo** (*Il Vagabondo Leggendario di Unima*) → Premio: **Volcarona del Sole** (Lvl 70, IV 100%)
+  11. ❄️ **Perla & Eredi di Hisui** (*I Guardiani del Tempo e dello Spazio*) → Premio: **Zoroark di Hisui** (Lvl 70, IV 100%)
+  12. ⚙️ **Iridio** (*L'Alleato d'Argento della Fondazione Aether*) → Premio: **Silvally "Iride"** (Lvl 70, IV 100%)
+  13. 📜 **Prof. Oak** (*Il Grande Maestro Pokémon*) → Premio: **Tauros del Professore** (Lvl 70, IV 100%)
+  14. ⚡ **Campionessa Nemona** (*La Rivelazione di Paldea*) → Premio: **Baxcalibur "Furore"** (Lvl 70, IV 100%)
+  15. 🏰 **Asso Palmer** (*Il Re della Torre Lotta*) → Premio: **Heatran del Vulcano** (Lvl 70, IV 100%)
+  16. 👻 **Volo** (*Il Mercante della Ginkgo Guild*) → Premio: **Giratina "Origine"** (Lvl 70, IV 100%)
+  17. 🌟 **Campionessa Diantea** (*La Campionessa Radiosa di Kalos*) → Premio: **Gardevoir "Aura Nobile"** (Lvl 70, IV 100%)
+  18. 🌌 **Leader Cyrus** (*Il Dominatore del Mondo Distorto*) → Premio: **Dialga "Spaziotempo"** (Lvl 70, IV 100%)
+  19. 👑 **Signore Ghecis** (*La Tirannia del Team Plasma*) → Premio: **Hydreigon "Tiranno"** (Lvl 70, IV 100%)
+  20. 🐺 **Rivale Silver** (*L'Erede delle Ombre di Johto*) → Premio: **Feraligatr "Ribelle"** (Lvl 70, IV 100%)
 - **Regole delle Sfide**:
-  - **Squadre Lvl 100**: 6 Pokémon al Livello 100, IV 31/31/31/31/31/31, EV distribuiti e set di mosse competitive.
-  - **I propri livelli reali**: I tuoi Pokémon conservano il loro livello attuale, accumulando grandi quantità di punti ESP.
-  - **Buff Passivo Unico**: Ogni Boss gode di un'abilità passiva di campo (es. parali all'inizio, aumento attacco/difesa/velocità, rigenerazione PS, immunità di stato).
-  - **Premi della Prima Vittoria**: $50.000 - $65.000 PokéDollari ed un Pokémon Speciale/Leggendario Cromatico al Lvl 70 con IV perfetti salvato direttamente nel Box o in Squadra.
-  - **Risfide Infinite**: I Boss possono essere riaffrontati quante volte si desidera.
+  - **Squadre Lvl 100**: 6 Pokémon al Livello 100 con IV 31/31/31/31/31/31 ed EV competitivi.
+  - **Buff Passivo Unico**: Ogni Boss attiva un'abilità passiva di campo (modificatori di danno, velocità o statistiche).
+  - **Premi della Prima Vittoria**: PokéDollari ed un Pokémon Speciale Cromatico con IV 100% e mosse esclusive.
+  - **Risfide Infinite**: I Boss possono essere affrontati nuovamente in qualsiasi momento.
 
 ---
 
@@ -161,7 +169,7 @@ npm run dev
 L'applicazione sarà accessibile su `http://localhost:3000`.
 
 ### Esecuzione dei Test Automatici
-La codebase dispone di una suite di **53 test unitari e di integrazione** con Vitest:
+La codebase dispone di una suite di **12 suite di test e 79 test automatizzati** con Vitest:
 ```bash
 npm test
 ```
@@ -170,20 +178,7 @@ npm test
 ```bash
 npm run build
 ```
-I file compilati e ottimizzati per la distribuzione statica verranno generati nella cartella `dist/`.
-
----
-
-## 🌐 Deploy su GitHub Pages (Configurazione Automatica)
-
-Il progetto è preconfigurato per il deploy su GitHub Pages:
-1. In `vite.config.ts`, il parametro `base: './'` garantisce il caricamento corretto degli asset relativi in qualsiasi sottocartella di GitHub Pages.
-2. Il workflow GitHub Actions è configurato in `.github/workflows/deploy.yml`.
-
-### Attivazione in 3 Passi:
-1. Effettua il push del codice sul tuo repository GitHub (`git push origin main`).
-2. Vai su **Settings > Pages** del tuo repository.
-3. Sotto **Build and deployment > Source**, seleziona **GitHub Actions**.
+I file compilati e ottimizzati verranno generati nella cartella `dist/`.
 
 ---
 

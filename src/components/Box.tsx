@@ -1,9 +1,9 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState, useMemo, useEffect } from 'react';
 import { useGame } from '../contexts/GameContext';
 import { 
-  ChevronLeft, Search, X, Sparkles, Zap, Heart, Star,
+  ChevronLeft, ChevronRight, Search, X, Sparkles, Zap, Heart, Star,
   ArrowUpDown, SlidersHorizontal, RotateCcw, ShieldAlert,
-  CheckSquare, Square, Trash2, Check, AlertTriangle
+  CheckSquare, Square, Trash2, Check, AlertTriangle, Layers
 } from 'lucide-react';
 import { Pokemon } from '../types/game';
 import { PokemonDetails } from './PokemonDetails';
@@ -25,6 +25,7 @@ export const Box: React.FC<{ onBack: () => void }> = ({ onBack }) => {
   const [onlyInjured, setOnlyInjured] = useState<boolean>(false);
   const [sortBy, setSortBy] = useState<SortKey>('recent');
   const [showAdvancedFilters, setShowAdvancedFilters] = useState<boolean>(false);
+  const [currentPage, setCurrentPage] = useState<number>(1);
 
   // Multi-Select & Mass Release State
   const [isMultiSelectMode, setIsMultiSelectMode] = useState<boolean>(false);
@@ -81,7 +82,13 @@ export const Box: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     setOnlyCanEvolve(false);
     setOnlyInjured(false);
     setSortBy('recent');
+    setCurrentPage(1);
   };
+
+  // Reset to first page whenever search or filter constraints change
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, selectedType, selectedGen, onlyFavorite, onlyShiny, onlyCanEvolve, onlyInjured, sortBy]);
 
   // Filtered & Sorted Box
   const filteredBox = useMemo(() => {
@@ -164,6 +171,16 @@ export const Box: React.FC<{ onBack: () => void }> = ({ onBack }) => {
     return result;
   }, [state.player.box, search, selectedType, selectedGen, onlyFavorite, onlyShiny, onlyCanEvolve, onlyInjured, sortBy]);
 
+  // Original Games-style Pagination (40 Pokemon per Box)
+  const BOX_PAGE_SIZE = 40;
+  const totalPages = Math.max(1, Math.ceil(filteredBox.length / BOX_PAGE_SIZE));
+  const safeCurrentPage = Math.min(Math.max(1, currentPage), totalPages);
+  const startIndex = (safeCurrentPage - 1) * BOX_PAGE_SIZE;
+  const endIndex = Math.min(startIndex + BOX_PAGE_SIZE, filteredBox.length);
+  const paginatedBox = useMemo(() => {
+    return filteredBox.slice(startIndex, endIndex);
+  }, [filteredBox, startIndex, endIndex]);
+
   // Safe Withdraw using unique instanceId
   const withdraw = (target: Pokemon) => {
     if (state.player.team.length >= 6) {
@@ -225,6 +242,16 @@ export const Box: React.FC<{ onBack: () => void }> = ({ onBack }) => {
       } else {
         next.add(key);
       }
+      return next;
+    });
+  };
+
+  // Select all pokemon currently on this box page
+  const selectCurrentPage = () => {
+    playMenuClick();
+    setSelectedInstanceKeys(prev => {
+      const next = new Set(prev);
+      paginatedBox.forEach(p => next.add(getPkmnKey(p)));
       return next;
     });
   };
@@ -380,18 +407,26 @@ export const Box: React.FC<{ onBack: () => void }> = ({ onBack }) => {
 
       {/* MULTI-SELECT SUB-BAR */}
       {isMultiSelectMode && (
-        <div className="flex items-center justify-between px-3.5 py-2 bg-amber-950/40 border-b border-amber-800/40 text-xs shrink-0">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-wrap items-center justify-between gap-2 px-3.5 py-2 bg-amber-950/40 border-b border-amber-800/40 text-xs shrink-0">
+          <div className="flex flex-wrap items-center gap-1.5">
+            <button
+              onClick={selectCurrentPage}
+              className="px-2.5 py-1 rounded-lg bg-amber-600/30 hover:bg-amber-600/50 text-amber-200 border border-amber-600/40 font-bold transition-colors text-[11px] cursor-pointer"
+              title={`Seleziona i Pokémon di questo Box (Box ${safeCurrentPage})`}
+            >
+              Box {safeCurrentPage} ({paginatedBox.length})
+            </button>
             <button
               onClick={selectAllFiltered}
-              className="px-2.5 py-1 rounded-lg bg-amber-600/30 hover:bg-amber-600/50 text-amber-200 border border-amber-600/40 font-bold transition-colors text-[11px]"
+              className="px-2.5 py-1 rounded-lg bg-amber-800/40 hover:bg-amber-800/60 text-amber-300 border border-amber-700/40 font-bold transition-colors text-[11px] cursor-pointer"
+              title={`Seleziona tutti i Pokémon filtrati in tutti i Box`}
             >
-              Seleziona Visibili ({filteredBox.length})
+              Tutti i Box ({filteredBox.length})
             </button>
             {selectedInstanceKeys.size > 0 && (
               <button
                 onClick={deselectAll}
-                className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition-colors text-[11px]"
+                className="px-2 py-1 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-300 font-medium transition-colors text-[11px] cursor-pointer"
               >
                 Deseleziona
               </button>
@@ -689,6 +724,7 @@ export const Box: React.FC<{ onBack: () => void }> = ({ onBack }) => {
         <div>
           <div className="flex items-center justify-between mb-2">
             <h2 className="text-xs font-black uppercase text-slate-400 tracking-wider flex items-center gap-1.5">
+              <Layers className="w-3.5 h-3.5 text-indigo-400" />
               <span>Nel Box</span>
               <span className="text-indigo-400">
                 ({filteredBox.length} {filteredBox.length !== state.player.box.length ? `/ ${state.player.box.length}` : ''})
@@ -713,34 +749,159 @@ export const Box: React.FC<{ onBack: () => void }> = ({ onBack }) => {
               {activeFiltersCount > 0 && (
                 <button
                   onClick={resetFilters}
-                  className="mt-3 px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition-colors"
+                  className="mt-3 px-3.5 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-xl text-xs font-bold transition-colors cursor-pointer"
                 >
                   Reimposta Filtri
                 </button>
               )}
             </div>
           ) : (
-            <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2 pb-16">
-              {filteredBox.map((pokemon) => {
-                const key = getPkmnKey(pokemon);
-                const isSelected = selectedInstanceKeys.has(key);
-                return (
-                  <BoxPokemonCard 
-                    key={key}
-                    pokemon={pokemon}
-                    isMultiSelect={isMultiSelectMode}
-                    isSelected={isSelected}
+            <div className="space-y-2">
+              {/* COMPACT AUTHENTIC PC BOX SWITCHER */}
+              <div className="flex flex-wrap sm:flex-nowrap items-center justify-between gap-1.5 px-2.5 py-1 bg-slate-900/85 border border-slate-800 rounded-xl shadow-inner">
+                {/* Navigation: Prev, Title, Next */}
+                <div className="flex items-center gap-1.5 shrink-0">
+                  <button
                     onClick={() => {
-                      if (isMultiSelectMode) {
-                        toggleSelect(pokemon);
-                      } else {
+                      if (safeCurrentPage > 1) {
                         playMenuClick();
-                        setSelectedPokemon({ pokemon, source: 'box' });
+                        setCurrentPage(safeCurrentPage - 1);
                       }
                     }}
-                  />
-                );
-              })}
+                    disabled={safeCurrentPage <= 1}
+                    className={`flex items-center justify-center p-1 rounded-lg text-xs font-bold transition-all ${
+                      safeCurrentPage > 1
+                        ? 'bg-slate-800 hover:bg-slate-700 text-indigo-300 border border-slate-700 cursor-pointer active:scale-95 shadow-sm'
+                        : 'bg-slate-950/40 text-slate-600 border border-slate-800/40 cursor-not-allowed opacity-40'
+                    }`}
+                    title="Box Precedente"
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                  </button>
+
+                  <div className="flex items-baseline gap-1.5 px-1">
+                    <span className="text-xs font-black text-white tracking-wide">
+                      BOX {safeCurrentPage}
+                      <span className="text-slate-400 font-bold text-[11px] ml-1">/ {totalPages}</span>
+                    </span>
+                    <span className="text-[10px] text-slate-500 font-medium">
+                      ({startIndex + 1}-{endIndex} di {filteredBox.length})
+                    </span>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      if (safeCurrentPage < totalPages) {
+                        playMenuClick();
+                        setCurrentPage(safeCurrentPage + 1);
+                      }
+                    }}
+                    disabled={safeCurrentPage >= totalPages}
+                    className={`flex items-center justify-center p-1 rounded-lg text-xs font-bold transition-all ${
+                      safeCurrentPage < totalPages
+                        ? 'bg-slate-800 hover:bg-slate-700 text-indigo-300 border border-slate-700 cursor-pointer active:scale-95 shadow-sm'
+                        : 'bg-slate-950/40 text-slate-600 border border-slate-800/40 cursor-not-allowed opacity-40'
+                    }`}
+                    title="Box Successivo"
+                  >
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+
+                {/* Quick Box Page Pills (if more than 1 page) */}
+                {totalPages > 1 && (
+                  <div className="flex items-center gap-1 overflow-x-auto max-w-full no-scrollbar py-0.5">
+                    {Array.from({ length: totalPages }, (_, i) => i + 1).map(pageNum => {
+                      const isSelected = pageNum === safeCurrentPage;
+                      return (
+                        <button
+                          key={`box-page-btn-${pageNum}`}
+                          onClick={() => {
+                            playMenuClick();
+                            setCurrentPage(pageNum);
+                          }}
+                          className={`px-2 py-0.5 rounded-lg text-[11px] font-black transition-all whitespace-nowrap cursor-pointer ${
+                            isSelected
+                              ? 'bg-indigo-600 text-white shadow-sm border border-indigo-400'
+                              : 'bg-slate-800/90 text-slate-400 hover:text-slate-200 border border-slate-700/60 hover:bg-slate-700'
+                          }`}
+                        >
+                          Box {pageNum}
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+              </div>
+
+              {/* 40 POKEMON GRID (CURRENT BOX PAGE) */}
+              <div className="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 lg:grid-cols-8 gap-2">
+                {paginatedBox.map((pokemon) => {
+                  const key = getPkmnKey(pokemon);
+                  const isSelected = selectedInstanceKeys.has(key);
+                  return (
+                    <BoxPokemonCard 
+                      key={key}
+                      pokemon={pokemon}
+                      isMultiSelect={isMultiSelectMode}
+                      isSelected={isSelected}
+                      onClick={() => {
+                        if (isMultiSelectMode) {
+                          toggleSelect(pokemon);
+                        } else {
+                          playMenuClick();
+                          setSelectedPokemon({ pokemon, source: 'box' });
+                        }
+                      }}
+                    />
+                  );
+                })}
+              </div>
+
+              {/* BOTTOM PAGINATION BAR (If more than 1 box) */}
+              {totalPages > 1 && (
+                <div className="flex items-center justify-between pt-2 pb-16 text-xs text-slate-400 border-t border-slate-800/80">
+                  <button
+                    onClick={() => {
+                      if (safeCurrentPage > 1) {
+                        playMenuClick();
+                        setCurrentPage(safeCurrentPage - 1);
+                      }
+                    }}
+                    disabled={safeCurrentPage <= 1}
+                    className={`flex items-center gap-1 px-3 py-1.5 rounded-xl font-bold transition-all ${
+                      safeCurrentPage > 1
+                        ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 cursor-pointer active:scale-95'
+                        : 'opacity-40 cursor-not-allowed'
+                    }`}
+                  >
+                    <ChevronLeft className="w-3.5 h-3.5" />
+                    <span>Box {safeCurrentPage - 1}</span>
+                  </button>
+
+                  <span className="text-[11px] font-bold text-slate-400">
+                    Box <strong className="text-white">{safeCurrentPage}</strong> di <strong className="text-slate-300">{totalPages}</strong> ({paginatedBox.length} Pokémon in questa pagina)
+                  </span>
+
+                  <button
+                    onClick={() => {
+                      if (safeCurrentPage < totalPages) {
+                        playMenuClick();
+                        setCurrentPage(safeCurrentPage + 1);
+                      }
+                    }}
+                    disabled={safeCurrentPage >= totalPages}
+                    className={`flex items-center gap-1 px-3 py-1.5 rounded-xl font-bold transition-all ${
+                      safeCurrentPage < totalPages
+                        ? 'bg-slate-800 hover:bg-slate-700 text-slate-200 cursor-pointer active:scale-95'
+                        : 'opacity-40 cursor-not-allowed'
+                    }`}
+                  >
+                    <span>Box {safeCurrentPage + 1}</span>
+                    <ChevronRight className="w-3.5 h-3.5" />
+                  </button>
+                </div>
+              )}
             </div>
           )}
         </div>
