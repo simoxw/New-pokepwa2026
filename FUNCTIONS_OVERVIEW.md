@@ -59,6 +59,19 @@ Questo documento descrive le principali funzioni, algoritmi e metodi esportati n
   2. Velocità effettiva dei due Pokémon (modificata da stadi e paralisi).
   3. Spareggio casuale 50/50 in caso di perfetta parità di velocità.
 
+### `battleAi.ts`
+- **`selectEnemyMove(enemyMoves, enemy, playerActive, enemyStatus, playerStatus, enemyStages, playerStages, enemyHp, playerHp)`**:  
+  Algoritmo di decisione tattica dell'avversario:
+  - **Filtro Assoluto Immunità (`eff === 0`)**: Assegna punteggio `-9999` ad attacchi a danno zero (es. Elettro su Terra, Normale/Lotta su Spettro, Terra su Volante).
+  - **Priorità Mosse Neutre e Superefficaci**: Penalizza severamente le mosse poco efficaci (`eff < 1`) se l'avversario possiede alternative offensive con `eff >= 1`.
+  - **Anti-Spam Setup e Debuff**: Assegna punteggio `-9999` a mosse di potenziamento se la statistica del Pokémon è già a +6, o a debuff se la statistica del giocatore è già a -6.
+  - **Anti-Spam Status Alterati**: Punteggio `-9999` a mosse di stato se il bersaglio ha già una condizione primaria attiva o è immune per tipo elementale.
+  - **Priorità K.O. e Mosse Rapide**: Massima priorità se il colpo manda K.O. il giocatore o con mosse ad alta priorità se la salute è critica.
+- **`shouldEnemyUseFullRestore(isEliteOrBoss, enemyHp, enemyMaxHp, enemyHealsRemaining)`**:  
+  Determina se Superquattro, Campione o Boss Iconico utilizzano una Ricarica Totale:
+  - Condizione: Salute nemica $\le 20\%$ dei PS massimi, 30% di probabilità, con un tetto massimo di **4 cure per combattimento**.
+  - Flusso di turno fedele ai giochi originali: consuma il turno del Boss per curare PS al 100% e rimuovere status, consentendo al giocatore di sferrare subito dopo il proprio attacco.
+
 ### `escapeFormula.ts`
 - **`canEscapeFromBattle(playerPokemon, opponentPokemon, escapeAttempts)`**:  
   Esegue la formula ufficiale di fuga dalle lotte con Pokémon selvatici:
@@ -193,7 +206,8 @@ Configurazione dei **20 Boss Iconici**:
 
 ## 8. Test Automatici & Audit di Integrità (`/src/tests/`)
 
-La codebase è coperta da **12 suite di test** e **79 test unitari e di integrazione** eseguiti con Vitest:
+La codebase è coperta da **13 suite di test** e **84 test unitari e di integrazione** eseguiti con Vitest:
+- **`battleAiAdvanced.test.ts`**: Verifica le decisioni dell'IA competitiva (esclusione immunità 0x, priorità mosse neutre, prevenzione spam boost/status e trigger della Ricarica Totale).
 - **`allTrainersAndBossesAudit.test.ts`**: Verifica che tutte le specie e mosse di ogni Boss e Allenatore siano censite e non generino fallback o errori di tipo.
 - **`bossRewardsCheat.test.ts`**: Valida la generazione conforme e con IV perfetti dei Pokémon del menù trucchi.
 - **`boxPagination.test.ts`**: Verifica le formule di calcolo delle pagine, il ritaglio esatto dei 40 Pokémon per pagina e la resilienza ai filtri.

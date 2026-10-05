@@ -169,7 +169,7 @@ npm run dev
 L'applicazione sarà accessibile su `http://localhost:3000`.
 
 ### Esecuzione dei Test Automatici
-La codebase dispone di una suite di **12 suite di test e 79 test automatizzati** con Vitest:
+La codebase dispone di una suite di **13 suite di test e 84 test automatizzati** con Vitest:
 ```bash
 npm test
 ```

@@ -11,7 +11,7 @@ import { BattleControls } from './battle/BattleControls';
 import { PostBattleScreen, PostBattleData } from './battle/PostBattleScreen';
 import { calculateDamage, getAccuracyMultiplier, getStageMultiplier } from '../lib/battle/battleMath';
 import { executeMoveAction } from '../lib/battle/battleActionRunner';
-import { selectEnemyMove } from '../lib/battle/battleAi';
+import { selectEnemyMove, shouldEnemyUseFullRestore } from '../lib/battle/battleAi';
 import { SideHazards, defaultSideHazards, processEntryHazards } from '../lib/battle/hazards';
 import { 
   canMove, 
@@ -148,6 +148,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
   const [playerHp, setPlayerHp] = useState(playerActive.hp);
   const [enemyHp, setEnemyHp] = useState(enemy.hp);
   const [enemyTeam, setEnemyTeam] = useState<Pokemon[]>(trainer ? trainer.team : []);
+  const [enemyHealsRemaining, setEnemyHealsRemaining] = useState<number>(4);
 
   useEffect(() => {
     playBgm('battle');
@@ -1245,6 +1246,71 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
         nextTargetStatus: actionRes.nextTargetStatus
       };
     };
+
+    // --- CHECK ELITE / BOSS FULL RESTORE USAGE ---
+    const isEliteOrBoss = Boolean(bossBuff) || Boolean(trainer?.id && (
+      trainer.id.startsWith('superquattro-') || 
+      trainer.id.startsWith('campione-') || 
+      trainer.id === 'campione-pm' ||
+      trainer.id.startsWith('boss-')
+    ));
+
+    const enemyUsesHeal = shouldEnemyUseFullRestore(
+      isEliteOrBoss,
+      enemyHp,
+      enemy.maxHp,
+      enemyHealsRemaining
+    );
+
+    if (enemyUsesHeal) {
+      setEnemyHealsRemaining(prev => Math.max(0, prev - 1));
+      const trainerTitle = trainer?.name ? trainer.name : 'Il Boss';
+      addLog(`👑 ${trainerTitle} usa una Ricarica Totale su ${enemy.name}!`);
+      try { playLevelUp(); } catch { /* ignore */ }
+
+      const healedHp = enemy.maxHp;
+      setEnemyHp(healedHp);
+      setEnemyStatus({ status: undefined, duration: undefined });
+      addLog(`✨ I PS di ${enemy.name} tornano al massimo e ogni problema di stato è stato curato! (${enemyHealsRemaining - 1} rimaste)`);
+      await new Promise(r => setTimeout(r, 900));
+
+      // The enemy used their turn to heal, so only the player executes their attack!
+      let curPlayerHp = playerHp;
+      let curEnemyHp = healedHp;
+      let livePlayerStatus: { status?: StatusCondition; duration?: number } = { ...playerStatus };
+      let liveEnemyStatus: { status?: StatusCondition; duration?: number } = { status: undefined, duration: undefined };
+
+      const playerResult = await runCombatantAttack(true, true, curPlayerHp, curEnemyHp);
+      curPlayerHp = playerResult.nextPlayerHp;
+      curEnemyHp = playerResult.nextEnemyHp;
+      if (playerResult.nextUserStatus) livePlayerStatus = playerResult.nextUserStatus;
+      if (playerResult.nextTargetStatus) liveEnemyStatus = playerResult.nextTargetStatus;
+
+      if (playerResult.stopped) {
+        return;
+      }
+
+      await new Promise(r => setTimeout(r, 500));
+
+      // End of turn effects
+      setPlayerVolatile(prev => ({ ...prev, isFlinched: false, isProtected: false }));
+      setEnemyVolatile(prev => ({ ...prev, isFlinched: false, isProtected: false }));
+
+      curPlayerHp = await handleStatusEndTurn(playerActive, curPlayerHp, setPlayerHp, livePlayerStatus.status, setPlayerStatus);
+      if (curPlayerHp <= 0) {
+        await handlePlayerFaint();
+        return;
+      }
+
+      curEnemyHp = await handleStatusEndTurn(enemy, curEnemyHp, setEnemyHp, liveEnemyStatus.status, setEnemyStatus);
+      if (curEnemyHp <= 0) {
+        await handleWin(curPlayerHp);
+        return;
+      }
+
+      setIsAnimating(false);
+      return;
+    }
 
     // --- EXECUTION PHASE 1: FIRST COMBATANT ---
     let curPlayerHp = playerHp;

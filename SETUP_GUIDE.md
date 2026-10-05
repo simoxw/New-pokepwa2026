@@ -38,7 +38,7 @@ La codebase include una suite di test unitari con **Vitest** che verifica:
 - Le mosse a più turni (Volo, Fossa, Solarraggio, Iper Raggio).
 - Le abilità passive e il meteo.
 
-Per eseguire l'intera suite di 79 test automatizzati (inclusi audit allenatori/boss, paginazione del box e generazione Pokémon speciali):
+Per eseguire l'intera suite di 84 test automatizzati (inclusi audit allenatori/boss, paginazione del box, intelligenza tattica IA e Ricarica Totale Boss):
 ```bash
 npm test
 ```

@@ -99,6 +99,7 @@ poke-pwa/
 │   ├── tests/                  # Suite di test automatizzati (Vitest)
 │   │   ├── allTrainersAndBossesAudit.test.ts # Audit completo di integrità Pokémon e mosse Boss/Trainer
 │   │   ├── battleAdvancedMechanics.test.ts
+│   │   ├── battleAiAdvanced.test.ts # Test IA competitiva (immunità 0x, anti-spam boost e Ricarica Totale Boss)
 │   │   ├── battleSystemComplete.test.ts
 │   │   ├── battle.test.ts
 │   │   ├── bossRewardsCheat.test.ts # Test di generazione Pokémon speciali del menù trucchi
