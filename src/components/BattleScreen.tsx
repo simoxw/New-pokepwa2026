@@ -34,6 +34,16 @@ import { LEGENDARY_BOSSES, generateBossRewardPokemon } from '../data/legendaryBo
 import { getMoveByName } from '../data/movesData';
 import { BattleFXLayer, BattleFXData } from './BattleFXLayer';
 import { 
+  FieldWeather, 
+  SideScreens, 
+  defaultFieldWeather, 
+  defaultSideScreens, 
+  processWeatherTurnEnd, 
+  tickWeather, 
+  tickScreens, 
+  WeatherType 
+} from '../lib/battle/fieldEffects';
+import { 
   playHit, 
   playFaint, 
   playProtect, 
@@ -234,6 +244,11 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
   // Side Hazards
   const [playerSideHazards, setPlayerSideHazards] = useState<SideHazards>(defaultSideHazards());
   const [enemySideHazards, setEnemySideHazards] = useState<SideHazards>(defaultSideHazards());
+
+  // Field Weather & Defensive Screens
+  const [fieldWeather, setFieldWeather] = useState<FieldWeather>(defaultFieldWeather());
+  const [playerScreens, setPlayerScreens] = useState<SideScreens>(defaultSideScreens());
+  const [enemyScreens, setEnemyScreens] = useState<SideScreens>(defaultSideScreens());
 
   // Stat Stages (-6 to +6)
   const [playerStages, setPlayerStages] = useState<BattleStages>({
@@ -837,9 +852,35 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
         userSideHazards: enemySideHazards,
         setUserSideHazards: setEnemySideHazards,
         targetSideHazards: playerSideHazards,
-        setTargetSideHazards: setPlayerSideHazards
+        setTargetSideHazards: setPlayerSideHazards,
+        weather: fieldWeather.type,
+        setWeather: (w) => setFieldWeather({ type: w, turns: 5 }),
+        userScreens: enemyScreens,
+        setUserScreens: setEnemyScreens,
+        targetScreens: playerScreens,
+        setTargetScreens: setPlayerScreens,
+        isWildBattle: !trainer
       }
     );
+
+    if (res.forceFlee) {
+      await new Promise(r => setTimeout(r, 600));
+      setBattleResult({ type: 'escape' });
+      return;
+    }
+
+    if (res.forceSwitchTarget) {
+      const availablePlayerIndices = state.player.team
+        .map((p, idx) => ({ p, idx }))
+        .filter(({ p, idx }) => idx !== 0 && p.hp > 0);
+      if (availablePlayerIndices.length > 0) {
+        const chosen = availablePlayerIndices[Math.floor(Math.random() * availablePlayerIndices.length)];
+        handleSwitch(chosen.idx);
+        return;
+      } else {
+        addLog("Ma è fallita! Non ci sono altri Pokémon pronti a lottare!");
+      }
+    }
 
     if (res.userFainted) {
       await handleWin(res.nextTargetHp);
@@ -866,6 +907,31 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     if (nextEnemyHp <= 0) {
       await handleWin(nextPlayerHp);
       return;
+    }
+
+    // Weather end-of-turn damage
+    if (fieldWeather.type === 'sandstorm' || fieldWeather.type === 'hail') {
+      const weatherP = processWeatherTurnEnd(playerActive, nextPlayerHp, fieldWeather.type);
+      if (weatherP.damage > 0) {
+        addLog(weatherP.msg!);
+        nextPlayerHp = weatherP.nextHp;
+        setPlayerHp(nextPlayerHp);
+        if (nextPlayerHp <= 0) {
+          await handlePlayerFaint();
+          return;
+        }
+      }
+
+      const weatherE = processWeatherTurnEnd(enemy, nextEnemyHp, fieldWeather.type);
+      if (weatherE.damage > 0) {
+        addLog(weatherE.msg!);
+        nextEnemyHp = weatherE.nextHp;
+        setEnemyHp(nextEnemyHp);
+        if (nextEnemyHp <= 0) {
+          await handleWin(nextPlayerHp);
+          return;
+        }
+      }
     }
 
     if (bossBuff === 'n_harmony' && nextEnemyHp > 0 && nextEnemyHp < enemy.maxHp) {
@@ -1171,7 +1237,14 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
         userSideHazards: playerSideHazards,
         setUserSideHazards: setPlayerSideHazards,
         targetSideHazards: enemySideHazards,
-        setTargetSideHazards: setEnemySideHazards
+        setTargetSideHazards: setEnemySideHazards,
+        weather: fieldWeather.type,
+        setWeather: (w: WeatherType) => setFieldWeather({ type: w, turns: 5 }),
+        userScreens: playerScreens,
+        setUserScreens: setPlayerScreens,
+        targetScreens: enemyScreens,
+        setTargetScreens: setEnemyScreens,
+        isWildBattle: !trainer
       } : {
         attackMultiplier: bossAtkMult,
         defenseMultiplier: towerDefMult * bossDefMult,
@@ -1181,7 +1254,14 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
         userSideHazards: enemySideHazards,
         setUserSideHazards: setEnemySideHazards,
         targetSideHazards: playerSideHazards,
-        setTargetSideHazards: setPlayerSideHazards
+        setTargetSideHazards: setPlayerSideHazards,
+        weather: fieldWeather.type,
+        setWeather: (w: WeatherType) => setFieldWeather({ type: w, turns: 5 }),
+        userScreens: enemyScreens,
+        setUserScreens: setEnemyScreens,
+        targetScreens: playerScreens,
+        setTargetScreens: setPlayerScreens,
+        isWildBattle: !trainer
       };
 
       const actionRes = executeMoveAction(
@@ -1219,6 +1299,45 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
 
       const finalPlayerHp = attackerIsPlayer ? actionRes.nextUserHp : actionRes.nextTargetHp;
       const finalEnemyHp = attackerIsPlayer ? actionRes.nextTargetHp : actionRes.nextUserHp;
+
+      if (actionRes.forceFlee) {
+        await new Promise(r => setTimeout(r, 600));
+        setBattleResult({ type: 'escape' });
+        return { nextPlayerHp: finalPlayerHp, nextEnemyHp: finalEnemyHp, stopped: true };
+      }
+
+      if (actionRes.forceSwitchTarget) {
+        await new Promise(r => setTimeout(r, 600));
+        if (attackerIsPlayer) {
+          const currentEnemyId = enemy.instanceId || enemy.id;
+          const availableEnemies = enemyTeam.filter(p => (p.instanceId || p.id) !== currentEnemyId && p.hp > 0);
+          if (availableEnemies.length > 0) {
+            const nextChosenEnemy = availableEnemies[Math.floor(Math.random() * availableEnemies.length)];
+            addLog(`🔄 ${trainer?.name || 'L\'avversario'} manda in campo ${nextChosenEnemy.name}!`);
+            const enemyHazardRes = processEntryHazards(nextChosenEnemy, nextChosenEnemy.hp, enemySideHazards, nextChosenEnemy.status);
+            setEnemy(nextChosenEnemy);
+            setEnemyHp(enemyHazardRes.nextHp);
+            setEnemyMoves(nextChosenEnemy.moves.map(resolveBattleMove));
+            setEnemyStatus({ status: enemyHazardRes.nextStatus, duration: enemyHazardRes.nextStatusDuration ?? nextChosenEnemy.statusDuration });
+            setEnemyStages({ attack: 0, defense: 0, spAtk: 0, spDef: 0, speed: 0, accuracy: 0, evasion: 0 });
+            setEnemyVolatile({});
+            return { nextPlayerHp: finalPlayerHp, nextEnemyHp: enemyHazardRes.nextHp, stopped: true };
+          } else {
+            addLog("Ma è fallita! Non ci sono altri Pokémon nella squadra avversaria!");
+          }
+        } else {
+          const availablePlayerIndices = state.player.team
+            .map((p, idx) => ({ p, idx }))
+            .filter(({ p, idx }) => idx !== 0 && p.hp > 0);
+          if (availablePlayerIndices.length > 0) {
+            const chosen = availablePlayerIndices[Math.floor(Math.random() * availablePlayerIndices.length)];
+            handleSwitch(chosen.idx);
+            return { nextPlayerHp: finalPlayerHp, nextEnemyHp: finalEnemyHp, stopped: true };
+          } else {
+            addLog("Ma è fallita! Non ci sono altri Pokémon pronti a lottare!");
+          }
+        }
+      }
 
       if (actionRes.targetFainted) {
         if (attackerIsPlayer) {
@@ -1308,6 +1427,45 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
         return;
       }
 
+      // Weather end-of-turn damage (Sandstorm / Hail)
+      if (fieldWeather.type === 'sandstorm' || fieldWeather.type === 'hail') {
+        const weatherP = processWeatherTurnEnd(playerActive, curPlayerHp, fieldWeather.type);
+        if (weatherP.damage > 0) {
+          addLog(weatherP.msg!);
+          curPlayerHp = weatherP.nextHp;
+          setPlayerHp(curPlayerHp);
+          if (curPlayerHp <= 0) {
+            await handlePlayerFaint();
+            return;
+          }
+        }
+
+        const weatherE = processWeatherTurnEnd(enemy, curEnemyHp, fieldWeather.type);
+        if (weatherE.damage > 0) {
+          addLog(weatherE.msg!);
+          curEnemyHp = weatherE.nextHp;
+          setEnemyHp(curEnemyHp);
+          if (curEnemyHp <= 0) {
+            await handleWin(curPlayerHp);
+            return;
+          }
+        }
+      }
+
+      // Tick Weather
+      const tw = tickWeather(fieldWeather);
+      setFieldWeather(tw.nextWeather);
+      if (tw.expiredMsg) addLog(tw.expiredMsg);
+
+      // Tick Screens
+      const sp = tickScreens(playerScreens, playerActive.name);
+      setPlayerScreens(sp.nextScreens);
+      sp.expiredMsgs.forEach(m => addLog(m));
+
+      const se = tickScreens(enemyScreens, enemy.name);
+      setEnemyScreens(se.nextScreens);
+      se.expiredMsgs.forEach(m => addLog(m));
+
       setIsAnimating(false);
       return;
     }
@@ -1351,7 +1509,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       return;
     }
 
-    // --- EXECUTION PHASE 3: END OF TURN (Clear flinch, status tick damage) ---
+    // --- EXECUTION PHASE 3: END OF TURN (Clear flinch, status tick damage, weather, screens) ---
     // Clear flinch & protect
     setPlayerVolatile(prev => ({ ...prev, isFlinched: false, isProtected: false }));
     setEnemyVolatile(prev => ({ ...prev, isFlinched: false, isProtected: false }));
@@ -1369,6 +1527,49 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       await handleWin(curPlayerHp);
       return;
     }
+
+    // Weather end-of-turn damage (Sandstorm / Hail)
+    if (fieldWeather.type === 'sandstorm' || fieldWeather.type === 'hail') {
+      const weatherP = processWeatherTurnEnd(playerActive, curPlayerHp, fieldWeather.type);
+      if (weatherP.damage > 0) {
+        addLog(weatherP.msg!);
+        curPlayerHp = weatherP.nextHp;
+        setPlayerHp(curPlayerHp);
+        await new Promise(r => setTimeout(r, 600));
+        if (curPlayerHp <= 0) {
+          await handlePlayerFaint();
+          return;
+        }
+      }
+
+      const weatherE = processWeatherTurnEnd(enemy, curEnemyHp, fieldWeather.type);
+      if (weatherE.damage > 0) {
+        addLog(weatherE.msg!);
+        curEnemyHp = weatherE.nextHp;
+        setEnemyHp(curEnemyHp);
+        await new Promise(r => setTimeout(r, 600));
+        if (curEnemyHp <= 0) {
+          await handleWin(curPlayerHp);
+          return;
+        }
+      }
+    }
+
+    // Tick Weather
+    const tw = tickWeather(fieldWeather);
+    setFieldWeather(tw.nextWeather);
+    if (tw.expiredMsg) {
+      addLog(tw.expiredMsg);
+    }
+
+    // Tick Screens
+    const sp = tickScreens(playerScreens, playerActive.name);
+    setPlayerScreens(sp.nextScreens);
+    sp.expiredMsgs.forEach(m => addLog(m));
+
+    const se = tickScreens(enemyScreens, enemy.name);
+    setEnemyScreens(se.nextScreens);
+    se.expiredMsgs.forEach(m => addLog(m));
 
     setIsAnimating(false);
   }, [
@@ -1697,6 +1898,8 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
               isShiny={enemy.isShiny}
               team={trainer ? enemyTeam.map(p => p.id === enemy.id ? { ...p, hp: enemyHp } : p) : [{ hp: enemyHp }]}
               stages={enemyStages}
+              substituteHp={enemyVolatile.substituteHp}
+              screens={enemyScreens}
             />
             <img 
               src={enemy?.sprites?.artwork || enemy?.sprites?.front || (enemy as any)?.spriteUrl} 
@@ -1738,6 +1941,18 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
             )}
           </motion.div>
         </div>
+
+        {/* Weather Indicator Banner */}
+        {fieldWeather.type !== 'none' && (
+          <div className="flex justify-center -my-1 z-10">
+            <div className="bg-black/80 backdrop-blur-xs text-white px-3.5 py-1 rounded-full text-xs font-black shadow-lg border border-white/20 flex items-center gap-1.5 animate-pulse">
+              {fieldWeather.type === 'sun' && <span>☀️ Luce Solare Intensa ({fieldWeather.turns} turni)</span>}
+              {fieldWeather.type === 'rain' && <span>🌧️ Pioggia a Dirotto ({fieldWeather.turns} turni)</span>}
+              {fieldWeather.type === 'sandstorm' && <span>🌪️ Tempesta di Sabbia ({fieldWeather.turns} turni)</span>}
+              {fieldWeather.type === 'hail' && <span>❄️ Bufera di Grandine ({fieldWeather.turns} turni)</span>}
+            </div>
+          </div>
+        )}
 
         {/* Player Side */}
         <div className="flex-1 flex flex-col items-start justify-center py-2 pl-2 min-h-[160px]">
@@ -1781,6 +1996,8 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
               isShiny={playerActive.isShiny}
               team={state.player.team.map((p, i) => i === 0 ? { ...p, hp: playerHp } : p)}
               stages={playerStages}
+              substituteHp={playerVolatile.substituteHp}
+              screens={playerScreens}
             />
           </motion.div>
         </div>

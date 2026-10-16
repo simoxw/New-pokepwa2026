@@ -5,7 +5,8 @@ import { isImmuneToStatus, VolatileStatus } from './statusEffects';
 import { checkAbility } from './abilities';
 import { playProtect, playHit } from '../sound';
 import { SideHazards, setHazardFromMove } from './hazards';
-import { getMoveByName } from '../../data/movesData';
+import { getMoveByName, getRandomMetronomeMove } from '../../data/movesData';
+import { WeatherType, SideScreens } from './fieldEffects';
 
 export interface ExecuteMoveResult {
   nextUserHp: number;
@@ -14,6 +15,8 @@ export interface ExecuteMoveResult {
   userFainted: boolean;
   nextUserStatus?: { status?: StatusCondition; duration?: number };
   nextTargetStatus?: { status?: StatusCondition; duration?: number };
+  forceSwitchTarget?: boolean;
+  forceFlee?: boolean;
 }
 
 function isSelfStatChange(move: Move, sc: { change: number; target?: string }, defaultSelf: boolean): boolean {
@@ -88,6 +91,13 @@ export function executeMoveAction(
     setUserSideHazards?: React.Dispatch<React.SetStateAction<SideHazards>>;
     targetSideHazards?: SideHazards;
     setTargetSideHazards?: React.Dispatch<React.SetStateAction<SideHazards>>;
+    weather?: WeatherType;
+    setWeather?: (weather: WeatherType) => void;
+    userScreens?: SideScreens;
+    setUserScreens?: React.Dispatch<React.SetStateAction<SideScreens>>;
+    targetScreens?: SideScreens;
+    setTargetScreens?: React.Dispatch<React.SetStateAction<SideScreens>>;
+    isWildBattle?: boolean;
   }
 ): ExecuteMoveResult {
   // Enrich move with authoritative database definition to ensure secondary effects (stat_changes, recoil, drain) are always guaranteed
@@ -144,8 +154,139 @@ export function executeMoveAction(
   let nextUserStatusObj = { ...userStatus };
   let nextTargetStatusObj = { ...targetStatus };
 
-  // 0. Protect / Detect handling
-  const mLower = move.name.toLowerCase();
+  const mLower = (move.name || '').toLowerCase();
+
+  // 0a. Metronome handling
+  if (mLower.includes('metronomo') || mLower.includes('metronome')) {
+    const randomMove = getRandomMetronomeMove();
+    addLog(`🎲 Metronomo estrae a sorte ${randomMove.name}!`);
+    return executeMoveAction(
+      randomMove,
+      user,
+      target,
+      userStages,
+      setUserStages,
+      targetStages,
+      setTargetStages,
+      userStatus,
+      setUserStatus,
+      targetStatus,
+      setTargetStatus,
+      userVolatile,
+      setUserVolatile,
+      targetVolatile,
+      setTargetVolatile,
+      curUserHp,
+      setUserHp,
+      curTargetHp,
+      setTargetHp,
+      isPlayer,
+      isFirstInTurn,
+      addLog,
+      options
+    );
+  }
+
+  // 0b. Substitute handling
+  if (mLower.includes('sostituto') || mLower.includes('substitute')) {
+    const cost = Math.max(1, Math.floor(user.maxHp / 4));
+    if (userVolatile.substituteHp && userVolatile.substituteHp > 0) {
+      addLog(`Ma ${user.name} ha già un Sostituto attivo!`);
+    } else if (curUserHp <= cost) {
+      addLog(`Ma non ha abbastanza PS per creare un Sostituto!`);
+    } else {
+      curUserHp -= cost;
+      setUserHp(curUserHp);
+      setUserVolatile(prev => ({ ...prev, substituteHp: cost }));
+      addLog(`${user.name} sacrifica il 25% dei suoi PS (${cost} PS) e crea un Sostituto!`);
+    }
+    return {
+      nextUserHp: curUserHp,
+      nextTargetHp: curTargetHp,
+      targetFainted: false,
+      userFainted: false,
+      nextUserStatus: nextUserStatusObj,
+      nextTargetStatus: nextTargetStatusObj
+    };
+  }
+
+  // 0c. Weather moves handling (Sunny Day, Rain Dance, Sandstorm, Hail)
+  if (mLower.includes('giornodisole') || mLower.includes('sunny-day')) {
+    options?.setWeather?.('sun');
+    addLog("☀️ La luce solare diventa accecante per 5 turni!");
+    return {
+      nextUserHp: curUserHp,
+      nextTargetHp: curTargetHp,
+      targetFainted: false,
+      userFainted: false,
+      nextUserStatus: nextUserStatusObj,
+      nextTargetStatus: nextTargetStatusObj
+    };
+  }
+  if (mLower.includes('pioggiadanza') || mLower.includes('piovodanza') || mLower.includes('rain-dance')) {
+    options?.setWeather?.('rain');
+    addLog("🌧️ Ha iniziato a piovere a dirotto per 5 turni!");
+    return {
+      nextUserHp: curUserHp,
+      nextTargetHp: curTargetHp,
+      targetFainted: false,
+      userFainted: false,
+      nextUserStatus: nextUserStatusObj,
+      nextTargetStatus: nextTargetStatusObj
+    };
+  }
+  if (mLower.includes('terrempesta') || mLower.includes('sandstorm')) {
+    options?.setWeather?.('sandstorm');
+    addLog("🌪️ Una violenta tempesta di sabbia infuria per 5 turni!");
+    return {
+      nextUserHp: curUserHp,
+      nextTargetHp: curTargetHp,
+      targetFainted: false,
+      userFainted: false,
+      nextUserStatus: nextUserStatusObj,
+      nextTargetStatus: nextTargetStatusObj
+    };
+  }
+  if (mLower.includes('grandine') || mLower.includes('hail')) {
+    options?.setWeather?.('hail');
+    addLog("❄️ Ha iniziato a grandinare fittamente per 5 turni!");
+    return {
+      nextUserHp: curUserHp,
+      nextTargetHp: curTargetHp,
+      targetFainted: false,
+      userFainted: false,
+      nextUserStatus: nextUserStatusObj,
+      nextTargetStatus: nextTargetStatusObj
+    };
+  }
+
+  // 0d. Defensive Screens handling (Reflect, Light Screen)
+  if (mLower.includes('riflesso') || mLower.includes('reflect')) {
+    options?.setUserScreens?.(prev => ({ ...prev, reflect: 5 }));
+    addLog(`🛡️ Riflesso dimezza i danni fisici per la squadra di ${user.name} per 5 turni!`);
+    return {
+      nextUserHp: curUserHp,
+      nextTargetHp: curTargetHp,
+      targetFainted: false,
+      userFainted: false,
+      nextUserStatus: nextUserStatusObj,
+      nextTargetStatus: nextTargetStatusObj
+    };
+  }
+  if (mLower.includes('schermoluce') || mLower.includes('light-screen')) {
+    options?.setUserScreens?.(prev => ({ ...prev, lightScreen: 5 }));
+    addLog(`🔮 Schermoluce dimezza i danni speciali per la squadra di ${user.name} per 5 turni!`);
+    return {
+      nextUserHp: curUserHp,
+      nextTargetHp: curTargetHp,
+      targetFainted: false,
+      userFainted: false,
+      nextUserStatus: nextUserStatusObj,
+      nextTargetStatus: nextTargetStatusObj
+    };
+  }
+
+  // 0e. Protect / Detect handling
   const isProtectMove = mLower.includes('protezione') || mLower.includes('protect') || mLower.includes('individuazione') || mLower.includes('detect');
   
   if (isProtectMove) {
@@ -183,6 +324,33 @@ export function executeMoveAction(
       nextUserStatus: nextUserStatusObj,
       nextTargetStatus: nextTargetStatusObj
     };
+  }
+
+  // 0f. Forced Switch Moves (Roar, Whirlwind)
+  if (mLower.includes('boato') || mLower.includes('roar') || mLower.includes('turbine') || mLower.includes('whirlwind')) {
+    if (options?.isWildBattle) {
+      if (isPlayer) {
+        addLog(`Il Pokémon selvatico ${target.name} è fuggito spaventato!`);
+      } else {
+        addLog(`${user.name} spazza via ${target.name}! Fuggi dalla lotta!`);
+      }
+      return {
+        nextUserHp: curUserHp,
+        nextTargetHp: curTargetHp,
+        targetFainted: false,
+        userFainted: false,
+        forceFlee: true
+      };
+    } else {
+      addLog(`${target.name} è stato costretto ad abbandonare il campo di battaglia!`);
+      return {
+        nextUserHp: curUserHp,
+        nextTargetHp: curTargetHp,
+        targetFainted: false,
+        userFainted: false,
+        forceSwitchTarget: true
+      };
+    }
   }
 
   // Target is semi-invulnerable in air/underground/water (Fly, Dig, Dive, Bounce)
@@ -279,6 +447,10 @@ export function executeMoveAction(
       const statKey = STAT_MAP[rawStatName];
       if (!statKey) continue;
       const isSelf = isSelfStatChange(move, sc, defaultSelf);
+      if (!isSelf && sc.change < 0 && targetVolatile.substituteHp && targetVolatile.substituteHp > 0) {
+        addLog(`Il Sostituto di ${target.name} blocca il calo di statistiche!`);
+        continue;
+      }
       const recipient = isSelf ? user : target;
       const setRecipientStages = isSelf ? setUserStages : setTargetStages;
       const recipientStages = isSelf ? userStages : targetStages;
@@ -304,6 +476,12 @@ export function executeMoveAction(
 
   // Helper to apply primary status conditions
   const applyStatusCondition = (status: StatusCondition, chance?: number) => {
+    if (targetVolatile.substituteHp && targetVolatile.substituteHp > 0) {
+      if (move.category === 'status') {
+        addLog(`Il Sostituto protegge ${target.name} dal problema di stato!`);
+      }
+      return;
+    }
     if (targetStatus.status) {
       if (move.category === 'status') {
         addLog(`${target.name} ha già un problema di stato!`);
@@ -434,10 +612,22 @@ export function executeMoveAction(
         { ...user, status: userStatus.status },
         { ...target, status: targetStatus.status },
         move,
-        { attackerStages: userStages, targetStages, ...options }
+        { attackerStages: userStages, targetStages, weather: options?.weather, defenderScreens: options?.targetScreens, ...options }
       );
       const hitDmg = Math.max(1, Math.floor(res.damage * damageMult));
-      curTargetHp = Math.max(0, curTargetHp - hitDmg);
+      if (targetVolatile.substituteHp && targetVolatile.substituteHp > 0) {
+        if (hitDmg >= targetVolatile.substituteHp) {
+          targetVolatile.substituteHp = 0;
+          setTargetVolatile(prev => ({ ...prev, substituteHp: 0 }));
+          addLog(`💥 Il Sostituto di ${target.name} è andato distrutto!`);
+        } else {
+          targetVolatile.substituteHp -= hitDmg;
+          const left = targetVolatile.substituteHp;
+          setTargetVolatile(prev => ({ ...prev, substituteHp: left }));
+        }
+      } else {
+        curTargetHp = Math.max(0, curTargetHp - hitDmg);
+      }
       totalDamage += hitDmg;
       actualHits++;
       effectiveness = res.effectiveness;
@@ -462,7 +652,7 @@ export function executeMoveAction(
     { ...user, status: userStatus.status },
     { ...target, status: targetStatus.status },
     move,
-    { attackerStages: userStages, targetStages, ...options }
+    { attackerStages: userStages, targetStages, weather: options?.weather, defenderScreens: options?.targetScreens, ...options }
   );
   const finalDamage = Math.floor(result.damage * damageMult);
 
@@ -484,9 +674,33 @@ export function executeMoveAction(
 
   addLog(`${user.name} infligge ${finalDamage} danni!`);
 
-  // Subtract damage from defender
-  curTargetHp = Math.max(0, curTargetHp - finalDamage);
-  setTargetHp(curTargetHp);
+  // Target damage resolution: check substitute first, then False Swipe
+  const hasSubstitute = Boolean(targetVolatile.substituteHp && targetVolatile.substituteHp > 0);
+  let hitLandedOnPokemon = !hasSubstitute;
+
+  if (hasSubstitute) {
+    const curSub = targetVolatile.substituteHp || 0;
+    if (finalDamage >= curSub) {
+      targetVolatile.substituteHp = 0;
+      setTargetVolatile(prev => ({ ...prev, substituteHp: 0 }));
+      addLog(`💥 Il Sostituto di ${target.name} è andato distrutto!`);
+    } else {
+      const nextSub = curSub - finalDamage;
+      targetVolatile.substituteHp = nextSub;
+      setTargetVolatile(prev => ({ ...prev, substituteHp: nextSub }));
+      addLog(`Il Sostituto di ${target.name} incassa il colpo! (${nextSub} PS rimasti al sostituto)`);
+    }
+  } else {
+    const isFalseSwipe = mLower.includes('falsofinale') || mLower.includes('false-swipe') || moveDef.englishName === 'false-swipe';
+    if (isFalseSwipe && finalDamage >= curTargetHp) {
+      curTargetHp = 1;
+      setTargetHp(curTargetHp);
+      addLog(`✨ ${target.name} resiste con 1 PS grazie a Falsofinale!`);
+    } else {
+      curTargetHp = Math.max(0, curTargetHp - finalDamage);
+      setTargetHp(curTargetHp);
+    }
+  }
 
   // Card Lifesteal (Drenaggio di Pacchetti)
   if (isPlayer && options?.lifestealPercent && finalDamage > 0 && curUserHp > 0) {
@@ -552,7 +766,7 @@ export function executeMoveAction(
     }
   }
 
-  if (curTargetHp > 0) {
+  if (curTargetHp > 0 && hitLandedOnPokemon) {
     // Status condition proc
     if (move.statusEffect && !targetStatus.status) {
       const chance = move.effectChance ?? 10;

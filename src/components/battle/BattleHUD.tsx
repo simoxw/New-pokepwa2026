@@ -15,6 +15,8 @@ interface HpBarProps {
   team?: { hp: number }[];
   stages?: Partial<BattleStages>;
   types?: string[];
+  substituteHp?: number;
+  screens?: { reflect?: number; lightScreen?: number };
 }
 
 const STAT_DISPLAY_NAMES: Record<string, string> = {
@@ -27,7 +29,22 @@ const STAT_DISPLAY_NAMES: Record<string, string> = {
   evasion: 'ELUS',
 };
 
-export const BattleHUD: React.FC<HpBarProps> = ({ current, max, label, level, isPlayer, isCaught, status, isConfused, isShiny, team, stages, types }) => {
+export const BattleHUD: React.FC<HpBarProps> = ({ 
+  current, 
+  max, 
+  label, 
+  level, 
+  isPlayer, 
+  isCaught, 
+  status, 
+  isConfused, 
+  isShiny, 
+  team, 
+  stages, 
+  types,
+  substituteHp,
+  screens
+}) => {
   const percent = Math.max(0, (current / max) * 100);
 
   const STATUS_COLORS: Record<string, string> = {
@@ -87,6 +104,21 @@ export const BattleHUD: React.FC<HpBarProps> = ({ current, max, label, level, is
           {isConfused && (
             <span className="bg-fuchsia-600 text-[8px] text-white px-1.5 py-0.5 rounded font-black animate-pulse">
               CONF
+            </span>
+          )}
+          {substituteHp !== undefined && substituteHp > 0 && (
+            <span className="bg-emerald-600 text-[8px] text-white px-1.5 py-0.5 rounded font-black shadow-xs">
+              🧸 SOST: {substituteHp} PS
+            </span>
+          )}
+          {screens?.reflect !== undefined && screens.reflect > 0 && (
+            <span className="bg-amber-600 text-[8px] text-white px-1.5 py-0.5 rounded font-black shadow-xs">
+              🛡️ RIFL ({screens.reflect}t)
+            </span>
+          )}
+          {screens?.lightScreen !== undefined && screens.lightScreen > 0 && (
+            <span className="bg-indigo-600 text-[8px] text-white px-1.5 py-0.5 rounded font-black shadow-xs">
+              🔮 SCHERM ({screens.lightScreen}t)
             </span>
           )}
         </div>

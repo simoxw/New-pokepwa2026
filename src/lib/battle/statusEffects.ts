@@ -13,6 +13,7 @@ export interface VolatileStatus {
   trapTurns?: number;
   isProtected?: boolean;
   protectStreak?: number;
+  substituteHp?: number;
 }
 
 export function checkConfusion(pokemon: Pokemon, confusionTurns: number = 0): {

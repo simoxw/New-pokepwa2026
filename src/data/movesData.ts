@@ -1823,7 +1823,8 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
     accuracy: 100,
     pp: 10,
     maxPp: 10,
-    target: 'user'
+    target: 'user',
+    description: "Sacrifica il 25% dei propri PS massimi per creare un'esca che incassa colpi e protegge da status e cali di statistiche."
   },
   'rest': {
     englishName: 'rest',
@@ -2029,7 +2030,8 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
     accuracy: 100,
     pp: 10,
     maxPp: 10,
-    target: 'user'
+    target: 'user',
+    description: "Agita un dito ed estrae casualmente una mossa qualsiasi dal gioco eseguendola all'istante."
   },
   'swift': {
     englishName: 'swift',
@@ -2108,14 +2110,15 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
   },
   'rain-dance': {
     englishName: 'rain-dance',
-    name: 'Piovodanza',
+    name: 'Pioggiadanza',
     type: 'water',
     category: 'status',
     power: 0,
     accuracy: 100,
     pp: 5,
     maxPp: 5,
-    target: 'user'
+    target: 'entire-field',
+    description: 'Scatena una pioggia intensa per 5 turni, potenziando le mosse Acqua del 50% e indebolendo quelle Fuoco del 50%.'
   },
   'sunny-day': {
     englishName: 'sunny-day',
@@ -2126,7 +2129,8 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
     accuracy: 100,
     pp: 5,
     maxPp: 5,
-    target: 'user'
+    target: 'entire-field',
+    description: 'Intensifica i raggi solari per 5 turni, potenziando le mosse Fuoco del 50% e indebolendo quelle Acqua del 50%.'
   },
   'sandstorm': {
     englishName: 'sandstorm',
@@ -2137,7 +2141,20 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
     accuracy: 100,
     pp: 10,
     maxPp: 10,
-    target: 'user'
+    target: 'entire-field',
+    description: 'Scatena una tempesta di sabbia per 5 turni che danneggia tutti i Pokémon non di tipo Roccia, Terra o Acciaio a fine turno.'
+  },
+  'hail': {
+    englishName: 'hail',
+    name: 'Grandine',
+    type: 'ice',
+    category: 'status',
+    power: 0,
+    accuracy: 100,
+    pp: 10,
+    maxPp: 10,
+    target: 'entire-field',
+    description: 'Evoca una grandinata per 5 turni che danneggia tutti i Pokémon non di tipo Ghiaccio a fine turno.'
   },
   'phantom-force': {
     englishName: 'phantom-force',
@@ -2782,6 +2799,71 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
     stat_changes_target: 'user',
     stat_changes: [{ change: 1, stat: { name: 'special-attack' } }],
     effectChance: 100
+  },
+  'false-swipe': {
+    englishName: 'false-swipe',
+    name: 'Falsofinale',
+    type: 'normal',
+    category: 'physical',
+    power: 40,
+    accuracy: 100,
+    pp: 40,
+    maxPp: 40,
+    priority: 0,
+    target: 'selected-pokemon',
+    description: 'Un attacco controllato che non manda mai K.O. il bersaglio, lasciandogli sempre almeno 1 PS.'
+  },
+  'reflect': {
+    englishName: 'reflect',
+    name: 'Riflesso',
+    type: 'psychic',
+    category: 'status',
+    power: 0,
+    accuracy: 100,
+    pp: 20,
+    maxPp: 20,
+    priority: 0,
+    target: 'users-field',
+    description: 'Innalza una barriera luminosa che dimezza i danni da attacchi fisici subiti dalla squadra per 5 turni.'
+  },
+  'light-screen': {
+    englishName: 'light-screen',
+    name: 'Schermoluce',
+    type: 'psychic',
+    category: 'status',
+    power: 0,
+    accuracy: 100,
+    pp: 30,
+    maxPp: 30,
+    priority: 0,
+    target: 'users-field',
+    description: 'Innalza un muro di luce che dimezza i danni da attacchi speciali subiti dalla squadra per 5 turni.'
+  },
+  'roar': {
+    englishName: 'roar',
+    name: 'Boato',
+    type: 'normal',
+    category: 'status',
+    power: 0,
+    accuracy: 100,
+    pp: 20,
+    maxPp: 20,
+    priority: -6,
+    target: 'selected-pokemon',
+    description: 'Un ruggito possente che costringe il Pokémon nemico ad abbandonare il campo o fa fuggire i selvatici.'
+  },
+  'whirlwind': {
+    englishName: 'whirlwind',
+    name: 'Turbine',
+    type: 'normal',
+    category: 'status',
+    power: 0,
+    accuracy: 100,
+    pp: 20,
+    maxPp: 20,
+    priority: -6,
+    target: 'selected-pokemon',
+    description: 'Una folata di vento violenta che spazza via il bersaglio forzando lo scambio o fuggendo dai selvatici.'
   }
 };
 
@@ -2799,6 +2881,29 @@ export function normalizeMoveKey(name: string): string {
 }
 
 const ALIAS_MAP: Record<string, string> = {
+  'metronomo': 'metronome',
+  'metronome': 'metronome',
+  'sostituto': 'substitute',
+  'substitute': 'substitute',
+  'giornodisole': 'sunny-day',
+  'sunny-day': 'sunny-day',
+  'pioggiadanza': 'rain-dance',
+  'piovodanza': 'rain-dance',
+  'rain-dance': 'rain-dance',
+  'terrempesta': 'sandstorm',
+  'sandstorm': 'sandstorm',
+  'grandine': 'hail',
+  'hail': 'hail',
+  'riflesso': 'reflect',
+  'reflect': 'reflect',
+  'schermoluce': 'light-screen',
+  'light-screen': 'light-screen',
+  'boato': 'roar',
+  'roar': 'roar',
+  'turbine': 'whirlwind',
+  'whirlwind': 'whirlwind',
+  'falsofinale': 'false-swipe',
+  'false-swipe': 'false-swipe',
   'volo': 'fly',
   'fly': 'fly',
   'zuffa': 'close-combat',
@@ -3217,3 +3322,23 @@ export function getMoveByName(rawName: string): Move {
     maxPp: 35
   };
 }
+
+/**
+ * Selects a random eligible move for Metronome from the game catalog.
+ * Excludes Metronome itself and Struggle.
+ */
+export function getRandomMetronomeMove(): Move {
+  const allMoves = Object.values(MOVES_DATABASE).filter(m => {
+    const key = normalizeMoveKey(m.name);
+    const eng = normalizeMoveKey(m.englishName);
+    return key !== 'metronomo' && eng !== 'metronome' && key !== 'scontro' && eng !== 'struggle';
+  });
+
+  if (allMoves.length === 0) {
+    return getMoveByName('Azione');
+  }
+
+  const selected = allMoves[Math.floor(Math.random() * allMoves.length)];
+  return getMoveByName(selected.name);
+}
+

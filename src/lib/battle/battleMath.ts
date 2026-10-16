@@ -1,6 +1,7 @@
 import { Pokemon, Move, BattleStages } from '../../types/game';
 import { getEffectiveness } from './typeChart';
 import { applyStatusStatModifiers } from './statusEffects';
+import { WeatherType, SideScreens, getWeatherDamageMultiplier, getScreenDamageMultiplier } from './fieldEffects';
 
 export interface DamageResult {
   damage: number;
@@ -18,6 +19,8 @@ export interface CalculateDamageOptions {
   defenseMultiplier?: number;
   incomingDamageMultiplier?: number;
   bossMutationType?: 'corazzato' | 'overclocked' | 'vampirico' | 'corrotto';
+  weather?: WeatherType;
+  defenderScreens?: SideScreens;
 }
 
 export function getStageMultiplier(stage: number = 0): number {
@@ -123,6 +126,22 @@ export function calculateDamage(
 
   // 6. Apply Effectiveness
   baseDamage = Math.floor(baseDamage * effectiveness);
+
+  // 6b. Apply Weather Multiplier (Sun boosts Fire, weakens Water; Rain boosts Water, weakens Fire)
+  if (options.weather && options.weather !== 'none') {
+    const weatherMult = getWeatherDamageMultiplier(move.type, options.weather);
+    if (weatherMult !== 1.0) {
+      baseDamage = Math.floor(baseDamage * weatherMult);
+    }
+  }
+
+  // 6c. Apply Defensive Screens (Reflect for physical, Light Screen for special; bypassed by critical hits)
+  if (!isCrit && options.defenderScreens) {
+    const screenMult = getScreenDamageMultiplier(isSpecial ? 'special' : 'physical', options.defenderScreens);
+    if (screenMult !== 1.0) {
+      baseDamage = Math.floor(baseDamage * screenMult);
+    }
+  }
 
   // 7. Extra Modifiers (Cursed Cards & Boss Mutations)
   if (options.incomingDamageMultiplier) {
