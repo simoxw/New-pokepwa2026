@@ -17,7 +17,10 @@ export type CoreAbilityKey =
   | 'piovischio'
   | 'sabbiafiume'
   | 'scendineve'
-  | 'tecnico';
+  | 'tecnico'
+  | 'corpodifuoco'
+  | 'velenopunto'
+  | 'cartavetro';
 
 export const CORE_ABILITIES: Record<CoreAbilityKey, Ability> = {
   erbaiuto: {
@@ -94,6 +97,21 @@ export const CORE_ABILITIES: Record<CoreAbilityKey, Ability> = {
     name: 'Tecnico',
     description: 'Potenzia del 50% le mosse offensive con potenza base di 60 o inferiore.',
     effect: 'technician'
+  },
+  corpodifuoco: {
+    name: 'Corpodifuoco',
+    description: '30% di probabilità di scottare chi colpisce con una mossa fisica.',
+    effect: 'contact_burn'
+  },
+  velenopunto: {
+    name: 'Velenopunto',
+    description: '30% di probabilità di avvelenare chi colpisce con una mossa fisica.',
+    effect: 'contact_poison'
+  },
+  cartavetro: {
+    name: 'Cartavetro',
+    description: 'Infligge 1/8 dei PS massimi di danno a chi colpisce con una mossa fisica.',
+    effect: 'contact_recoil'
   }
 };
 
@@ -115,6 +133,9 @@ const ABILITY_ALIASES: Record<string, CoreAbilityKey> = {
   'sabbiafiume': 'sabbiafiume',
   'scendineve': 'scendineve',
   'tecnico': 'tecnico',
+  'corpodifuoco': 'corpodifuoco',
+  'velenopunto': 'velenopunto',
+  'cartavetro': 'cartavetro',
   // English / PokéAPI slugs
   'overgrow': 'erbaiuto',
   'blaze': 'aiutofuoco',
@@ -135,7 +156,13 @@ const ABILITY_ALIASES: Record<string, CoreAbilityKey> = {
   'sand stream': 'sabbiafiume',
   'snow-warning': 'scendineve',
   'snow warning': 'scendineve',
-  'technician': 'tecnico'
+  'technician': 'tecnico',
+  'flame-body': 'corpodifuoco',
+  'flame body': 'corpodifuoco',
+  'poison-point': 'velenopunto',
+  'poison point': 'velenopunto',
+  'rough-skin': 'cartavetro',
+  'rough skin': 'cartavetro'
 };
 
 /**
@@ -242,7 +269,22 @@ export const SPECIES_ABILITY_MAP: Record<number, CoreAbilityKey> = {
   123: 'tecnico', 212: 'tecnico',
   235: 'tecnico', 286: 'tecnico',
   407: 'tecnico', 424: 'tecnico',
-  573: 'tecnico', 925: 'tecnico'
+  573: 'tecnico', 925: 'tecnico',
+  // Corpodifuoco (Flame Body)
+  126: 'corpodifuoco', 146: 'corpodifuoco', 218: 'corpodifuoco', 219: 'corpodifuoco',
+  240: 'corpodifuoco', 467: 'corpodifuoco', 631: 'corpodifuoco',
+  636: 'corpodifuoco', 637: 'corpodifuoco',
+  662: 'corpodifuoco', 663: 'corpodifuoco', 838: 'corpodifuoco', 839: 'corpodifuoco',
+  // Velenopunto (Poison Point)
+  29: 'velenopunto', 30: 'velenopunto', 31: 'velenopunto',
+  32: 'velenopunto', 33: 'velenopunto', 34: 'velenopunto',
+  117: 'velenopunto', 211: 'velenopunto', 315: 'velenopunto', 406: 'velenopunto',
+  543: 'velenopunto', 544: 'velenopunto', 545: 'velenopunto',
+  690: 'velenopunto', 691: 'velenopunto',
+  // Cartavetro (Rough Skin)
+  318: 'cartavetro', 319: 'cartavetro',
+  443: 'cartavetro', 444: 'cartavetro', 445: 'cartavetro',
+  621: 'cartavetro'
 };
 
 export function normalizeAbilityKey(rawName?: string): CoreAbilityKey | null {
@@ -294,6 +336,7 @@ export interface AbilityEffect {
   value?: number;
   msg?: string;
   inflictStatus?: StatusCondition;
+  contactDamage?: number;
   healHp?: number;
   boostStat?: keyof BattleStages;
   boostAmount?: number;
@@ -401,6 +444,43 @@ export function checkAbility(
             type: 'other',
             inflictStatus: 'paralyzed',
             msg: `⚡ La Statica di ${pokemon.name} ha paralizzato ${attacker.name}!`
+          };
+        }
+      }
+      break;
+    case 'corpodifuoco':
+      if (context === 'on_hit' && options?.move?.category === 'physical' && Math.random() < 0.3) {
+        const attacker = options.target;
+        if (attacker && !isImmuneToStatus(attacker.types, 'burned')) {
+          return {
+            type: 'other',
+            inflictStatus: 'burned',
+            msg: `🔥 Corpodifuoco di ${pokemon.name} ha scottato ${attacker.name}!`
+          };
+        }
+      }
+      break;
+    case 'velenopunto':
+      if (context === 'on_hit' && options?.move?.category === 'physical' && Math.random() < 0.3) {
+        const attacker = options.target;
+        if (attacker && !isImmuneToStatus(attacker.types, 'poisoned')) {
+          return {
+            type: 'other',
+            inflictStatus: 'poisoned',
+            msg: `☠️ Velenopunto di ${pokemon.name} ha avvelenato ${attacker.name}!`
+          };
+        }
+      }
+      break;
+    case 'cartavetro':
+      if (context === 'on_hit' && options?.move?.category === 'physical') {
+        const attacker = options.target;
+        if (attacker) {
+          const contactDamage = Math.max(1, Math.floor(attacker.maxHp / 8));
+          return {
+            type: 'other',
+            contactDamage,
+            msg: `🪨 Cartavetro di ${pokemon.name} ferisce ${attacker.name}! (-${contactDamage} PS)`
           };
         }
       }

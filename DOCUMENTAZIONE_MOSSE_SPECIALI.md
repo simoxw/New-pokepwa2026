@@ -361,14 +361,14 @@ Questo documento elenca **tutte le mosse** implementate nel gioco che possiedono
 
 ---
 
-## 7. Sistema Abilità Core (15 Abilità Curate e Compatibilità Scambi)
+## 7. Sistema Abilità Core (18 Abilità Curate e Compatibilità Scambi)
 
-Il motore supporta **15 Abilità Core** selezionate senza appesantire l'architettura dati e con **compatibilità al 100% con codici Base64 esterni/Pokédex e vecchi salvataggi** (che possono omettere il campo `ability`).
+Il motore supporta **18 Abilità Core** selezionate senza appesantire l'architettura dati e con **compatibilità al 100% con codici Base64 esterni/Pokédex e vecchi salvataggi** (che possono omettere il campo `ability`).
 
-* **Risoluzione deterministica (`resolvePokemonAbility`)**:
-  * Se `pokemon.ability` è assente o è il placeholder generico `'Tenacia'`, viene risolta in modo trasparente tramite `SPECIES_ABILITY_MAP[pokemon.id]` senza errori né migrazioni distruttive.
-  * I nomi in inglese provenienti da PokéAPI (es. `'intimidate'`, `'levitate'`) vengono convertiti automaticamente nelle rispettive Abilità Core italiane.
-  * I codici di esportazione/importazione (`encodePokemon` / `decodePokemon` in `src/lib/utils.ts`) restano invariati al 100%.
+* **Risoluzione deterministica & Salvataggio all'import (`resolvePokemonAbility` + `normalizePokemon`)**:
+  * Se `pokemon.ability` è assente o è il placeholder generico `'Tenacia'`, viene risolta tramite `SPECIES_ABILITY_MAP[pokemon.id]` e **salvata automaticamente sull'oggetto Pokémon al momento della normalizzazione/importazione** (in caso di specie non mappata, resta `null` senza errori).
+  * I nomi in inglese provenienti da PokéAPI o app esterne (es. `'intimidate'`, `'flame-body'`, `'rough-skin'`) vengono convertiti automaticamente nelle rispettive Abilità Core italiane.
+  * I codici di esportazione/importazione (`encodePokemon` / `decodePokemon` in `src/lib/utils.ts`) restano retrocompatibili al 100%.
 
 | Abilità Core | Effetto in Lotta |
 |---|---|
@@ -378,6 +378,9 @@ Il motore supporta **15 Abilità Core** selezionate senza appesantire l'architet
 | **Levitazione** | Immunità totale alle mosse di tipo Terra |
 | **Vigore** | Con PS pieni resiste a un colpo letale con 1 PS |
 | **Statica** | 30% di probabilità di paralizzare chi sferra una mossa fisica |
+| **Corpodifuoco** | 30% di probabilità di scottare chi sferra una mossa fisica |
+| **Velenopunto** | 30% di probabilità di avvelenare chi sferra una mossa fisica |
+| **Cartavetro** | Infligge 1/8 dei PS massimi di danno a chi sferra una mossa fisica |
 | **Assorbacqua** | Immunità Acqua e recupero del 25% dei PS massimi se colpito |
 | **Fuocardore** | Immunità Fuoco e +50% alle proprie mosse Fuoco dopo l'assorbimento |
 | **Parafulmine** | Immunità Elettro e +1 Attacco Speciale se colpito |
@@ -385,7 +388,8 @@ Il motore supporta **15 Abilità Core** selezionate senza appesantire l'architet
 
 * **File di Implementazione**:
   * `src/lib/battle/abilities.ts`: definizioni `CORE_ABILITIES`, `SPECIES_ABILITY_MAP`, `resolvePokemonAbility()`, `processSwitchInAbility()`, `checkAbility()`, `hasSturdyAbility()`.
-  * `src/lib/battle/battleActionRunner.ts`: applicazione immunità, assorbimenti, Vigore, Tecnico, Statica e potenziamenti.
+  * `src/lib/utils.ts`: risoluzione e salvataggio automatico dell'abilità in `normalizePokemon()`.
+  * `src/lib/battle/battleActionRunner.ts`: applicazione immunità, assorbimenti, Vigore, Tecnico, abilità di contatto (`Statica`, `Corpodifuoco`, `Velenopunto`, `Cartavetro`) e potenziamenti.
   * `src/components/BattleScreen.tsx`: attivazione abilità d'ingresso e passaggio a `BattleHUD`.
   * `src/components/battle/BattleHUD.tsx` & `src/components/PokemonDetails.tsx`: visualizzazione chiara dell'abilità attiva.
 
@@ -394,5 +398,5 @@ Il motore supporta **15 Abilità Core** selezionate senza appesantire l'architet
 ## 🧪 Suite di Test Automatici
 
 Tutte queste meccaniche sono coperte da una suite completa di test automatizzati con **Vitest**:
-* File test: `src/tests/specialMovesAndMechanics.test.ts` (test dedicati a Falsofinale, Sostituto, Meteo, Schermi, Metronomo, Scambio Forzato, Stordiraggio, Trespolo, Splash, Nube, Scaccianebbia, Bruciapelo, Retromarcia/Invertivolt/Virata, Sbadiglio, Rintoccasana/Aromaterapia, tutte le 15 Abilità Core e compatibilità codici Base64 esterni).
+* File test: `src/tests/specialMovesAndMechanics.test.ts` (test dedicati a Falsofinale, Sostituto, Meteo, Schermi, Metronomo, Scambio Forzato, Stordiraggio, Trespolo, Splash, Nube, Scaccianebbia, Bruciapelo, Retromarcia/Invertivolt/Virata, Sbadiglio, Rintoccasana/Aromaterapia, tutte le 18 Abilità Core e compatibilità codici Base64 esterni).
 * Esecuzione comandi: `npm test` oppure `npx vitest run src/tests/specialMovesAndMechanics.test.ts`.

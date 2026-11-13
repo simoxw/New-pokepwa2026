@@ -948,15 +948,19 @@ export function executeMoveAction(
     addLog(`🩸 Boss Vampirico rigenera ${vampHeal} PS dall'attacco!`);
   }
 
-  // Ability check on target hit (contact abilities like Statica)
+  // Ability check on target hit (contact abilities like Statica, Corpodifuoco, Velenopunto, Cartavetro)
   if (hitLandedOnPokemon) {
     const onHitEffect = checkAbility(target, 'on_hit', { move, target: user, currentHp: curTargetHp });
     if (onHitEffect?.type === 'other') {
-      if (onHitEffect.inflictStatus && !userStatus.status && !isImmuneToStatus(user.types, onHitEffect.inflictStatus)) {
+      if (onHitEffect.contactDamage && onHitEffect.contactDamage > 0 && curUserHp > 0) {
+        curUserHp = Math.max(0, curUserHp - onHitEffect.contactDamage);
+        setUserHp(curUserHp);
+        if (onHitEffect.msg) addLog(onHitEffect.msg);
+      } else if (onHitEffect.inflictStatus && !userStatus.status && !isImmuneToStatus(user.types, onHitEffect.inflictStatus)) {
         nextUserStatusObj = { status: onHitEffect.inflictStatus };
         setUserStatus({ status: onHitEffect.inflictStatus });
         if (onHitEffect.msg) addLog(onHitEffect.msg);
-      } else if (onHitEffect.msg && !onHitEffect.inflictStatus) {
+      } else if (onHitEffect.msg && !onHitEffect.inflictStatus && !onHitEffect.contactDamage) {
         addLog(onHitEffect.msg);
       }
     }

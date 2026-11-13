@@ -3,6 +3,7 @@ import { getMoveByName } from '../data/movesData';
 import { resolveCanonicalPokemonId } from '../data/pokemonSpeciesMap';
 import { POKEMON_FALLBACKS } from '../data/pokemonFallbacks';
 import { recalculateStats } from './leveling';
+import { resolvePokemonAbility } from './battle/abilities';
 
 /**
  * Normalizes any raw Pokemon object (from storage or N64/Base64 import)
@@ -185,6 +186,14 @@ export function normalizePokemon(raw: any): Pokemon {
 
   if (rawLevel > 100 || finalPokemon.level >= 100) {
     finalPokemon = recalculateStats(finalPokemon);
+  }
+
+  const resolvedAbility = resolvePokemonAbility(finalPokemon);
+  if (resolvedAbility) {
+    finalPokemon = {
+      ...finalPokemon,
+      ability: resolvedAbility
+    };
   }
 
   return finalPokemon;

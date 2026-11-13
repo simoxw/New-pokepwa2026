@@ -2095,6 +2095,110 @@ describe('Special Moves & Field Mechanics Test Suite', () => {
       // Unmapped species without `ability` returns null safely without crashing
       const unmappedSnorlax = createMockPokemon({ id: 143, name: 'Snorlax', ability: undefined });
       expect(resolvePokemonAbility(unmappedSnorlax)).toBeNull();
+
+      // normalizePokemon / decodePokemon persists resolved ability directly on the Pokemon object
+      expect(normalized.ability?.name).toBe('Levitazione');
+      const garchompImport = decodePokemon(encodePokemon({ id: 445, name: 'Garchomp', level: 50 } as any));
+      expect(garchompImport?.ability?.name).toBe('Cartavetro');
+      const magmarImport = decodePokemon(encodePokemon({ id: 126, name: 'Magmar', level: 40 } as any));
+      expect(magmarImport?.ability?.name).toBe('Corpodifuoco');
+      const nidokingImport = decodePokemon(encodePokemon({ id: 34, name: 'Nidoking', level: 45 } as any));
+      expect(nidokingImport?.ability?.name).toBe('Velenopunto');
+    });
+
+    it('triggers Corpodifuoco, Velenopunto, and Cartavetro on physical contact and handles KOs and immunities', () => {
+      const physicalMove = getMoveByName('Azione');
+      const specialMove = getMoveByName('Palla Ombra');
+      const attacker = createMockPokemon({ id: 143, name: 'Snorlax', types: ['normal'], hp: 160, maxHp: 160 });
+
+      // 1. Corpodifuoco burns physical attacker (respecting Fire immunity)
+      const magmar = createMockPokemon({ id: 126, name: 'Magmar', types: ['fire'], hp: 150, maxHp: 150, ability: CORE_ABILITIES.corpodifuoco });
+      let atkStatus: { status?: any; duration?: number } = {};
+      const spyBurn = vi.spyOn(Math, 'random').mockReturnValue(0.1);
+      executeMoveAction(
+        physicalMove, attacker, magmar,
+        defaultStages(), () => {}, defaultStages(), () => {},
+        atkStatus, (u) => { atkStatus = typeof u === 'function' ? u(atkStatus) : u; },
+        {}, () => {}, {}, () => {}, {}, () => {},
+        160, () => {}, 150, () => {}, true, true, () => {}
+      );
+      expect(atkStatus.status).toBe('burned');
+
+      // Fire attacker is immune to burn from Corpodifuoco
+      const fireAttacker = createMockPokemon({ id: 6, name: 'Charizard', types: ['fire', 'flying'], hp: 160, maxHp: 160 });
+      let fireAtkStatus: { status?: any; duration?: number } = {};
+      executeMoveAction(
+        physicalMove, fireAttacker, magmar,
+        defaultStages(), () => {}, defaultStages(), () => {},
+        fireAtkStatus, (u) => { fireAtkStatus = typeof u === 'function' ? u(fireAtkStatus) : u; },
+        {}, () => {}, {}, () => {}, {}, () => {},
+        160, () => {}, 150, () => {}, true, true, () => {}
+      );
+      expect(fireAtkStatus.status).toBeUndefined();
+
+      // Special move does NOT trigger Corpodifuoco
+      let specialAtkStatus: { status?: any; duration?: number } = {};
+      executeMoveAction(
+        specialMove, attacker, magmar,
+        defaultStages(), () => {}, defaultStages(), () => {},
+        specialAtkStatus, (u) => { specialAtkStatus = typeof u === 'function' ? u(specialAtkStatus) : u; },
+        {}, () => {}, {}, () => {}, {}, () => {},
+        160, () => {}, 150, () => {}, true, true, () => {}
+      );
+      expect(specialAtkStatus.status).toBeUndefined();
+
+      // 2. Velenopunto poisons physical attacker (and does NOT trigger through Substitute)
+      const nidoking = createMockPokemon({ id: 34, name: 'Nidoking', types: ['poison', 'ground'], hp: 160, maxHp: 160, ability: CORE_ABILITIES.velenopunto });
+      let poisonAtkStatus: { status?: any; duration?: number } = {};
+      executeMoveAction(
+        physicalMove, attacker, nidoking,
+        defaultStages(), () => {}, defaultStages(), () => {},
+        poisonAtkStatus, (u) => { poisonAtkStatus = typeof u === 'function' ? u(poisonAtkStatus) : u; },
+        {}, () => {}, {}, () => {}, {}, () => {},
+        160, () => {}, 160, () => {}, true, true, () => {}
+      );
+      expect(poisonAtkStatus.status).toBe('poisoned');
+
+      let subBlockedStatus: { status?: any; duration?: number } = {};
+      executeMoveAction(
+        physicalMove, attacker, nidoking,
+        defaultStages(), () => {}, defaultStages(), () => {},
+        subBlockedStatus, (u) => { subBlockedStatus = typeof u === 'function' ? u(subBlockedStatus) : u; },
+        {}, () => {}, {}, () => {}, { substituteHp: 80 }, () => {},
+        160, () => {}, 160, () => {}, true, true, () => {}
+      );
+      expect(subBlockedStatus.status).toBeUndefined();
+      spyBurn.mockRestore();
+
+      // 3. Cartavetro deals 1/8 maxHp (20 HP on 160 maxHp) to physical attacker and can KO
+      const garchomp = createMockPokemon({ id: 445, name: 'Garchomp', types: ['dragon', 'ground'], hp: 180, maxHp: 180, ability: CORE_ABILITIES.cartavetro });
+      const resRough = executeMoveAction(
+        physicalMove, attacker, garchomp,
+        defaultStages(), () => {}, defaultStages(), () => {},
+        {}, () => {}, {}, () => {}, {}, () => {}, {}, () => {},
+        160, () => {}, 180, () => {}, true, true, () => {}
+      );
+      expect(resRough.nextUserHp).toBe(140);
+      expect(resRough.userFainted).toBe(false);
+
+      // Low HP attacker is knocked out by Cartavetro contact recoil
+      const resRoughKO = executeMoveAction(
+        physicalMove, attacker, garchomp,
+        defaultStages(), () => {}, defaultStages(), () => {},
+        {}, () => {}, {}, () => {}, {}, () => {}, {}, () => {},
+        15, () => {}, 180, () => {}, true, true, () => {}
+      );
+      expect(resRoughKO.nextUserHp).toBe(0);
+      expect(resRoughKO.userFainted).toBe(true);
+
+      // Special move does NOT trigger Cartavetro
+      const resRoughSpecial = executeMoveAction(
+        specialMove, attacker, garchomp,
+        defaultStages(), () => {}, defaultStages(), () => {},
+        {}, () => {}, {}, () => {}, {}, () => {}, {}, () => {},
+        160, () => {}, 180, () => {}, true, true, () => {}
+      );
+      expect(resRoughSpecial.nextUserHp).toBe(160);
     });
   });
 });
