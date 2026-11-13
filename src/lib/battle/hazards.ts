@@ -64,12 +64,27 @@ export function setHazardFromMove(
     return { updatedTargetSide: updatedTarget, msg: 'Una fitta Ragnatela ricopre il campo avversario!' };
   }
 
-  if (mName.includes('rapid-spin') || mName.includes('rapiddensa') || mName.includes('defog') || mName.includes('scaccianebbia')) {
+  if (mName.includes('rapid-spin') || mName.includes('rapiddensa') || mName.includes('rapigiro') || mName.includes('rapidsguardo') || mName.includes('defog') || mName.includes('scaccianebbia')) {
+    const isDefog = mName.includes('defog') || mName.includes('scaccianebbia');
     const cleared = defaultSideHazards();
+    const hasAnyHazards = (side?: SideHazards) => Boolean(
+      side && (side.stealthRock || (side.spikesLayers || 0) > 0 || (side.toxicSpikesLayers || 0) > 0 || side.stickyWeb)
+    );
+    const hasTarget = hasAnyHazards(targetSide);
+    const hasUser = hasAnyHazards(userSide);
+
+    if (isDefog) {
+      return {
+        updatedTargetSide: cleared,
+        updatedUserSide: cleared,
+        msg: (hasTarget || hasUser) ? '🌬️ Scaccianebbia spazza via tutte le trappole dal campo!' : undefined
+      };
+    }
+
     return { 
-      updatedTargetSide: mName.includes('defog') ? cleared : updatedTarget, 
+      updatedTargetSide: updatedTarget, 
       updatedUserSide: cleared,
-      msg: 'Le trappole sul campo sono state liberate!' 
+      msg: hasUser ? 'Le trappole sul campo sono state liberate!' : undefined
     };
   }
 

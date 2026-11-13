@@ -175,7 +175,9 @@ export function parseMoveObject(moveData: any, fallbackName?: string): Move {
   // Move priority (e.g. Quick Attack = +1, Extreme Speed = +2)
   let priority = typeof moveData.priority === 'number' ? moveData.priority : 0;
   if (priority === 0) {
-    if (rawNameLower.includes('extreme-speed') || rawNameLower.includes('extrarapido')) {
+    if (rawNameLower.includes('fake-out') || rawNameLower.includes('bruciapelo')) {
+      priority = 3;
+    } else if (rawNameLower.includes('extreme-speed') || rawNameLower.includes('extrarapido')) {
       priority = 2;
     } else if (
       rawNameLower.includes('quick-attack') || rawNameLower.includes('attacco-rapido') ||
@@ -254,6 +256,8 @@ export function parseMoveObject(moveData: any, fallbackName?: string): Move {
   let flinchChance: number | undefined = undefined;
   if (typeof moveData.meta?.flinch_chance === 'number' && moveData.meta.flinch_chance > 0) {
     flinchChance = moveData.meta.flinch_chance;
+  } else if (rawNameLower.includes('fake-out') || rawNameLower.includes('bruciapelo')) {
+    flinchChance = 100;
   } else if (
     rawNameLower.includes('bite') || rawNameLower.includes('morso') ||
     rawNameLower.includes('headbutt') || rawNameLower.includes('bottintesta') ||
@@ -498,6 +502,8 @@ const MOVE_TRANSLATIONS: Record<string, string> = {
   'disable': 'Inibitore',
   'mist': 'Nebbia',
   'haze': 'Nube',
+  'defog': 'Scaccianebbia',
+  'fake-out': 'Bruciapelo',
 };
 
 export async function getBaseStats(id: number) {

@@ -1,6 +1,7 @@
 import { Pokemon, Move, BattleStages, StatusCondition } from '../../types/game';
 import { calculateDamage } from './battleMath';
 import { STRUGGLE_MOVE } from '../pokeapi';
+import { VolatileStatus } from './statusEffects';
 
 /**
  * Determines whether an Elite Four, Champion, or Legendary Boss trainer
@@ -39,7 +40,8 @@ export function selectEnemyMove(
   enemyStages: BattleStages,
   playerStages: BattleStages,
   enemyHp: number,
-  playerHp: number
+  playerHp: number,
+  enemyVolatile: VolatileStatus = {}
 ): Move {
   const validMoves = enemyMoves.filter(m => (m.pp ?? m.maxPp ?? 35) > 0);
   if (validMoves.length === 0) return STRUGGLE_MOVE;
@@ -192,6 +194,29 @@ export function selectEnemyMove(
         } else if (playerHpPercent > 0.6) {
           score += 15;
         }
+      }
+
+      // 3E. Haze (Nube): smart usage when player is boosted and enemy is not heavily boosted
+      const mNameLower = move.name.toLowerCase();
+      if (mNameLower === 'nube' || mNameLower === 'haze') {
+        const playerBoostSum = Object.values(playerStages).reduce((acc, v) => acc + Math.max(0, v || 0), 0);
+        const enemyBoostSum = Object.values(enemyStages).reduce((acc, v) => acc + Math.max(0, v || 0), 0);
+        const anyNonZero = [...Object.values(playerStages), ...Object.values(enemyStages)].some(v => (v || 0) !== 0);
+        if (!anyNonZero || enemyBoostSum > playerBoostSum) {
+          score = -9999;
+        } else if (playerBoostSum >= 2) {
+          score += 45;
+        }
+      }
+    }
+
+    // 3F. Fake Out (Bruciapelo): only works on first turn on field!
+    const mLower = move.name.toLowerCase();
+    if (mLower === 'bruciapelo' || mLower === 'fake-out') {
+      if ((enemyVolatile.turnsOnField ?? 0) > 0) {
+        score = -9999;
+      } else {
+        score += 35;
       }
     }
 

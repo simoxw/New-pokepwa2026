@@ -1263,7 +1263,8 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
     pp: 10,
     maxPp: 10,
     target: 'selected-pokemon',
-    confusionChance: 100
+    confusionChance: 100,
+    description: 'Emette una luce sinistra e spettrale che confonde il bersaglio per 2-5 turni.'
   },
   'recover': {
     englishName: 'recover',
@@ -1286,7 +1287,8 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
     accuracy: 100,
     pp: 40,
     maxPp: 40,
-    target: 'user'
+    target: 'user',
+    description: 'Rimbalza senza combinare nulla. Non ha alcun effetto in battaglia.'
   },
   'protect': {
     englishName: 'protect',
@@ -1437,7 +1439,11 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
     accuracy: 100,
     pp: 15,
     maxPp: 15,
-    target: 'selected-pokemon'
+    target: 'selected-pokemon',
+    stat_changes: [{ change: -1, stat: { name: 'evasion' } }],
+    stat_changes_target: 'target',
+    effectChance: 100,
+    description: 'Soffia via gli schermi difensivi nemici (Riflesso, Schermoluce), tutte le trappole su entrambi i lati del campo e riduce di 1 livello l\'Elusione del bersaglio.'
   },
   'stone-edge': {
     englishName: 'stone-edge',
@@ -1849,7 +1855,8 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
     pp: 10,
     maxPp: 10,
     target: 'user',
-    healing: 0.5
+    healing: 0.5,
+    description: 'Atterra per riposarsi e recupera fino al 50% dei propri PS massimi.'
   },
   'synthesis': {
     englishName: 'synthesis',
@@ -2864,6 +2871,33 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
     priority: -6,
     target: 'selected-pokemon',
     description: 'Una folata di vento violenta che spazza via il bersaglio forzando lo scambio o fuggendo dai selvatici.'
+  },
+  'haze': {
+    englishName: 'haze',
+    name: 'Nube',
+    type: 'ice',
+    category: 'status',
+    power: 0,
+    accuracy: 100,
+    pp: 30,
+    maxPp: 30,
+    priority: 0,
+    target: 'entire-field',
+    description: 'Avvolge il campo in una nube scura che azzera immediatamente tutte le variazioni delle statistiche di entrambi i Pokémon.'
+  },
+  'fake-out': {
+    englishName: 'fake-out',
+    name: 'Bruciapelo',
+    type: 'normal',
+    category: 'physical',
+    power: 40,
+    accuracy: 100,
+    pp: 10,
+    maxPp: 10,
+    priority: 3,
+    flinchChance: 100,
+    target: 'selected-pokemon',
+    description: 'Colpisce per primo con priorità +3 e fa tentennare il bersaglio al 100%, ma funziona solo al primo turno dopo l\'ingresso in campo.'
   }
 };
 
@@ -2904,6 +2938,16 @@ const ALIAS_MAP: Record<string, string> = {
   'whirlwind': 'whirlwind',
   'falsofinale': 'false-swipe',
   'false-swipe': 'false-swipe',
+  'stordiraggio': 'confuse-ray',
+  'confuse-ray': 'confuse-ray',
+  'trespolo': 'roost',
+  'roost': 'roost',
+  'nube': 'haze',
+  'haze': 'haze',
+  'scaccianebbia': 'defog',
+  'defog': 'defog',
+  'bruciapelo': 'fake-out',
+  'fake-out': 'fake-out',
   'volo': 'fly',
   'fly': 'fly',
   'zuffa': 'close-combat',

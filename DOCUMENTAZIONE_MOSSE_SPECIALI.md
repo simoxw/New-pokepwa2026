@@ -16,6 +16,12 @@ Questo documento elenca **tutte le mosse** implementate nel gioco che possiedono
 2. [Mosse Tattiche e Difensive](#2-mosse-tattiche-e-difensive)
    - Protezione e Individuazione (Protect, Detect)
    - Riposo (Rest)
+   - Trespolo (Roost) e Sintesi/Ripresa (Healing)
+   - Stordiraggio (Confuse Ray) e Confusione
+   - Splash (Splash)
+   - Nube (Haze)
+   - Scaccianebbia (Defog)
+   - Bruciapelo (Fake Out)
 3. [Mosse a Più Turni e Ricarica](#3-mosse-a-più-turni-e-ricarica)
    - Mosse con Semi-Invulnerabilità (Volo, Fossa, Sub, Rimbalzo)
    - Mosse con Ricarica Obbligatoria (Iper Raggio, Gigaimpatto)
@@ -149,7 +155,91 @@ Questo documento elenca **tutte le mosse** implementate nel gioco che possiedono
   * Ripristina istantaneamente il 100% dei PS massimi dell'utilizzatore.
   * Rimuove qualsiasi problema di stato precedente (avvelenamento, paralisi, scottatura, congelamento).
   * Addormenta l'utilizzatore per 2 turni esatti. Fallisce se l'utilizzatore sta già dormendo.
-* **File**: `src/lib/battle/battleActionRunner.ts` (righe ~480-515).
+* **File**: `src/lib/battle/battleActionRunner.ts` (righe ~515-544).
+
+---
+
+### 🪶 Trespolo (Roost), Sintesi (Synthesis) e Ripresa (Recover)
+* **Descrizione**: L'utilizzatore atterra per riposarsi o canalizza l'energia vitale, recuperando il 50% dei propri PS massimi.
+* **Regole & Meccaniche**:
+  * Cura l'utilizzatore di `Math.floor(maxHp * 0.5)` PS.
+  * Se il Pokémon è già al 100% dei suoi PS, la mossa fallisce con il messaggio: `Ma i PS di [Pokémon] sono già al massimo!`.
+  * Se i PS da curare superano il tetto massimo, calcola esattamente i PS effettivi ripristinati senza eccedere `maxHp`.
+* **File di Implementazione**:
+  * `src/data/movesData.ts`: alias `trespolo -> roost`, `sintesi -> synthesis`, `ripresa -> recover` e proprietà `healing: 0.5`.
+  * `src/lib/battle/battleActionRunner.ts`: blocco dedicato `move.healing > 0` con controllo PS massimi.
+
+---
+
+### 🌀 Stordiraggio (Confuse Ray) e Stato di Confusione
+* **Descrizione**: Emette una luce sinistra e spettrale che disorienta il bersaglio facendolo cadere in uno stato di confusione.
+* **Regole & Meccaniche**:
+  * Applica lo stato volatile di Confusione con una durata variabile da 2 a 5 turni (`Math.floor(Math.random() * 4) + 2`).
+  * **Immunità Sostituto**: se il bersaglio possiede un Sostituto attivo, la confusione viene bloccata (`Il Sostituto protegge [Pokémon] dalla confusione!`).
+  * **Controllo già confuso**: se il bersaglio è già nello stato di confusione, fallisce con il messaggio `[Pokémon] è già confuso!`.
+  * **Autolesionismo in battaglia**: ogni turno, il Pokémon confuso ha il 33% di probabilità di colpirsi da solo (calcolato con potenza fisica 40 basata su Attacco e Difesa propri), consumando l'azione del turno. Quando il contatore scende a 1, si riprende con `[Pokémon] non è più confuso!`.
+* **File di Implementazione**:
+  * `src/data/movesData.ts`: `confuse-ray` con `confusionChance: 100` e alias `stordiraggio`.
+  * `src/lib/battle/battleActionRunner.ts`: applicazione con verifica Sostituto e contatore turni.
+  * `src/lib/battle/statusEffects.ts`: funzione `checkConfusion()`.
+  * `src/components/BattleScreen.tsx`: gestione del controllo confusione prima dell'esecuzione della mossa.
+
+---
+
+### 💦 Splash (Splash)
+* **Descrizione**: L'iconica mossa di rimbalzo innocuo di Magikarp e altri Pokémon.
+* **Regole & Meccaniche**:
+  * Consuma 1 PP, ma non infligge alcun danno né altera statistiche o stati.
+  * Mostra il messaggio canonico e inequivocabile: `Ma non ha alcun effetto!`.
+* **File di Implementazione**:
+  * `src/data/movesData.ts`: mossa di stato con potenza 0 e 40 PP.
+  * `src/lib/battle/battleActionRunner.ts`: intercettazione e log immediato.
+
+---
+
+### 🌫️ Nube (Haze)
+* **Descrizione**: Avvolge il campo in una nube scura che azzera immediatamente tutte le variazioni delle statistiche di entrambi i Pokémon.
+* **Regole & Meccaniche**:
+  * Riporta a **0** tutti i 7 stadi statistici (`attack`, `defense`, `spAtk`, `spDef`, `speed`, `accuracy`, `evasion`) sia dell'utilizzatore che del bersaglio.
+  * **Mossa ad area globale (`entire-field`)**: aggira Protezione/Individuazione, il Sostituto, la semi-invulnerabilità (Volo/Fossa) e non può fallire per precisione.
+  * **IA intelligente**: l'avversario controllato dall'IA evita di sprecare Nube quando le statistiche sono già neutre e la privilegia quando il giocatore ha accumulato potenziamenti (`>= +2`).
+* **File di Implementazione**:
+  * `src/data/movesData.ts`: definizione `'haze'` (Nube) e alias.
+  * `src/lib/battle/battleActionRunner.ts`: reset globale di `userStages` e `targetStages`.
+  * `src/lib/battle/battleAi.ts`: logica tattica anti-spam e anti-setup.
+
+---
+
+### 🌬️ Scaccianebbia (Defog)
+* **Descrizione**: Soffia via gli schermi protettivi nemici, spazza tutte le trappole dal campo e riduce l'Elusione del bersaglio.
+* **Regole & Meccaniche**:
+  * **Riduzione Elusione**: riduce di **-1 livello** l'Elusione del bersaglio (bloccata se il bersaglio ha un Sostituto attivo).
+  * **Rimozione Schermi avversari**: distrugge *Riflesso* e *Schermoluce* attivi sul lato avversario (lasciando intatti eventuali schermi propri), anche dietro Sostituto.
+  * **Pulizia totale Trappole**: rimuove *Levitoroccia*, *Punte*, *Fielepunte* e *Rete Vischiosa* da **entrambi i lati** del campo.
+  * Viene bloccata interamente da Protezione/Individuazione o dalla semi-invulnerabilità (Volo/Fossa/Sub).
+* **File di Implementazione**:
+  * `src/data/movesData.ts`: definizione `'defog'` (Scaccianebbia) e alias.
+  * `src/lib/battle/hazards.ts`: funzione `setHazardFromMove()` con pulizia bilaterale per `defog` / `scaccianebbia`.
+  * `src/lib/battle/battleActionRunner.ts`: riduzione Elusione, rimozione `targetScreens` e pulizia trappole.
+  * `src/components/BattleScreen.tsx`: tracciamento sincronizzato di schermi e trappole nel corso del turno.
+
+---
+
+### 👏 Bruciapelo (Fake Out)
+* **Descrizione**: Attacco fisico di tipo Normale con potenza 40 che colpisce per primo con **priorità +3** e garantisce il tentennamento del bersaglio (100%), ma funziona **solo al primo turno dopo l'ingresso in campo**.
+* **Regole & Meccaniche**:
+  * **Priorità +3**: agisce prima di qualsiasi mossa standard, di *Attacco Rapido* (+1) e persino di *Extrarapido* (+2).
+  * **Restrizione al 1° turno (`turnsOnField`)**: se il Pokémon ha già trascorso almeno un turno attivo sul campo (usando Bruciapelo, un'altra mossa, o restando fermo), Bruciapelo fallisce automaticamente (`Ma Bruciapelo di X fallisce! Funziona solo al primo turno sul campo!`).
+  * **Reset al cambio**: sostituendo il Pokémon e rimandandolo in campo successivamente, `turnsOnField` si azzera e Bruciapelo torna utilizzabile al primo turno di rientro (se il giocatore effettua un cambio manuale mentre l'avversario attacca nel turno di ingresso, il turno successivo resta comunque il primo turno attivo utile del nuovo entrante).
+  * **Tentennamento (100% Flinch)**: impedisce al bersaglio di agire nel turno, a patto che l'utilizzatore colpisca per primo (`isFirstInTurn`), il bersaglio non sia immune (tipo Spettro), non si sia protetto e non sia dietro un Sostituto.
+  * **IA intelligente**: l'IA usa Bruciapelo solo al turno di ingresso e lo esclude dai turni successivi.
+* **File di Implementazione**:
+  * `src/data/movesData.ts`: definizione `'fake-out'` (Bruciapelo, priorità +3, `flinchChance: 100`) e alias.
+  * `src/lib/pokeapi.ts`: fallback priorità `+3` e tentennamento `100%`.
+  * `src/lib/battle/statusEffects.ts`: campo `turnsOnField?: number` in `VolatileStatus`.
+  * `src/lib/battle/battleActionRunner.ts`: controllo e incremento `turnsOnField`.
+  * `src/lib/battle/battleAi.ts`: blocco selezione dopo il 1° turno.
+  * `src/components/BattleScreen.tsx`: aggiornamento di `turnsOnField` a fine turno e reset al cambio Pokémon.
 
 ---
 
@@ -227,5 +317,5 @@ Questo documento elenca **tutte le mosse** implementate nel gioco che possiedono
 ## 🧪 Suite di Test Automatici
 
 Tutte queste meccaniche sono coperte da una suite completa di test automatizzati con **Vitest**:
-* File test: `src/tests/specialMovesAndMechanics.test.ts` (22 test dedicati a Falsofinale, Sostituto, Meteo, Schermi, Metronomo e Scambio Forzato).
+* File test: `src/tests/specialMovesAndMechanics.test.ts` (test dedicati a Falsofinale, Sostituto, Meteo, Schermi, Metronomo, Scambio Forzato, Stordiraggio, Trespolo, Splash, Nube, Scaccianebbia e Bruciapelo).
 * Esecuzione comandi: `npm test` oppure `npx vitest run src/tests/specialMovesAndMechanics.test.ts`.

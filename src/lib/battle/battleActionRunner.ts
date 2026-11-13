@@ -4,9 +4,9 @@ import { calculateDamage, getAccuracyMultiplier, CalculateDamageOptions } from '
 import { isImmuneToStatus, VolatileStatus } from './statusEffects';
 import { checkAbility } from './abilities';
 import { playProtect, playHit } from '../sound';
-import { SideHazards, setHazardFromMove } from './hazards';
+import { SideHazards, setHazardFromMove, defaultSideHazards } from './hazards';
 import { getMoveByName, getRandomMetronomeMove } from '../../data/movesData';
-import { WeatherType, SideScreens } from './fieldEffects';
+import { WeatherType, SideScreens, defaultSideScreens } from './fieldEffects';
 
 export interface ExecuteMoveResult {
   nextUserHp: number;
@@ -155,6 +155,7 @@ export function executeMoveAction(
   let nextTargetStatusObj = { ...targetStatus };
 
   const mLower = (move.name || '').toLowerCase();
+  const rawLower = (rawMove.name || '').toLowerCase();
 
   // 0a. Metronome handling
   if (mLower.includes('metronomo') || mLower.includes('metronome')) {
@@ -185,6 +186,26 @@ export function executeMoveAction(
       addLog,
       options
     );
+  }
+
+  // Track turns spent on the field (for Fake Out / Bruciapelo first-turn restriction)
+  const isFirstTurnOnField = (userVolatile.turnsOnField ?? 0) === 0;
+  const nextTurnsOnField = (userVolatile.turnsOnField ?? 0) + 1;
+  userVolatile.turnsOnField = nextTurnsOnField;
+  setUserVolatile(prev => ({ ...prev, turnsOnField: Math.max(nextTurnsOnField, prev.turnsOnField ?? 0) }));
+
+  // 0a2. Fake Out (Bruciapelo) first-turn check
+  const isFakeOut = mLower === 'bruciapelo' || mLower === 'fake-out' || rawLower === 'fake-out';
+  if (isFakeOut && !isFirstTurnOnField) {
+    addLog(`Ma ${move.name} di ${user.name} fallisce! Funziona solo al primo turno sul campo!`);
+    return {
+      nextUserHp: curUserHp,
+      nextTargetHp: curTargetHp,
+      targetFainted: false,
+      userFainted: false,
+      nextUserStatus: nextUserStatusObj,
+      nextTargetStatus: nextTargetStatusObj
+    };
   }
 
   // 0b. Substitute handling
@@ -310,6 +331,32 @@ export function executeMoveAction(
     };
   } else {
     setUserVolatile(prev => ({ ...prev, protectStreak: 0 }));
+  }
+
+  // 0e2. Haze (Nube) handling - entire-field move, bypasses Protect, Substitute & semi-invulnerability
+  if (mLower === 'nube' || mLower === 'haze' || rawLower === 'haze') {
+    const zeroStages: BattleStages = {
+      attack: 0,
+      defense: 0,
+      spAtk: 0,
+      spDef: 0,
+      speed: 0,
+      accuracy: 0,
+      evasion: 0
+    };
+    Object.assign(userStages, zeroStages);
+    Object.assign(targetStages, zeroStages);
+    setUserStages({ ...zeroStages });
+    setTargetStages({ ...zeroStages });
+    addLog('🌫️ Una fitta Nube avvolge il campo! Tutte le variazioni alle statistiche sono state azzerate!');
+    return {
+      nextUserHp: curUserHp,
+      nextTargetHp: curTargetHp,
+      targetFainted: false,
+      userFainted: false,
+      nextUserStatus: nextUserStatusObj,
+      nextTargetStatus: nextTargetStatusObj
+    };
   }
 
   // Target is protected
@@ -543,14 +590,84 @@ export function executeMoveAction(
       nextTargetStatus: nextTargetStatusObj
     };
   } else if (move.healing && move.healing > 0) {
-    const healAmount = Math.max(1, Math.floor(user.maxHp * move.healing));
-    curUserHp = Math.min(user.maxHp, curUserHp + healAmount);
-    setUserHp(curUserHp);
-    addLog(`${user.name} ha recuperato le forze! (+${healAmount} PS)`);
+    if (curUserHp >= user.maxHp) {
+      addLog(`Ma i PS di ${user.name} sono già al massimo!`);
+    } else {
+      const healAmount = Math.max(1, Math.floor(user.maxHp * move.healing));
+      const actualHealed = Math.min(healAmount, user.maxHp - curUserHp);
+      curUserHp = Math.min(user.maxHp, curUserHp + actualHealed);
+      setUserHp(curUserHp);
+      if (mLower.includes('trespolo') || mLower.includes('roost')) {
+        addLog(`${user.name} atterra per riposarsi e recupera le forze! (+${actualHealed} PS)`);
+      } else {
+        addLog(`${user.name} ha recuperato le forze! (+${actualHealed} PS)`);
+      }
+    }
+    return {
+      nextUserHp: curUserHp,
+      nextTargetHp: curTargetHp,
+      targetFainted: curTargetHp <= 0,
+      userFainted: curUserHp <= 0,
+      nextUserStatus: nextUserStatusObj,
+      nextTargetStatus: nextTargetStatusObj
+    };
   }
 
   // 3. STATUS MOVES (Deal NO damage directly)
   if (move.category === 'status' || !move.power || move.power === 0) {
+    // Splash handling
+    if (mLower === 'splash') {
+      addLog("Ma non ha alcun effetto!");
+      return {
+        nextUserHp: curUserHp,
+        nextTargetHp: curTargetHp,
+        targetFainted: false,
+        userFainted: false,
+        nextUserStatus: nextUserStatusObj,
+        nextTargetStatus: nextTargetStatusObj
+      };
+    }
+
+    // Defog (Scaccianebbia) handling: -1 target Evasion, clears target Screens, clears Hazards on both sides
+    if (mLower.includes('scaccianebbia') || mLower.includes('defog') || rawLower === 'defog') {
+      if (move.stat_changes && move.stat_changes.length > 0) {
+        applyStatChanges(move.stat_changes, false);
+      } else {
+        applyStatChanges([{ change: -1, stat: { name: 'evasion' } }], false);
+      }
+      if (options?.setTargetScreens) {
+        const hadScreens = Boolean(
+          options.targetScreens && (options.targetScreens.reflect > 0 || options.targetScreens.lightScreen > 0)
+        );
+        options.setTargetScreens(defaultSideScreens());
+        if (hadScreens) {
+          addLog(`🌬️ Scaccianebbia dissolve le barriere difensive di ${target.name}!`);
+        }
+      }
+      const hazardCheck = setHazardFromMove(
+        move.name,
+        options?.targetSideHazards || defaultSideHazards(),
+        options?.userSideHazards || defaultSideHazards()
+      );
+      if (hazardCheck.msg) {
+        addLog(hazardCheck.msg);
+      }
+      if (options?.setTargetSideHazards) {
+        options.setTargetSideHazards(hazardCheck.updatedTargetSide);
+      }
+      if (hazardCheck.updatedUserSide && options?.setUserSideHazards) {
+        options.setUserSideHazards(hazardCheck.updatedUserSide);
+      }
+      return {
+        nextUserHp: curUserHp,
+        nextTargetHp: curTargetHp,
+        targetFainted: false,
+        userFainted: false,
+        nextUserStatus: nextUserStatusObj,
+        nextTargetStatus: nextTargetStatusObj
+      };
+    }
+
     if (move.stat_changes && move.stat_changes.length > 0) {
       applyStatChanges(move.stat_changes, move.target === 'user');
     }
@@ -570,10 +687,12 @@ export function executeMoveAction(
     }
     // Confusion status move (e.g. Supersonic, Confuse Ray)
     if (move.confusionChance) {
-      if (!targetVolatile.confusionTurns || targetVolatile.confusionTurns <= 0) {
+      if (targetVolatile.substituteHp && targetVolatile.substituteHp > 0) {
+        addLog(`Il Sostituto protegge ${target.name} dalla confusione!`);
+      } else if (!targetVolatile.confusionTurns || targetVolatile.confusionTurns <= 0) {
         const chance = move.confusionChance;
         if (Math.random() * 100 < chance) {
-          const cTurns = Math.floor(Math.random() * 4) + 1;
+          const cTurns = Math.floor(Math.random() * 4) + 2; // 2 to 5 turns
           setTargetVolatile(prev => ({ ...prev, confusionTurns: cTurns }));
           addLog(`${target.name} è confuso!`);
         } else {
@@ -582,8 +701,23 @@ export function executeMoveAction(
       } else {
         addLog(`${target.name} è già confuso!`);
       }
+      return {
+        nextUserHp: curUserHp,
+        nextTargetHp: curTargetHp,
+        targetFainted: false,
+        userFainted: false,
+        nextUserStatus: nextUserStatusObj,
+        nextTargetStatus: nextTargetStatusObj
+      };
     }
-    return { nextUserHp: curUserHp, nextTargetHp: curTargetHp, targetFainted: false, userFainted: false };
+    return {
+      nextUserHp: curUserHp,
+      nextTargetHp: curTargetHp,
+      targetFainted: false,
+      userFainted: false,
+      nextUserStatus: nextUserStatusObj,
+      nextTargetStatus: nextTargetStatusObj
+    };
   }
 
   // 4. ATTACKING MOVES (Physical / Special)
@@ -691,7 +825,7 @@ export function executeMoveAction(
       addLog(`Il Sostituto di ${target.name} incassa il colpo! (${nextSub} PS rimasti al sostituto)`);
     }
   } else {
-    const isFalseSwipe = mLower.includes('falsofinale') || mLower.includes('false-swipe') || moveDef.englishName === 'false-swipe';
+    const isFalseSwipe = mLower.includes('falsofinale') || mLower.includes('false-swipe') || rawLower === 'false-swipe';
     if (isFalseSwipe && finalDamage >= curTargetHp) {
       curTargetHp = 1;
       setTargetHp(curTargetHp);
@@ -746,7 +880,7 @@ export function executeMoveAction(
 
   // Hazard clearing attacking moves (e.g., Rapid Spin)
   const mNameLower = move.name.toLowerCase();
-  if ((mNameLower.includes('rapid-spin') || mNameLower.includes('rapidsguardo')) && options?.userSideHazards && options?.setUserSideHazards) {
+  if ((mNameLower.includes('rapid-spin') || mNameLower.includes('rapigiro') || mNameLower.includes('rapidsguardo')) && options?.userSideHazards && options?.setUserSideHazards) {
     const hazardCheck = setHazardFromMove(move.name, options.targetSideHazards || {}, options.userSideHazards);
     if (hazardCheck.msg) {
       addLog(hazardCheck.msg);

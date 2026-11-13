@@ -774,8 +774,8 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     }
   }, [addLog, playerActive.name, setState, state.player.team]);
 
-  // Single enemy turn execution (used after item or failed flee)
-  const triggerEnemySingleTurn = useCallback(async (curPlayerHp: number, curEnemyHp: number) => {
+  // Single enemy turn execution (used after item, switch, or failed flee)
+  const triggerEnemySingleTurn = useCallback(async (curPlayerHp: number, curEnemyHp: number, playerJustSwitched: boolean = false) => {
     setIsAnimating(true);
     await new Promise(r => setTimeout(r, 800));
 
@@ -941,11 +941,17 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       addLog(`🕊️ Armonia Filosofica rigenera ${healAmount} PS a ${enemy.name}!`);
     }
 
+    setEnemyVolatile(prev => ({ ...prev, isFlinched: false, isProtected: false, turnsOnField: Math.max(1, prev.turnsOnField ?? 0) }));
+    if (!playerJustSwitched) {
+      setPlayerVolatile(prev => ({ ...prev, isFlinched: false, isProtected: false, turnsOnField: Math.max(1, prev.turnsOnField ?? 0) }));
+    }
     setIsAnimating(false);
   }, [
     enemy, enemyVolatile, enemyStatus, enemyMoves, enemyStages, playerActive, 
     playerStages, playerStatus, playerVolatile, deductEnemyPp,
-    handleWin, handlePlayerFaint, handleStatusEndTurn, addLog
+    handleWin, handlePlayerFaint, handleStatusEndTurn, addLog,
+    fieldWeather, playerScreens, enemyScreens, playerSideHazards, enemySideHazards,
+    bossBuff, trainer, state.player.team
   ]);
 
   // Main turn execution: Dynamic Turn Order based on Priority & Effective Speed
@@ -972,7 +978,8 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       enemyStages, 
       playerStages, 
       enemyHp, 
-      playerHp
+      playerHp,
+      enemyVolatile
     );
 
     // Calculate effective speeds
@@ -998,11 +1005,16 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
 
     const playerFirst = turnWinner === 'player';
 
-    // Local live state tracking for volatile conditions & stat stages during the multi-phase turn
+    // Local live state tracking for volatile conditions, stat stages & field effects during the multi-phase turn
     let livePlayerVolatile: VolatileStatus = { ...playerVolatile };
     let liveEnemyVolatile: VolatileStatus = { ...enemyVolatile };
     let livePlayerStages: BattleStages = { ...playerStages };
     let liveEnemyStages: BattleStages = { ...enemyStages };
+    let liveFieldWeather: FieldWeather = { ...fieldWeather };
+    let livePlayerScreens: SideScreens = { ...playerScreens };
+    let liveEnemyScreens: SideScreens = { ...enemyScreens };
+    let livePlayerHazards: SideHazards = { ...playerSideHazards };
+    let liveEnemyHazards: SideHazards = { ...enemySideHazards };
 
     // Helper for executing an individual combatant's attack within this turn
     const runCombatantAttack = async (
@@ -1234,16 +1246,31 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
         lifestealPercent: towerLifeStealPercent,
         accuracyPenalty: towerAccuracyPenalty + (bossBuff === 'blu_arrogance' ? 8 : 0),
         bossMutationType: bossMutation?.type,
-        userSideHazards: playerSideHazards,
-        setUserSideHazards: setPlayerSideHazards,
-        targetSideHazards: enemySideHazards,
-        setTargetSideHazards: setEnemySideHazards,
-        weather: fieldWeather.type,
-        setWeather: (w: WeatherType) => setFieldWeather({ type: w, turns: 5 }),
-        userScreens: playerScreens,
-        setUserScreens: setPlayerScreens,
-        targetScreens: enemyScreens,
-        setTargetScreens: setEnemyScreens,
+        userSideHazards: livePlayerHazards,
+        setUserSideHazards: (updater: React.SetStateAction<SideHazards>) => {
+          livePlayerHazards = typeof updater === 'function' ? updater(livePlayerHazards) : updater;
+          setPlayerSideHazards(livePlayerHazards);
+        },
+        targetSideHazards: liveEnemyHazards,
+        setTargetSideHazards: (updater: React.SetStateAction<SideHazards>) => {
+          liveEnemyHazards = typeof updater === 'function' ? updater(liveEnemyHazards) : updater;
+          setEnemySideHazards(liveEnemyHazards);
+        },
+        weather: liveFieldWeather.type,
+        setWeather: (w: WeatherType) => {
+          liveFieldWeather = { type: w, turns: 5 };
+          setFieldWeather(liveFieldWeather);
+        },
+        userScreens: livePlayerScreens,
+        setUserScreens: (updater: React.SetStateAction<SideScreens>) => {
+          livePlayerScreens = typeof updater === 'function' ? updater(livePlayerScreens) : updater;
+          setPlayerScreens(livePlayerScreens);
+        },
+        targetScreens: liveEnemyScreens,
+        setTargetScreens: (updater: React.SetStateAction<SideScreens>) => {
+          liveEnemyScreens = typeof updater === 'function' ? updater(liveEnemyScreens) : updater;
+          setEnemyScreens(liveEnemyScreens);
+        },
         isWildBattle: !trainer
       } : {
         attackMultiplier: bossAtkMult,
@@ -1251,16 +1278,31 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
         incomingDamageMultiplier: towerIncomingDmgMult,
         dodgeChance: towerDodgeChance,
         bossMutationType: bossMutation?.type,
-        userSideHazards: enemySideHazards,
-        setUserSideHazards: setEnemySideHazards,
-        targetSideHazards: playerSideHazards,
-        setTargetSideHazards: setPlayerSideHazards,
-        weather: fieldWeather.type,
-        setWeather: (w: WeatherType) => setFieldWeather({ type: w, turns: 5 }),
-        userScreens: enemyScreens,
-        setUserScreens: setEnemyScreens,
-        targetScreens: playerScreens,
-        setTargetScreens: setPlayerScreens,
+        userSideHazards: liveEnemyHazards,
+        setUserSideHazards: (updater: React.SetStateAction<SideHazards>) => {
+          liveEnemyHazards = typeof updater === 'function' ? updater(liveEnemyHazards) : updater;
+          setEnemySideHazards(liveEnemyHazards);
+        },
+        targetSideHazards: livePlayerHazards,
+        setTargetSideHazards: (updater: React.SetStateAction<SideHazards>) => {
+          livePlayerHazards = typeof updater === 'function' ? updater(livePlayerHazards) : updater;
+          setPlayerSideHazards(livePlayerHazards);
+        },
+        weather: liveFieldWeather.type,
+        setWeather: (w: WeatherType) => {
+          liveFieldWeather = { type: w, turns: 5 };
+          setFieldWeather(liveFieldWeather);
+        },
+        userScreens: liveEnemyScreens,
+        setUserScreens: (updater: React.SetStateAction<SideScreens>) => {
+          liveEnemyScreens = typeof updater === 'function' ? updater(liveEnemyScreens) : updater;
+          setEnemyScreens(liveEnemyScreens);
+        },
+        targetScreens: livePlayerScreens,
+        setTargetScreens: (updater: React.SetStateAction<SideScreens>) => {
+          livePlayerScreens = typeof updater === 'function' ? updater(livePlayerScreens) : updater;
+          setPlayerScreens(livePlayerScreens);
+        },
         isWildBattle: !trainer
       };
 
@@ -1412,8 +1454,8 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       await new Promise(r => setTimeout(r, 500));
 
       // End of turn effects
-      setPlayerVolatile(prev => ({ ...prev, isFlinched: false, isProtected: false }));
-      setEnemyVolatile(prev => ({ ...prev, isFlinched: false, isProtected: false }));
+      setPlayerVolatile(prev => ({ ...prev, isFlinched: false, isProtected: false, turnsOnField: Math.max(1, prev.turnsOnField ?? 0) }));
+      setEnemyVolatile(prev => ({ ...prev, isFlinched: false, isProtected: false, turnsOnField: Math.max(1, prev.turnsOnField ?? 0) }));
 
       curPlayerHp = await handleStatusEndTurn(playerActive, curPlayerHp, setPlayerHp, livePlayerStatus.status, setPlayerStatus);
       if (curPlayerHp <= 0) {
@@ -1428,8 +1470,8 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       }
 
       // Weather end-of-turn damage (Sandstorm / Hail)
-      if (fieldWeather.type === 'sandstorm' || fieldWeather.type === 'hail') {
-        const weatherP = processWeatherTurnEnd(playerActive, curPlayerHp, fieldWeather.type);
+      if (liveFieldWeather.type === 'sandstorm' || liveFieldWeather.type === 'hail') {
+        const weatherP = processWeatherTurnEnd(playerActive, curPlayerHp, liveFieldWeather.type);
         if (weatherP.damage > 0) {
           addLog(weatherP.msg!);
           curPlayerHp = weatherP.nextHp;
@@ -1440,7 +1482,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
           }
         }
 
-        const weatherE = processWeatherTurnEnd(enemy, curEnemyHp, fieldWeather.type);
+        const weatherE = processWeatherTurnEnd(enemy, curEnemyHp, liveFieldWeather.type);
         if (weatherE.damage > 0) {
           addLog(weatherE.msg!);
           curEnemyHp = weatherE.nextHp;
@@ -1453,16 +1495,16 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       }
 
       // Tick Weather
-      const tw = tickWeather(fieldWeather);
+      const tw = tickWeather(liveFieldWeather);
       setFieldWeather(tw.nextWeather);
       if (tw.expiredMsg) addLog(tw.expiredMsg);
 
       // Tick Screens
-      const sp = tickScreens(playerScreens, playerActive.name);
+      const sp = tickScreens(livePlayerScreens, playerActive.name);
       setPlayerScreens(sp.nextScreens);
       sp.expiredMsgs.forEach(m => addLog(m));
 
-      const se = tickScreens(enemyScreens, enemy.name);
+      const se = tickScreens(liveEnemyScreens, enemy.name);
       setEnemyScreens(se.nextScreens);
       se.expiredMsgs.forEach(m => addLog(m));
 
@@ -1510,9 +1552,9 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     }
 
     // --- EXECUTION PHASE 3: END OF TURN (Clear flinch, status tick damage, weather, screens) ---
-    // Clear flinch & protect
-    setPlayerVolatile(prev => ({ ...prev, isFlinched: false, isProtected: false }));
-    setEnemyVolatile(prev => ({ ...prev, isFlinched: false, isProtected: false }));
+    // Clear flinch & protect, and mark turn spent on field for Fake Out
+    setPlayerVolatile(prev => ({ ...prev, isFlinched: false, isProtected: false, turnsOnField: Math.max(1, prev.turnsOnField ?? 0) }));
+    setEnemyVolatile(prev => ({ ...prev, isFlinched: false, isProtected: false, turnsOnField: Math.max(1, prev.turnsOnField ?? 0) }));
 
     // Player status damage (Poison / Burn)
     curPlayerHp = await handleStatusEndTurn(playerActive, curPlayerHp, setPlayerHp, livePlayerStatus.status, setPlayerStatus);
@@ -1529,8 +1571,8 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     }
 
     // Weather end-of-turn damage (Sandstorm / Hail)
-    if (fieldWeather.type === 'sandstorm' || fieldWeather.type === 'hail') {
-      const weatherP = processWeatherTurnEnd(playerActive, curPlayerHp, fieldWeather.type);
+    if (liveFieldWeather.type === 'sandstorm' || liveFieldWeather.type === 'hail') {
+      const weatherP = processWeatherTurnEnd(playerActive, curPlayerHp, liveFieldWeather.type);
       if (weatherP.damage > 0) {
         addLog(weatherP.msg!);
         curPlayerHp = weatherP.nextHp;
@@ -1542,7 +1584,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
         }
       }
 
-      const weatherE = processWeatherTurnEnd(enemy, curEnemyHp, fieldWeather.type);
+      const weatherE = processWeatherTurnEnd(enemy, curEnemyHp, liveFieldWeather.type);
       if (weatherE.damage > 0) {
         addLog(weatherE.msg!);
         curEnemyHp = weatherE.nextHp;
@@ -1556,18 +1598,18 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     }
 
     // Tick Weather
-    const tw = tickWeather(fieldWeather);
+    const tw = tickWeather(liveFieldWeather);
     setFieldWeather(tw.nextWeather);
     if (tw.expiredMsg) {
       addLog(tw.expiredMsg);
     }
 
     // Tick Screens
-    const sp = tickScreens(playerScreens, playerActive.name);
+    const sp = tickScreens(livePlayerScreens, playerActive.name);
     setPlayerScreens(sp.nextScreens);
     sp.expiredMsgs.forEach(m => addLog(m));
 
-    const se = tickScreens(enemyScreens, enemy.name);
+    const se = tickScreens(liveEnemyScreens, enemy.name);
     setEnemyScreens(se.nextScreens);
     se.expiredMsgs.forEach(m => addLog(m));
 
@@ -1576,7 +1618,8 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     isAnimating, playerMoves, enemyMoves, getEffectiveSpeed, playerActive, 
     playerStages, playerStatus, enemy, enemyStages, enemyStatus, playerVolatile, 
     enemyVolatile, deductPlayerPp, deductEnemyPp, handleWin, 
-    handlePlayerFaint, handleStatusEndTurn, addLog, playerHp, enemyHp
+    handlePlayerFaint, handleStatusEndTurn, addLog, playerHp, enemyHp,
+    fieldWeather, playerScreens, enemyScreens, playerSideHazards, enemySideHazards
   ]);
 
   // Auto-trigger locked / multi-turn moves on Turn 2 (e.g. Volo, Fossa, Sub, Solarraggio, Iper Raggio ricarica)
@@ -1736,7 +1779,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     }
 
     if (!wasFainted) {
-      await triggerEnemySingleTurn(switchedHp, enemyHp);
+      await triggerEnemySingleTurn(switchedHp, enemyHp, true);
     } else {
       if (enemyHp > 0 && enemyStatus.status) {
         const nextE = await handleStatusEndTurn(

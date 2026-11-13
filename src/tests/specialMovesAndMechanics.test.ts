@@ -9,8 +9,12 @@ import {
   tickWeather, 
   tickScreens,
   FieldWeather,
-  SideScreens
+  SideScreens,
+  defaultSideScreens
 } from '../lib/battle/fieldEffects';
+import { SideHazards, defaultSideHazards, setHazardFromMove } from '../lib/battle/hazards';
+import { determineTurnOrder } from '../lib/battle/turnOrder';
+import { selectEnemyMove } from '../lib/battle/battleAi';
 import { Pokemon, BattleStages, Move } from '../types/game';
 import { VolatileStatus } from '../lib/battle/statusEffects';
 
@@ -738,6 +742,849 @@ describe('Special Moves & Field Mechanics Test Suite', () => {
 
       expect(res.forceSwitchTarget).toBe(true);
       expect(logs.some(l => l.includes('costretto ad abbandonare il campo'))).toBe(true);
+    });
+  });
+
+  describe('Stordiraggio (Confuse Ray) and Confusion Mechanics', () => {
+    it('resolves Stordiraggio alias and inflicts confusion on the target', () => {
+      const user = createMockPokemon({ name: 'Gengar' });
+      const target = createMockPokemon({ name: 'Snorlax' });
+      let targetVolatile: VolatileStatus = {};
+      const logs: string[] = [];
+
+      const move = getMoveByName('Stordiraggio');
+      expect(move.name).toBe('Stordiraggio');
+      expect(move.category).toBe('status');
+      expect(move.confusionChance).toBe(100);
+
+      const res = executeMoveAction(
+        move,
+        user,
+        target,
+        defaultStages(),
+        () => {},
+        defaultStages(),
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        targetVolatile,
+        (updater) => {
+          targetVolatile = typeof updater === 'function' ? updater(targetVolatile) : updater;
+        },
+        100,
+        () => {},
+        100,
+        () => {},
+        true,
+        true,
+        (msg) => logs.push(msg)
+      );
+
+      expect(targetVolatile.confusionTurns).toBeGreaterThanOrEqual(2);
+      expect(targetVolatile.confusionTurns).toBeLessThanOrEqual(5);
+      expect(logs.some(l => l.includes('Snorlax è confuso!'))).toBe(true);
+    });
+
+    it('fails if the target is already confused', () => {
+      const user = createMockPokemon({ name: 'Gengar' });
+      const target = createMockPokemon({ name: 'Snorlax' });
+      let targetVolatile: VolatileStatus = { confusionTurns: 3 };
+      const logs: string[] = [];
+
+      const move = getMoveByName('Stordiraggio');
+      executeMoveAction(
+        move,
+        user,
+        target,
+        defaultStages(),
+        () => {},
+        defaultStages(),
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        targetVolatile,
+        (updater) => {
+          targetVolatile = typeof updater === 'function' ? updater(targetVolatile) : updater;
+        },
+        100,
+        () => {},
+        100,
+        () => {},
+        true,
+        true,
+        (msg) => logs.push(msg)
+      );
+
+      expect(targetVolatile.confusionTurns).toBe(3);
+      expect(logs.some(l => l.includes('Snorlax è già confuso!'))).toBe(true);
+    });
+
+    it('is blocked by target Substitute', () => {
+      const user = createMockPokemon({ name: 'Gengar' });
+      const target = createMockPokemon({ name: 'Snorlax' });
+      let targetVolatile: VolatileStatus = { substituteHp: 25 };
+      const logs: string[] = [];
+
+      const move = getMoveByName('Stordiraggio');
+      executeMoveAction(
+        move,
+        user,
+        target,
+        defaultStages(),
+        () => {},
+        defaultStages(),
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        targetVolatile,
+        (updater) => {
+          targetVolatile = typeof updater === 'function' ? updater(targetVolatile) : updater;
+        },
+        100,
+        () => {},
+        100,
+        () => {},
+        true,
+        true,
+        (msg) => logs.push(msg)
+      );
+
+      expect(targetVolatile.confusionTurns).toBeUndefined();
+      expect(logs.some(l => l.includes('Il Sostituto protegge Snorlax dalla confusione!'))).toBe(true);
+    });
+  });
+
+  describe('Trespolo (Roost) and Recovery Mechanics', () => {
+    it('heals 50% max HP when damaged', () => {
+      const user = createMockPokemon({ name: 'Pidgeot', maxHp: 100 });
+      const target = createMockPokemon({ name: 'Golem' });
+      let userHp = 30;
+      const logs: string[] = [];
+
+      const roost = getMoveByName('Trespolo');
+      expect(roost.healing).toBe(0.5);
+
+      const res = executeMoveAction(
+        roost,
+        user,
+        target,
+        defaultStages(),
+        () => {},
+        defaultStages(),
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        userHp,
+        (hp) => { userHp = hp; },
+        100,
+        () => {},
+        true,
+        true,
+        (msg) => logs.push(msg)
+      );
+
+      expect(res.nextUserHp).toBe(80); // 30 + 50
+      expect(userHp).toBe(80);
+      expect(logs.some(l => l.includes('Pidgeot atterra per riposarsi e recupera le forze! (+50 PS)'))).toBe(true);
+    });
+
+    it('caps healing at maxHp without overflowing', () => {
+      const user = createMockPokemon({ name: 'Pidgeot', maxHp: 100 });
+      const target = createMockPokemon({ name: 'Golem' });
+      let userHp = 85;
+      const logs: string[] = [];
+
+      const roost = getMoveByName('roost');
+
+      const res = executeMoveAction(
+        roost,
+        user,
+        target,
+        defaultStages(),
+        () => {},
+        defaultStages(),
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        userHp,
+        (hp) => { userHp = hp; },
+        100,
+        () => {},
+        true,
+        true,
+        (msg) => logs.push(msg)
+      );
+
+      expect(res.nextUserHp).toBe(100);
+      expect(userHp).toBe(100);
+      expect(logs.some(l => l.includes('Pidgeot atterra per riposarsi e recupera le forze! (+15 PS)'))).toBe(true);
+    });
+
+    it('fails if user is already at maximum HP', () => {
+      const user = createMockPokemon({ name: 'Pidgeot', maxHp: 100 });
+      const target = createMockPokemon({ name: 'Golem' });
+      let userHp = 100;
+      const logs: string[] = [];
+
+      const roost = getMoveByName('Trespolo');
+
+      const res = executeMoveAction(
+        roost,
+        user,
+        target,
+        defaultStages(),
+        () => {},
+        defaultStages(),
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        userHp,
+        (hp) => { userHp = hp; },
+        100,
+        () => {},
+        true,
+        true,
+        (msg) => logs.push(msg)
+      );
+
+      expect(res.nextUserHp).toBe(100);
+      expect(logs.some(l => l.includes('Ma i PS di Pidgeot sono già al massimo!'))).toBe(true);
+    });
+  });
+
+  describe('Splash (Splash) Mechanics', () => {
+    it('executes Splash and logs canonical failure message', () => {
+      const user = createMockPokemon({ name: 'Magikarp', maxHp: 100 });
+      const target = createMockPokemon({ name: 'Gyarados', maxHp: 100 });
+      const logs: string[] = [];
+
+      const splash = getMoveByName('Splash');
+      expect(splash.name).toBe('Splash');
+
+      const res = executeMoveAction(
+        splash,
+        user,
+        target,
+        defaultStages(),
+        () => {},
+        defaultStages(),
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        100,
+        () => {},
+        100,
+        () => {},
+        true,
+        true,
+        (msg) => logs.push(msg)
+      );
+
+      expect(res.nextUserHp).toBe(100);
+      expect(res.nextTargetHp).toBe(100);
+      expect(logs.some(l => l.includes('Ma non ha alcun effetto!'))).toBe(true);
+    });
+  });
+
+  describe('Nube (Haze) Mechanics', () => {
+    it('resolves Nube/haze alias and resets all positive and negative stat stages on both sides', () => {
+      const user = createMockPokemon({ name: 'Weezing', types: ['poison'] });
+      const target = createMockPokemon({ name: 'Dragonite', types: ['dragon', 'flying'] });
+      let userStages: BattleStages = {
+        attack: -2,
+        defense: 3,
+        spAtk: -4,
+        spDef: 1,
+        speed: -1,
+        accuracy: -2,
+        evasion: 1
+      };
+      let targetStages: BattleStages = {
+        attack: 6,
+        defense: 2,
+        spAtk: 3,
+        spDef: -1,
+        speed: 4,
+        accuracy: 1,
+        evasion: 2
+      };
+      const logs: string[] = [];
+
+      const haze = getMoveByName('Nube');
+      expect(haze.name).toBe('Nube');
+      expect(haze.category).toBe('status');
+      expect(haze.type).toBe('ice');
+
+      executeMoveAction(
+        haze,
+        user,
+        target,
+        userStages,
+        (u) => { userStages = typeof u === 'function' ? u(userStages) : u; },
+        targetStages,
+        (u) => { targetStages = typeof u === 'function' ? u(targetStages) : u; },
+        {},
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        120,
+        () => {},
+        120,
+        () => {},
+        true,
+        true,
+        (msg) => logs.push(msg)
+      );
+
+      expect(userStages).toEqual(defaultStages());
+      expect(targetStages).toEqual(defaultStages());
+      expect(logs.some(l => l.includes('Nube') && l.includes('azzerate'))).toBe(true);
+    });
+
+    it('bypasses target Protect, Substitute, and semi-invulnerability', () => {
+      const user = createMockPokemon({ name: 'Vaporeon', types: ['water'] });
+      const target = createMockPokemon({ name: 'Gyarados', types: ['water', 'flying'] });
+      let userStages: BattleStages = { ...defaultStages(), spDef: -2 };
+      let targetStages: BattleStages = { ...defaultStages(), attack: 4, speed: 4 };
+      const targetVolatile: VolatileStatus = { isProtected: true, substituteHp: 30, chargingState: 'fly' };
+
+      const haze = getMoveByName('haze');
+      executeMoveAction(
+        haze,
+        user,
+        target,
+        userStages,
+        (u) => { userStages = typeof u === 'function' ? u(userStages) : u; },
+        targetStages,
+        (u) => { targetStages = typeof u === 'function' ? u(targetStages) : u; },
+        {},
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        targetVolatile,
+        () => {},
+        120,
+        () => {},
+        120,
+        () => {},
+        true,
+        true,
+        () => {}
+      );
+
+      expect(userStages).toEqual(defaultStages());
+      expect(targetStages).toEqual(defaultStages());
+    });
+
+    it('AI avoids Haze when stages are neutral and prioritizes it when player is heavily boosted', () => {
+      const haze = getMoveByName('Nube');
+      const tackle = getMoveByName('Azione');
+      const enemy = createMockPokemon({ name: 'Crobat', types: ['poison', 'flying'], moves: [haze, tackle] });
+      const player = createMockPokemon({ name: 'Charizard', types: ['fire', 'flying'] });
+
+      // Neutral stages: AI should never pick Haze over Tackle
+      const pickNeutral = selectEnemyMove([haze, tackle], enemy, player, {}, {}, defaultStages(), defaultStages(), 120, 120);
+      expect(pickNeutral.name).toBe('Azione');
+
+      // Heavily boosted player (+4 Atk, +2 Speed): AI strongly scores Haze
+      const boostedPlayerStages: BattleStages = { ...defaultStages(), attack: 4, speed: 2 };
+      const pickBoosted = selectEnemyMove([haze, tackle], enemy, player, {}, {}, defaultStages(), boostedPlayerStages, 120, 120);
+      expect(pickBoosted.name).toBe('Nube');
+    });
+  });
+
+  describe('Scaccianebbia (Defog) Mechanics', () => {
+    it('lowers target Evasion by 1, clears opponent Screens (keeping own screens), and clears all Hazards on both sides', () => {
+      const user = createMockPokemon({ name: 'Corviknight', types: ['flying', 'steel'] });
+      const target = createMockPokemon({ name: 'Grimmsnarl', types: ['dark', 'fairy'] });
+
+      let targetStages = defaultStages();
+      let userScreens: SideScreens = { reflect: 4, lightScreen: 0 };
+      let targetScreens: SideScreens = { reflect: 5, lightScreen: 5 };
+      let userHazards: SideHazards = { stealthRock: true, spikesLayers: 2, toxicSpikesLayers: 1, stickyWeb: true };
+      let targetHazards: SideHazards = { stealthRock: true, spikesLayers: 1, toxicSpikesLayers: 2, stickyWeb: false };
+      const logs: string[] = [];
+
+      const defog = getMoveByName('Scaccianebbia');
+      expect(defog.name).toBe('Scaccianebbia');
+      expect(defog.category).toBe('status');
+
+      executeMoveAction(
+        defog,
+        user,
+        target,
+        defaultStages(),
+        () => {},
+        targetStages,
+        (u) => { targetStages = typeof u === 'function' ? u(targetStages) : u; },
+        {},
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        120,
+        () => {},
+        120,
+        () => {},
+        true,
+        true,
+        (msg) => logs.push(msg),
+        {
+          userSideHazards: userHazards,
+          setUserSideHazards: (u) => { userHazards = typeof u === 'function' ? u(userHazards) : u; },
+          targetSideHazards: targetHazards,
+          setTargetSideHazards: (u) => { targetHazards = typeof u === 'function' ? u(targetHazards) : u; },
+          userScreens,
+          setUserScreens: (u) => { userScreens = typeof u === 'function' ? u(userScreens) : u; },
+          targetScreens,
+          setTargetScreens: (u) => { targetScreens = typeof u === 'function' ? u(targetScreens) : u; }
+        }
+      );
+
+      expect(targetStages.evasion).toBe(-1);
+      expect(targetScreens).toEqual(defaultSideScreens());
+      expect(userScreens).toEqual({ reflect: 4, lightScreen: 0 });
+      expect(userHazards).toEqual(defaultSideHazards());
+      expect(targetHazards).toEqual(defaultSideHazards());
+      expect(logs.some(l => l.includes('Elusione') && l.includes('cala'))).toBe(true);
+      expect(logs.some(l => l.includes('dissolve le barriere difensive'))).toBe(true);
+      expect(logs.some(l => l.includes('spazza via tutte le trappole'))).toBe(true);
+    });
+
+    it('clears target Screens and both sides Hazards even when target has a Substitute, while blocking only Evasion drop', () => {
+      const user = createMockPokemon({ name: 'Scizor', types: ['bug', 'steel'] });
+      const target = createMockPokemon({ name: 'Gengar', types: ['ghost', 'poison'] });
+
+      let targetStages = defaultStages();
+      let targetScreens: SideScreens = { reflect: 0, lightScreen: 3 };
+      let userHazards: SideHazards = { stealthRock: true, spikesLayers: 0, toxicSpikesLayers: 0, stickyWeb: false };
+      let targetHazards: SideHazards = { stealthRock: false, spikesLayers: 3, toxicSpikesLayers: 0, stickyWeb: false };
+      const logs: string[] = [];
+
+      const defog = getMoveByName('defog');
+
+      executeMoveAction(
+        defog,
+        user,
+        target,
+        defaultStages(),
+        () => {},
+        targetStages,
+        (u) => { targetStages = typeof u === 'function' ? u(targetStages) : u; },
+        {},
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        { substituteHp: 40 },
+        () => {},
+        120,
+        () => {},
+        120,
+        () => {},
+        true,
+        true,
+        (msg) => logs.push(msg),
+        {
+          userSideHazards: userHazards,
+          setUserSideHazards: (u) => { userHazards = typeof u === 'function' ? u(userHazards) : u; },
+          targetSideHazards: targetHazards,
+          setTargetSideHazards: (u) => { targetHazards = typeof u === 'function' ? u(targetHazards) : u; },
+          targetScreens,
+          setTargetScreens: (u) => { targetScreens = typeof u === 'function' ? u(targetScreens) : u; }
+        }
+      );
+
+      expect(targetStages.evasion).toBe(0);
+      expect(targetScreens).toEqual(defaultSideScreens());
+      expect(userHazards).toEqual(defaultSideHazards());
+      expect(targetHazards).toEqual(defaultSideHazards());
+      expect(logs.some(l => l.includes('Sostituto') && l.includes('blocca'))).toBe(true);
+    });
+
+    it('is completely blocked by target Protect', () => {
+      const user = createMockPokemon({ name: 'Togekiss', types: ['fairy', 'flying'] });
+      const target = createMockPokemon({ name: 'Alakazam', types: ['psychic'] });
+
+      let targetStages = defaultStages();
+      let targetScreens: SideScreens = { reflect: 5, lightScreen: 0 };
+      let userHazards: SideHazards = { stealthRock: true };
+      const logs: string[] = [];
+
+      const defog = getMoveByName('Scaccianebbia');
+
+      executeMoveAction(
+        defog,
+        user,
+        target,
+        defaultStages(),
+        () => {},
+        targetStages,
+        (u) => { targetStages = typeof u === 'function' ? u(targetStages) : u; },
+        {},
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        { isProtected: true },
+        () => {},
+        120,
+        () => {},
+        120,
+        () => {},
+        true,
+        true,
+        (msg) => logs.push(msg),
+        {
+          userSideHazards: userHazards,
+          setUserSideHazards: (u) => { userHazards = typeof u === 'function' ? u(userHazards) : u; },
+          targetScreens,
+          setTargetScreens: (u) => { targetScreens = typeof u === 'function' ? u(targetScreens) : u; }
+        }
+      );
+
+      expect(targetStages.evasion).toBe(0);
+      expect(targetScreens.reflect).toBe(5);
+      expect(userHazards.stealthRock).toBe(true);
+      expect(logs.some(l => l.includes('si è protetto completamente'))).toBe(true);
+    });
+
+    it('setHazardFromMove clears both sides when called directly with Italian name Scaccianebbia', () => {
+      const res = setHazardFromMove(
+        'Scaccianebbia',
+        { stealthRock: true, spikesLayers: 2, toxicSpikesLayers: 1, stickyWeb: true },
+        { stealthRock: true, spikesLayers: 3, toxicSpikesLayers: 2, stickyWeb: true }
+      );
+      expect(res.updatedTargetSide).toEqual(defaultSideHazards());
+      expect(res.updatedUserSide).toEqual(defaultSideHazards());
+      expect(res.msg).toContain('Scaccianebbia');
+    });
+  });
+
+  describe('Bruciapelo (Fake Out) Mechanics', () => {
+    it('resolves Bruciapelo/fake-out with priority +3 and outspeeds +2 Extreme Speed', () => {
+      const fakeOut = getMoveByName('Bruciapelo');
+      const extremeSpeed = getMoveByName('Extrarapido');
+
+      expect(fakeOut.name).toBe('Bruciapelo');
+      expect(fakeOut.power).toBe(40);
+      expect(fakeOut.priority).toBe(3);
+      expect(fakeOut.flinchChance).toBe(100);
+
+      const order = determineTurnOrder(
+        { combatant: 'player', move: fakeOut, effectiveSpeed: 50, priority: fakeOut.priority || 0 },
+        { combatant: 'enemy', move: extremeSpeed, effectiveSpeed: 200, priority: extremeSpeed.priority || 0 }
+      );
+      expect(order).toBe('player');
+    });
+
+    it('deals damage and guarantees flinch on Turn 1 on the field, then fails on Turn 2', () => {
+      const user = createMockPokemon({ name: 'Hariyama', types: ['fighting'], stats: { attack: 120, defense: 60, spAtk: 40, spDef: 60, speed: 50 } });
+      const target = createMockPokemon({ name: 'Snorlax', types: ['normal'], hp: 200, maxHp: 200 });
+
+      let userVolatile: VolatileStatus = {};
+      let targetVolatile: VolatileStatus = {};
+      let targetHp = 200;
+      const logsTurn1: string[] = [];
+
+      const fakeOut = getMoveByName('Bruciapelo');
+
+      // Turn 1: First turn on field -> succeeds & flinches
+      const res1 = executeMoveAction(
+        fakeOut,
+        user,
+        target,
+        defaultStages(),
+        () => {},
+        defaultStages(),
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        userVolatile,
+        (u) => { userVolatile = typeof u === 'function' ? u(userVolatile) : u; },
+        targetVolatile,
+        (u) => { targetVolatile = typeof u === 'function' ? u(targetVolatile) : u; },
+        120,
+        () => {},
+        targetHp,
+        (hp) => { targetHp = typeof hp === 'function' ? hp(targetHp) : hp; },
+        true,
+        true,
+        (msg) => logsTurn1.push(msg)
+      );
+
+      expect(res1.nextTargetHp).toBeLessThan(200);
+      expect(targetVolatile.isFlinched).toBe(true);
+      expect(userVolatile.turnsOnField).toBe(1);
+
+      // Turn 2: Already on field -> Fake Out MUST fail without damaging or flinching
+      targetVolatile = {};
+      const hpAfterTurn1 = res1.nextTargetHp;
+      const logsTurn2: string[] = [];
+
+      const res2 = executeMoveAction(
+        fakeOut,
+        user,
+        target,
+        defaultStages(),
+        () => {},
+        defaultStages(),
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        userVolatile,
+        (u) => { userVolatile = typeof u === 'function' ? u(userVolatile) : u; },
+        targetVolatile,
+        (u) => { targetVolatile = typeof u === 'function' ? u(targetVolatile) : u; },
+        120,
+        () => {},
+        hpAfterTurn1,
+        (hp) => { targetHp = typeof hp === 'function' ? hp(targetHp) : hp; },
+        true,
+        true,
+        (msg) => logsTurn2.push(msg)
+      );
+
+      expect(res2.nextTargetHp).toBe(hpAfterTurn1);
+      expect(targetVolatile.isFlinched).toBeUndefined();
+      expect(logsTurn2.some(l => l.includes('fallisce') && l.includes('primo turno'))).toBe(true);
+    });
+
+    it('fails on Turn 2 if user spent Turn 1 using another move, and works again after switching out and back in', () => {
+      const user = createMockPokemon({ name: 'Incineroar', types: ['fire', 'dark'] });
+      const target = createMockPokemon({ name: 'Blissey', types: ['normal'], hp: 300, maxHp: 300 });
+      let userVolatile: VolatileStatus = {};
+      let targetVolatile: VolatileStatus = {};
+      let targetHp = 300;
+
+      // Turn 1: User uses Tackle instead of Fake Out
+      const tackle = getMoveByName('Azione');
+      const r1 = executeMoveAction(
+        tackle,
+        user,
+        target,
+        defaultStages(),
+        () => {},
+        defaultStages(),
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        userVolatile,
+        (u) => { userVolatile = typeof u === 'function' ? u(userVolatile) : u; },
+        targetVolatile,
+        (u) => { targetVolatile = typeof u === 'function' ? u(targetVolatile) : u; },
+        120,
+        () => {},
+        targetHp,
+        (hp) => { targetHp = typeof hp === 'function' ? hp(targetHp) : hp; },
+        true,
+        true,
+        () => {}
+      );
+      targetHp = r1.nextTargetHp;
+      expect(userVolatile.turnsOnField).toBe(1);
+
+      // Turn 2: Now tries Fake Out -> fails!
+      const fakeOut = getMoveByName('fake-out');
+      const logsFail: string[] = [];
+      const r2 = executeMoveAction(
+        fakeOut,
+        user,
+        target,
+        defaultStages(),
+        () => {},
+        defaultStages(),
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        userVolatile,
+        (u) => { userVolatile = typeof u === 'function' ? u(userVolatile) : u; },
+        targetVolatile,
+        (u) => { targetVolatile = typeof u === 'function' ? u(targetVolatile) : u; },
+        120,
+        () => {},
+        targetHp,
+        (hp) => { targetHp = typeof hp === 'function' ? hp(targetHp) : hp; },
+        true,
+        true,
+        (msg) => logsFail.push(msg)
+      );
+      expect(r2.nextTargetHp).toBe(targetHp);
+      expect(logsFail.some(l => l.includes('fallisce'))).toBe(true);
+
+      // Simulate switch-out & switch-back-in: volatile resets to {}
+      userVolatile = {};
+      targetVolatile = {};
+      const hpBeforeSwitchRetry = targetHp;
+      const r3 = executeMoveAction(
+        fakeOut,
+        user,
+        target,
+        defaultStages(),
+        () => {},
+        defaultStages(),
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        userVolatile,
+        (u) => { userVolatile = typeof u === 'function' ? u(userVolatile) : u; },
+        targetVolatile,
+        (u) => { targetVolatile = typeof u === 'function' ? u(targetVolatile) : u; },
+        120,
+        () => {},
+        targetHp,
+        (hp) => { targetHp = typeof hp === 'function' ? hp(targetHp) : hp; },
+        true,
+        true,
+        () => {}
+      );
+      expect(r3.nextTargetHp).toBeLessThan(hpBeforeSwitchRetry);
+      expect(targetVolatile.isFlinched).toBe(true);
+    });
+
+    it('does not flinch Ghost-type targets or targets behind a Substitute', () => {
+      const user = createMockPokemon({ name: 'Mienshao', types: ['fighting'] });
+      const ghostTarget = createMockPokemon({ name: 'Gengar', types: ['ghost', 'poison'], hp: 120, maxHp: 120 });
+      const normalTarget = createMockPokemon({ name: 'Snorlax', types: ['normal'], hp: 200, maxHp: 200 });
+
+      const fakeOut = getMoveByName('Bruciapelo');
+
+      // vs Ghost-type: 0x immunity, no damage, no flinch
+      let ghostVolatile: VolatileStatus = {};
+      const resGhost = executeMoveAction(
+        fakeOut,
+        user,
+        ghostTarget,
+        defaultStages(),
+        () => {},
+        defaultStages(),
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        ghostVolatile,
+        (u) => { ghostVolatile = typeof u === 'function' ? u(ghostVolatile) : u; },
+        120,
+        () => {},
+        120,
+        () => {},
+        true,
+        true,
+        () => {}
+      );
+      expect(resGhost.nextTargetHp).toBe(120);
+      expect(ghostVolatile.isFlinched).toBeUndefined();
+
+      // vs Substitute: substitute absorbs hit, target does not flinch
+      let subVolatile: VolatileStatus = { substituteHp: 50 };
+      const resSub = executeMoveAction(
+        fakeOut,
+        user,
+        normalTarget,
+        defaultStages(),
+        () => {},
+        defaultStages(),
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        subVolatile,
+        (u) => { subVolatile = typeof u === 'function' ? u(subVolatile) : u; },
+        120,
+        () => {},
+        200,
+        () => {},
+        true,
+        true,
+        () => {}
+      );
+      expect(resSub.nextTargetHp).toBe(200);
+      expect(subVolatile.isFlinched).toBeUndefined();
+    });
+
+    it('AI uses Bruciapelo on Turn 1 and never selects it on Turn 2+', () => {
+      const fakeOut = getMoveByName('Bruciapelo');
+      const bodySlam = getMoveByName('Corposcontro');
+      const enemy = createMockPokemon({ name: 'Kangaskhan', types: ['normal'], moves: [fakeOut, bodySlam] });
+      const player = createMockPokemon({ name: 'Blastoise', types: ['water'] });
+
+      // Turn 2+: AI must NEVER pick Fake Out
+      const pickTurn2 = selectEnemyMove(
+        [fakeOut, bodySlam],
+        enemy,
+        player,
+        {},
+        {},
+        defaultStages(),
+        defaultStages(),
+        120,
+        120,
+        { turnsOnField: 1 }
+      );
+      expect(pickTurn2.name).toBe('Corposcontro');
     });
   });
 });
