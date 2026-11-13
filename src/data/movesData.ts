@@ -1746,7 +1746,66 @@ export const MOVES_DATABASE: Record<string, MoveDefinition> = {
     power: 70,
     accuracy: 100,
     pp: 20,
-    maxPp: 20
+    maxPp: 20,
+    description: 'Dopo l\'attacco, chi la usa lascia il posto a un compagno in squadra.'
+  },
+  'u-turn': {
+    englishName: 'u-turn',
+    name: 'Retromarcia',
+    type: 'bug',
+    category: 'physical',
+    power: 70,
+    accuracy: 100,
+    pp: 20,
+    maxPp: 20,
+    description: 'Dopo l\'attacco, chi la usa lascia il posto a un compagno in squadra.'
+  },
+  'flip-turn': {
+    englishName: 'flip-turn',
+    name: 'Virata',
+    type: 'water',
+    category: 'physical',
+    power: 60,
+    accuracy: 100,
+    pp: 20,
+    maxPp: 20,
+    description: 'Dopo l\'attacco, chi la usa lascia il posto a un compagno in squadra.'
+  },
+  'yawn': {
+    englishName: 'yawn',
+    name: 'Sbadiglio',
+    type: 'normal',
+    category: 'status',
+    power: 0,
+    accuracy: 100,
+    pp: 10,
+    maxPp: 10,
+    target: 'selected-pokemon',
+    description: 'Uno sbadiglio contagioso che fa addormentare il bersaglio alla fine del turno successivo.'
+  },
+  'heal-bell': {
+    englishName: 'heal-bell',
+    name: 'Rintoccasana',
+    type: 'normal',
+    category: 'status',
+    power: 0,
+    accuracy: 100,
+    pp: 5,
+    maxPp: 5,
+    target: 'user',
+    description: 'Un dolce rintocco che cura tutti i problemi di stato della propria squadra.'
+  },
+  'aromatherapy': {
+    englishName: 'aromatherapy',
+    name: 'Aromaterapia',
+    type: 'grass',
+    category: 'status',
+    power: 0,
+    accuracy: 100,
+    pp: 5,
+    maxPp: 5,
+    target: 'user',
+    description: 'Un profumo rilassante che cura tutti i problemi di stato della propria squadra.'
   },
   'venoshock': {
     englishName: 'venoshock',
@@ -3217,7 +3276,20 @@ const ALIAS_MAP: Record<string, string> = {
   'paralizzaspore': 'stun-spore',
   'stun-spore': 'stun-spore',
   'fanghiglia': 'muddy-water',
-  'baffo-daura': 'aura-sphere'
+  'baffo-daura': 'aura-sphere',
+  'retromarcia': 'u-turn',
+  'u-turn': 'u-turn',
+  'uturn': 'u-turn',
+  'virata': 'flip-turn',
+  'flip-turn': 'flip-turn',
+  'flipturn': 'flip-turn',
+  'sbadiglio': 'yawn',
+  'yawn': 'yawn',
+  'rintoccasana': 'heal-bell',
+  'heal-bell': 'heal-bell',
+  'healbell': 'heal-bell',
+  'aromaterapia': 'aromatherapy',
+  'aromatherapy': 'aromatherapy'
 };
 
 /**

@@ -41,7 +41,8 @@ export function selectEnemyMove(
   playerStages: BattleStages,
   enemyHp: number,
   playerHp: number,
-  enemyVolatile: VolatileStatus = {}
+  enemyVolatile: VolatileStatus = {},
+  playerVolatile: VolatileStatus = {}
 ): Move {
   const validMoves = enemyMoves.filter(m => (m.pp ?? m.maxPp ?? 35) > 0);
   if (validMoves.length === 0) return STRUGGLE_MOVE;
@@ -208,6 +209,31 @@ export function selectEnemyMove(
           score += 45;
         }
       }
+
+      // 3E2. Yawn (Sbadiglio): don't spam if target already has status, yawn active, or is nearly KO
+      if (mNameLower === 'sbadiglio' || mNameLower === 'yawn') {
+        if (playerStatus.status || (playerVolatile.yawnTurns && playerVolatile.yawnTurns > 0)) {
+          score = -9999;
+        } else if (playerHpPercent <= 0.25) {
+          score -= 50;
+        } else {
+          score += 30;
+        }
+      }
+
+      // 3E3. Heal Bell / Aromatherapy (Rintoccasana / Aromaterapia): prioritize if enemy is afflicted by status
+      if (
+        mNameLower === 'rintoccasana' ||
+        mNameLower === 'heal-bell' ||
+        mNameLower === 'aromaterapia' ||
+        mNameLower === 'aromatherapy'
+      ) {
+        if (enemyStatus.status) {
+          score += 55;
+        } else {
+          score = -9999;
+        }
+      }
     }
 
     // 3F. Fake Out (Bruciapelo): only works on first turn on field!
@@ -218,6 +244,17 @@ export function selectEnemyMove(
       } else {
         score += 35;
       }
+    }
+
+    // 3G. Pivot moves (Retromarcia, Invertivolt, Virata): slight tactical preference when non-immune
+    if (
+      (mLower === 'retromarcia' || mLower === 'u-turn' ||
+       mLower === 'invertivolt' || mLower === 'volt-switch' ||
+       mLower === 'virata' || mLower === 'flip-turn') &&
+      eff >= 1 &&
+      enemyHpPercent > 0.35
+    ) {
+      score += 10;
     }
 
     // 4. PRIORITY MOVES

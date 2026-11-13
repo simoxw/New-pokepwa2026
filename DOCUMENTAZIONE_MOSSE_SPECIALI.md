@@ -22,6 +22,9 @@ Questo documento elenca **tutte le mosse** implementate nel gioco che possiedono
    - Nube (Haze)
    - Scaccianebbia (Defog)
    - Bruciapelo (Fake Out)
+   - Mosse di Ricambio Tattico (Retromarcia, Invertivolt, Virata)
+   - Sbadiglio (Yawn)
+   - Rintoccasana e Aromaterapia (Heal Bell / Aromatherapy)
 3. [Mosse a Più Turni e Ricarica](#3-mosse-a-più-turni-e-ricarica)
    - Mosse con Semi-Invulnerabilità (Volo, Fossa, Sub, Rimbalzo)
    - Mosse con Ricarica Obbligatoria (Iper Raggio, Gigaimpatto)
@@ -34,6 +37,7 @@ Questo documento elenca **tutte le mosse** implementate nel gioco che possiedono
    - Rimozione Trappole (Rapigiro / Rapid Spin)
 6. [Mosse con Variazione Statistiche Garantita sull'Utilizzatore](#6-mosse-con-variazione-statistiche-garantita-sullutilizzatore)
    - Zuffa, Vampata, Troppoforte, Dragometeora, Danzaspada, ecc.
+7. [Sistema Abilità Core (15 Abilità Curate e Compatibilità Scambi)](#7-sistema-abilità-core-15-abilità-curate-e-compatibilità-scambi)
 
 ---
 
@@ -243,6 +247,49 @@ Questo documento elenca **tutte le mosse** implementate nel gioco che possiedono
 
 ---
 
+### 🔄⚡🌊 Mosse di Ricambio Tattico (Retromarcia, Invertivolt, Virata)
+* **Mosse**:
+  * **Retromarcia (U-turn)**: Tipo Coleottero, Fisico, Potenza 70.
+  * **Invertivolt (Volt Switch)**: Tipo Elettro, Speciale, Potenza 70.
+  * **Virata (Flip Turn)**: Tipo Acqua, Fisico, Potenza 60.
+* **Regole & Meccaniche**:
+  * Infliggono danni al bersaglio e, se il colpo va a segno (non bloccato da Protezione o immunità di tipo/abilità), l'utilizzatore lascia immediatamente il campo per dare spazio a un compagno di squadra sano.
+  * Il giocatore apre automaticamente il selettore squadra non annullabile (*Cambio Tattico*); se agisce per primo nel turno, il nuovo Pokémon entrante subisce l'eventuale attacco avversario della Fase 2 e i tick di fine turno.
+  * Le trappole d'ingresso (*Levitoroccia, Punte, Fielepunte, Rete Vischiosa*) e le abilità d'ingresso (*Prepotenza, Siccità, ecc.*) si attivano normalmente sul Pokémon entrante.
+  * Se l'utilizzatore è l'ultimo Pokémon sano in squadra, la mossa infligge normalmente i danni ma non effettua il cambio.
+* **File di Implementazione**:
+  * `src/data/movesData.ts`: definizioni e alias (`u-turn`, `volt-switch`, `flip-turn`).
+  * `src/lib/battle/battleActionRunner.ts`: flag `pivotSwitchRequired` subordinato a `canUserPivotSwitch` e successo dell'attacco.
+  * `src/components/BattleScreen.tsx`: gestione `pendingPivotRef` e cambio tattico per giocatore e allenatori avversari.
+
+---
+
+### 🥱 Sbadiglio (Yawn)
+* **Descrizione**: Trasmette al bersaglio una sonnolenza incontrollabile che lo fa addormentare al termine del turno successivo.
+* **Regole & Meccaniche**:
+  * Applica al bersaglio lo stato volatile `yawnTurns = 2` (mostrato nell'HUD con il badge `SBAD`).
+  * **Conteggio a fine turno**: alla fine del 1° turno scende a `1`; alla fine del turno successivo (se il bersaglio è ancora in campo e privo di altri stati primari), il bersaglio si addormenta per **2-4 turni**.
+  * **Contromossa tattica**: sostituendo il Pokémon colto da sonnolenza prima che si addormenti, lo stato volatile si azzera.
+  * **Immunità**: bloccata da *Sostituto*, da un problema di stato primario già presente o da uno Sbadiglio già attivo.
+* **File di Implementazione**:
+  * `src/data/movesData.ts`: definizione `'yawn'` (Sbadiglio).
+  * `src/lib/battle/statusEffects.ts`: campo `yawnTurns` e funzione `processYawnEndTurn()`.
+  * `src/lib/battle/battleActionRunner.ts`, `src/lib/battle/battleAi.ts`, `src/components/BattleScreen.tsx`, `src/components/battle/BattleHUD.tsx`.
+
+---
+
+### 🔔🌿 Rintoccasana (Heal Bell) e Aromaterapia (Aromatherapy)
+* **Descrizione**: Un rintocco purificatore o un profumo curativo che guarisce tutti i problemi di stato dell'utilizzatore e dell'intera squadra.
+* **Regole & Meccaniche**:
+  * Rimuove istantaneamente *Veleno, Iperveleno, Paralisi, Scottatura, Sonno e Congelamento* dal Pokémon attivo e da tutti i compagni in squadra (`team`).
+  * L'IA avversaria evita di usarla se il proprio Pokémon è sano e la seleziona con priorità alta quando afflitto da stato.
+* **File di Implementazione**:
+  * `src/data/movesData.ts`: definizioni `'heal-bell'` e `'aromatherapy'`.
+  * `src/lib/battle/battleActionRunner.ts`: callback `onCureTeamStatus` e reset stato attivo.
+  * `src/components/BattleScreen.tsx`: `curePlayerTeamStatus` e `cureEnemyTeamStatus`.
+
+---
+
 ## 3. Mosse a Più Turni e Ricarica
 
 ### 🦅 Mosse di Semi-Invulnerabilità (Volo, Fossa, Sub, Rimbalzo)
@@ -314,8 +361,38 @@ Questo documento elenca **tutte le mosse** implementate nel gioco che possiedono
 
 ---
 
+## 7. Sistema Abilità Core (15 Abilità Curate e Compatibilità Scambi)
+
+Il motore supporta **15 Abilità Core** selezionate senza appesantire l'architettura dati e con **compatibilità al 100% con codici Base64 esterni/Pokédex e vecchi salvataggi** (che possono omettere il campo `ability`).
+
+* **Risoluzione deterministica (`resolvePokemonAbility`)**:
+  * Se `pokemon.ability` è assente o è il placeholder generico `'Tenacia'`, viene risolta in modo trasparente tramite `SPECIES_ABILITY_MAP[pokemon.id]` senza errori né migrazioni distruttive.
+  * I nomi in inglese provenienti da PokéAPI (es. `'intimidate'`, `'levitate'`) vengono convertiti automaticamente nelle rispettive Abilità Core italiane.
+  * I codici di esportazione/importazione (`encodePokemon` / `decodePokemon` in `src/lib/utils.ts`) restano invariati al 100%.
+
+| Abilità Core | Effetto in Lotta |
+|---|---|
+| **Erbaiuto / Aiutofuoco / Acquaiuto** | +50% potenza alle mosse Erba / Fuoco / Acqua quando i PS sono <= 1/3 |
+| **Tecnico** | +50% potenza alle mosse offensive con potenza base <= 60 |
+| **Prepotenza** | Riduce di 1 livello l'Attacco avversario all'ingresso in campo (bloccata da Sostituto) |
+| **Levitazione** | Immunità totale alle mosse di tipo Terra |
+| **Vigore** | Con PS pieni resiste a un colpo letale con 1 PS |
+| **Statica** | 30% di probabilità di paralizzare chi sferra una mossa fisica |
+| **Assorbacqua** | Immunità Acqua e recupero del 25% dei PS massimi se colpito |
+| **Fuocardore** | Immunità Fuoco e +50% alle proprie mosse Fuoco dopo l'assorbimento |
+| **Parafulmine** | Immunità Elettro e +1 Attacco Speciale se colpito |
+| **Siccità / Piovischio / Sabbiafiume / Scendineve** | Attiva Sole / Pioggia / Tempesta di Sabbia / Grandine (5 turni) all'ingresso |
+
+* **File di Implementazione**:
+  * `src/lib/battle/abilities.ts`: definizioni `CORE_ABILITIES`, `SPECIES_ABILITY_MAP`, `resolvePokemonAbility()`, `processSwitchInAbility()`, `checkAbility()`, `hasSturdyAbility()`.
+  * `src/lib/battle/battleActionRunner.ts`: applicazione immunità, assorbimenti, Vigore, Tecnico, Statica e potenziamenti.
+  * `src/components/BattleScreen.tsx`: attivazione abilità d'ingresso e passaggio a `BattleHUD`.
+  * `src/components/battle/BattleHUD.tsx` & `src/components/PokemonDetails.tsx`: visualizzazione chiara dell'abilità attiva.
+
+---
+
 ## 🧪 Suite di Test Automatici
 
 Tutte queste meccaniche sono coperte da una suite completa di test automatizzati con **Vitest**:
-* File test: `src/tests/specialMovesAndMechanics.test.ts` (test dedicati a Falsofinale, Sostituto, Meteo, Schermi, Metronomo, Scambio Forzato, Stordiraggio, Trespolo, Splash, Nube, Scaccianebbia e Bruciapelo).
+* File test: `src/tests/specialMovesAndMechanics.test.ts` (test dedicati a Falsofinale, Sostituto, Meteo, Schermi, Metronomo, Scambio Forzato, Stordiraggio, Trespolo, Splash, Nube, Scaccianebbia, Bruciapelo, Retromarcia/Invertivolt/Virata, Sbadiglio, Rintoccasana/Aromaterapia, tutte le 15 Abilità Core e compatibilità codici Base64 esterni).
 * Esecuzione comandi: `npm test` oppure `npx vitest run src/tests/specialMovesAndMechanics.test.ts`.

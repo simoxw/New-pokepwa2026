@@ -17,6 +17,8 @@ interface HpBarProps {
   types?: string[];
   substituteHp?: number;
   screens?: { reflect?: number; lightScreen?: number };
+  abilityName?: string;
+  isDrowsy?: boolean;
 }
 
 const STAT_DISPLAY_NAMES: Record<string, string> = {
@@ -43,7 +45,9 @@ export const BattleHUD: React.FC<HpBarProps> = ({
   stages, 
   types,
   substituteHp,
-  screens
+  screens,
+  abilityName,
+  isDrowsy
 }) => {
   const percent = Math.max(0, (current / max) * 100);
 
@@ -101,6 +105,11 @@ export const BattleHUD: React.FC<HpBarProps> = ({
               {STATUS_LABELS[status] || status}
             </span>
           )}
+          {isDrowsy && !status && (
+            <span className="bg-indigo-500 text-[8px] text-white px-1.5 py-0.5 rounded font-black">
+              SBAD
+            </span>
+          )}
           {isConfused && (
             <span className="bg-fuchsia-600 text-[8px] text-white px-1.5 py-0.5 rounded font-black animate-pulse">
               CONF
@@ -122,7 +131,7 @@ export const BattleHUD: React.FC<HpBarProps> = ({
             </span>
           )}
         </div>
-        <span className="text-xs font-bold text-gray-500">Lv.{level}</span>
+        <span className="text-xs font-bold text-gray-500 tabular-nums">Lv.{level}</span>
       </div>
 
       <div className="w-full h-2 bg-gray-200 rounded-full overflow-hidden">
@@ -154,10 +163,17 @@ export const BattleHUD: React.FC<HpBarProps> = ({
           </div>
         ) : <div />}
 
-        <div className="text-[10px] font-bold text-gray-600 ml-auto">
+        <div className="text-[10px] font-bold text-gray-600 ml-auto tabular-nums">
           {current} / {max} HP
         </div>
       </div>
+
+      {abilityName && (
+        <div className="mt-1 flex items-center justify-between text-[9px] font-bold text-slate-600 border-t border-slate-200/70 pt-1">
+          <span className="uppercase tracking-wider text-slate-400">Abilità</span>
+          <span className="font-black text-slate-700 uppercase">{abilityName}</span>
+        </div>
+      )}
       
       {/* Stat changes badges */}
       {stages && Object.entries(stages).some(([, val]) => typeof val === 'number' && val !== 0) && (

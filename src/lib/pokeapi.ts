@@ -504,6 +504,12 @@ const MOVE_TRANSLATIONS: Record<string, string> = {
   'haze': 'Nube',
   'defog': 'Scaccianebbia',
   'fake-out': 'Bruciapelo',
+  'u-turn': 'Retromarcia',
+  'volt-switch': 'Invertivolt',
+  'flip-turn': 'Virata',
+  'yawn': 'Sbadiglio',
+  'heal-bell': 'Rintoccasana',
+  'aromatherapy': 'Aromaterapia',
 };
 
 export async function getBaseStats(id: number) {

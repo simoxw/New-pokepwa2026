@@ -4,6 +4,7 @@ import { Pokemon, Move, TYPE_COLORS } from '../types/game';
 import { Shield, Sword, Zap, Heart, Star, MapPin } from 'lucide-react';
 import { MoveInfoModal } from './battle/MoveInfoModal';
 import { getNatureDetails } from '../lib/pokeapi';
+import { resolvePokemonAbility } from '../lib/battle/abilities';
 import { useGame } from '../contexts/GameContext';
 import { playMenuClick } from '../lib/sound';
 
@@ -87,6 +88,7 @@ export const PokemonDetails: React.FC<PokemonDetailsProps> = ({
   const totalIv = (pokemon.ivs?.hp ?? 0) + (pokemon.ivs?.attack ?? 0) + (pokemon.ivs?.defense ?? 0) + (pokemon.ivs?.spAtk ?? 0) + (pokemon.ivs?.spDef ?? 0) + (pokemon.ivs?.speed ?? 0);
   const totalEv = (pokemon.evs?.hp || 0) + (pokemon.evs?.attack || 0) + (pokemon.evs?.defense || 0) + (pokemon.evs?.spAtk || 0) + (pokemon.evs?.spDef || 0) + (pokemon.evs?.speed || 0);
   const natureDetails = getNatureDetails(pokemon.nature);
+  const resolvedAbility = resolvePokemonAbility(pokemon);
 
   return (
     <div className="fixed inset-0 z-[100] bg-black/75 backdrop-blur-sm flex items-center justify-center p-4">
@@ -160,6 +162,21 @@ export const PokemonDetails: React.FC<PokemonDetailsProps> = ({
             <InfoItem icon={<Heart className="text-emerald-500" />} label="Natura" value={natureDetails.name} subValue={natureDetails.mod} />
             <InfoItem icon={<Zap className="text-blue-500" />} label="Shiny" value={pokemon.isShiny ? '✨ Sì' : 'No'} />
           </div>
+
+          {resolvedAbility && (
+            <div className="flex items-start gap-2.5 bg-slate-50 p-3 rounded-2xl border border-slate-100">
+              <div className="w-8 h-8 rounded-full bg-white shadow-sm flex items-center justify-center text-sm shrink-0 border border-slate-100 mt-0.5">
+                <Shield className="w-4 h-4 text-indigo-500" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-[10px] text-slate-500 font-bold uppercase leading-none">Abilità</p>
+                <p className="text-xs font-black uppercase text-slate-800 mt-0.5">{resolvedAbility.name}</p>
+                {resolvedAbility.description && (
+                  <p className="text-[11px] font-medium text-slate-600 leading-snug mt-0.5">{resolvedAbility.description}</p>
+                )}
+              </div>
+            </div>
+          )}
 
           {/* Experience Bar */}
           <div className="space-y-1">

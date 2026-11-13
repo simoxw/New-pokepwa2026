@@ -2,7 +2,7 @@ import React from 'react';
 import { Pokemon, Move, BattleStages, StatusCondition } from '../../types/game';
 import { calculateDamage, getAccuracyMultiplier, CalculateDamageOptions } from './battleMath';
 import { isImmuneToStatus, VolatileStatus } from './statusEffects';
-import { checkAbility } from './abilities';
+import { checkAbility, hasSturdyAbility } from './abilities';
 import { playProtect, playHit } from '../sound';
 import { SideHazards, setHazardFromMove, defaultSideHazards } from './hazards';
 import { getMoveByName, getRandomMetronomeMove } from '../../data/movesData';
@@ -17,6 +17,8 @@ export interface ExecuteMoveResult {
   nextTargetStatus?: { status?: StatusCondition; duration?: number };
   forceSwitchTarget?: boolean;
   forceFlee?: boolean;
+  pivotSwitchRequired?: boolean;
+  curedTeamStatus?: boolean;
 }
 
 function isSelfStatChange(move: Move, sc: { change: number; target?: string }, defaultSelf: boolean): boolean {
@@ -98,6 +100,8 @@ export function executeMoveAction(
     targetScreens?: SideScreens;
     setTargetScreens?: React.Dispatch<React.SetStateAction<SideScreens>>;
     isWildBattle?: boolean;
+    canUserPivotSwitch?: boolean;
+    onCureTeamStatus?: () => void;
   }
 ): ExecuteMoveResult {
   // Enrich move with authoritative database definition to ensure secondary effects (stat_changes, recoil, drain) are always guaranteed
@@ -668,6 +672,58 @@ export function executeMoveAction(
       };
     }
 
+    // Heal Bell (Rintoccasana) / Aromatherapy (Aromaterapia) handling
+    if (
+      mLower.includes('rintoccasana') ||
+      mLower.includes('heal-bell') ||
+      mLower.includes('aromaterapia') ||
+      mLower.includes('aromatherapy') ||
+      rawLower === 'heal-bell' ||
+      rawLower === 'aromatherapy'
+    ) {
+      nextUserStatusObj = { status: undefined, duration: undefined };
+      setUserStatus({ status: undefined, duration: undefined });
+      options?.onCureTeamStatus?.();
+      const isAroma = mLower.includes('aromaterapia') || mLower.includes('aromatherapy') || rawLower === 'aromatherapy';
+      addLog(
+        isAroma
+          ? `🌿 Un profumo rilassante guarisce tutti i problemi di stato della squadra di ${user.name}!`
+          : `🔔 Un dolce rintocco cura tutti i problemi di stato della squadra di ${user.name}!`
+      );
+      return {
+        nextUserHp: curUserHp,
+        nextTargetHp: curTargetHp,
+        targetFainted: false,
+        userFainted: false,
+        nextUserStatus: nextUserStatusObj,
+        nextTargetStatus: nextTargetStatusObj,
+        curedTeamStatus: true
+      };
+    }
+
+    // Yawn (Sbadiglio) handling
+    if (mLower === 'sbadiglio' || mLower === 'yawn' || rawLower === 'yawn') {
+      if (targetVolatile.substituteHp && targetVolatile.substituteHp > 0) {
+        addLog(`Il Sostituto protegge ${target.name} dallo sbadiglio!`);
+      } else if (targetStatus.status) {
+        addLog(`Ma non ha avuto effetto! ${target.name} ha già un problema di stato!`);
+      } else if (targetVolatile.yawnTurns && targetVolatile.yawnTurns > 0) {
+        addLog(`${target.name} è già colto da sonnolenza!`);
+      } else {
+        targetVolatile.yawnTurns = 2;
+        setTargetVolatile(prev => ({ ...prev, yawnTurns: 2 }));
+        addLog(`🥱 ${target.name} viene colto da una forte sonnolenza!`);
+      }
+      return {
+        nextUserHp: curUserHp,
+        nextTargetHp: curTargetHp,
+        targetFainted: false,
+        userFainted: false,
+        nextUserStatus: nextUserStatusObj,
+        nextTargetStatus: nextTargetStatusObj
+      };
+    }
+
     if (move.stat_changes && move.stat_changes.length > 0) {
       applyStatChanges(move.stat_changes, move.target === 'user');
     }
@@ -721,7 +777,43 @@ export function executeMoveAction(
   }
 
   // 4. ATTACKING MOVES (Physical / Special)
-  const abilityEffect = isPlayer ? checkAbility(user, 'on_move_use', { move, target }) : null;
+  // Pre-hit incoming ability immunities & absorption (Levitazione, Assorbacqua, Fuocardore, Parafulmine)
+  const preHitImmunity = checkAbility(target, 'on_hit', { move, target: user, currentHp: curTargetHp });
+  if (preHitImmunity?.type === 'damage_mult' && preHitImmunity.value === 0) {
+    if (preHitImmunity.msg) addLog(preHitImmunity.msg);
+    if (preHitImmunity.healHp && curTargetHp < target.maxHp) {
+      curTargetHp = Math.min(target.maxHp, curTargetHp + preHitImmunity.healHp);
+      setTargetHp(curTargetHp);
+    }
+    if (preHitImmunity.flashFireBoost) {
+      targetVolatile.flashFireBoosted = true;
+      setTargetVolatile(prev => ({ ...prev, flashFireBoosted: true }));
+    }
+    if (preHitImmunity.boostStat && preHitImmunity.boostAmount) {
+      const stKey = preHitImmunity.boostStat;
+      const curStage = targetStages[stKey] ?? 0;
+      if (curStage < 6) {
+        const nextStage = Math.min(6, curStage + preHitImmunity.boostAmount);
+        targetStages[stKey] = nextStage;
+        setTargetStages(prev => ({ ...prev, [stKey]: nextStage }));
+      }
+    }
+    return {
+      nextUserHp: curUserHp,
+      nextTargetHp: curTargetHp,
+      targetFainted: false,
+      userFainted: false,
+      nextUserStatus: nextUserStatusObj,
+      nextTargetStatus: nextTargetStatusObj
+    };
+  }
+
+  const abilityEffect = checkAbility(user, 'on_move_use', {
+    move,
+    target,
+    currentHp: curUserHp,
+    flashFireBoosted: Boolean(userVolatile.flashFireBoosted)
+  });
   if (abilityEffect?.msg) addLog(abilityEffect.msg);
   const damageMult = abilityEffect?.type === 'damage_mult' ? abilityEffect.value || 1 : 1;
 
@@ -830,6 +922,10 @@ export function executeMoveAction(
       curTargetHp = 1;
       setTargetHp(curTargetHp);
       addLog(`✨ ${target.name} resiste con 1 PS grazie a Falsofinale!`);
+    } else if (curTargetHp === target.maxHp && finalDamage >= curTargetHp && hasSturdyAbility(target)) {
+      curTargetHp = 1;
+      setTargetHp(curTargetHp);
+      addLog(`🛡️ ${target.name} resiste con 1 PS grazie a Vigore!`);
     } else {
       curTargetHp = Math.max(0, curTargetHp - finalDamage);
       setTargetHp(curTargetHp);
@@ -852,9 +948,19 @@ export function executeMoveAction(
     addLog(`🩸 Boss Vampirico rigenera ${vampHeal} PS dall'attacco!`);
   }
 
-  // Ability check on target hit
-  const onHitEffect = checkAbility(target, 'on_hit', { move, target: user });
-  if (onHitEffect?.msg) addLog(onHitEffect.msg);
+  // Ability check on target hit (contact abilities like Statica)
+  if (hitLandedOnPokemon) {
+    const onHitEffect = checkAbility(target, 'on_hit', { move, target: user, currentHp: curTargetHp });
+    if (onHitEffect?.type === 'other') {
+      if (onHitEffect.inflictStatus && !userStatus.status && !isImmuneToStatus(user.types, onHitEffect.inflictStatus)) {
+        nextUserStatusObj = { status: onHitEffect.inflictStatus };
+        setUserStatus({ status: onHitEffect.inflictStatus });
+        if (onHitEffect.msg) addLog(onHitEffect.msg);
+      } else if (onHitEffect.msg && !onHitEffect.inflictStatus) {
+        addLog(onHitEffect.msg);
+      }
+    }
+  }
 
   // 4a. DRAIN MOVES (e.g. Giga Drain, Absorb, Leech Life)
   if (move.drain && move.drain > 0 && curUserHp > 0) {
@@ -922,12 +1028,24 @@ export function executeMoveAction(
     }
   }
 
+  const isPivotMove =
+    mLower === 'retromarcia' || mLower === 'u-turn' || rawLower === 'u-turn' ||
+    mLower === 'invertivolt' || mLower === 'volt-switch' || rawLower === 'volt-switch' ||
+    mLower === 'virata' || mLower === 'flip-turn' || rawLower === 'flip-turn';
+
+  const pivotSwitchRequired = Boolean(
+    isPivotMove &&
+    curUserHp > 0 &&
+    options?.canUserPivotSwitch !== false
+  );
+
   return {
     nextUserHp: curUserHp,
     nextTargetHp: curTargetHp,
     targetFainted: curTargetHp <= 0,
     userFainted: curUserHp <= 0,
     nextUserStatus: nextUserStatusObj,
-    nextTargetStatus: nextTargetStatusObj
+    nextTargetStatus: nextTargetStatusObj,
+    pivotSwitchRequired
   };
 }

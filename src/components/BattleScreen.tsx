@@ -20,11 +20,12 @@ import {
   isImmuneToStatus, 
   checkConfusion, 
   checkFlinch, 
+  processYawnEndTurn,
   VolatileStatus 
 } from '../lib/battle/statusEffects';
 import { determineTurnOrder } from '../lib/battle/turnOrder';
 import { calculateEscape } from '../lib/battle/escapeFormula';
-import { checkAbility } from '../lib/battle/abilities';
+import { checkAbility, resolvePokemonAbility, processSwitchInAbility } from '../lib/battle/abilities';
 import { useItemInBattle } from '../lib/battle/items';
 import { BattleBag } from './battle/BattleBag';
 import { getBadgeForBoss } from '../lib/badges';
@@ -213,6 +214,48 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       });
     }
 
+    // Initial Switch-In Core Abilities (Prepotenza / Meteo) in Speed order
+    const pStartSpeed = playerActive.stats?.speed ?? 0;
+    const eStartSpeed = initialEnemy.stats?.speed ?? 0;
+    const startOrder: Array<'player' | 'enemy'> = pStartSpeed >= eStartSpeed ? ['player', 'enemy'] : ['enemy', 'player'];
+    let initWeather: WeatherType = 'none';
+    let initPlayerAtk = 0;
+    let initEnemyAtk = 0;
+
+    for (const side of startOrder) {
+      const incoming = side === 'player' ? playerActive : initialEnemy;
+      const opponent = side === 'player' ? initialEnemy : playerActive;
+      const oppStagesSnapshot: BattleStages = {
+        attack: side === 'player' ? initEnemyAtk : initPlayerAtk,
+        defense: 0,
+        spAtk: 0,
+        spDef: 0,
+        speed: 0,
+        accuracy: 0,
+        evasion: 0
+      };
+      const abilityRes = processSwitchInAbility(incoming, opponent, oppStagesSnapshot, initWeather, false);
+      if (abilityRes.triggered) {
+        if (abilityRes.msg) addLog(abilityRes.msg);
+        if (abilityRes.nextWeather) {
+          initWeather = abilityRes.nextWeather;
+          setFieldWeather({ type: abilityRes.nextWeather, turns: 5 });
+        }
+        if (abilityRes.nextOpponentStages) {
+          const atkDelta = (abilityRes.nextOpponentStages.attack ?? 0) - (oppStagesSnapshot.attack ?? 0);
+          if (atkDelta !== 0) {
+            if (side === 'player') {
+              initEnemyAtk += atkDelta;
+              setEnemyStages(prev => ({ ...prev, attack: Math.max(-6, Math.min(6, (prev.attack ?? 0) + atkDelta)) }));
+            } else {
+              initPlayerAtk += atkDelta;
+              setPlayerStages(prev => ({ ...prev, attack: Math.max(-6, Math.min(6, (prev.attack ?? 0) + atkDelta)) }));
+            }
+          }
+        }
+      }
+    }
+
     return () => {
       playBgm('overworld');
     };
@@ -299,6 +342,14 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
 
   // Overlays
   const [showSwitch, setShowSwitch] = useState(false);
+  const [isPivotSwitch, setIsPivotSwitch] = useState(false);
+  const pendingPivotRef = useRef<((
+    switchedIn: Pokemon,
+    switchedHp: number,
+    switchedStatus: { status?: StatusCondition; duration?: number },
+    switchedStages: BattleStages,
+    updatedWeather: FieldWeather
+  ) => Promise<void>) | null>(null);
   const [showBag, setShowBag] = useState(false);
   const [catchBall, setCatchBall] = useState<Item | null>(null);
   const [postBattleData, setPostBattleData] = useState<PostBattleData | null>(null);
@@ -382,6 +433,23 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       }
       return m;
     }));
+  }, []);
+
+  const curePlayerTeamStatus = useCallback(() => {
+    setPlayerStatus({ status: undefined, duration: undefined });
+    setState(prev => ({
+      ...prev,
+      player: {
+        ...prev.player,
+        team: prev.player.team.map(p => ({ ...p, status: undefined, statusDuration: undefined }))
+      }
+    }));
+  }, [setState]);
+
+  const cureEnemyTeamStatus = useCallback(() => {
+    setEnemyStatus({ status: undefined, duration: undefined });
+    setEnemy(prev => ({ ...prev, status: undefined, statusDuration: undefined }));
+    setEnemyTeam(prev => prev.map(p => ({ ...p, status: undefined, statusDuration: undefined })));
   }, []);
 
   // End-of-turn status tick (Burn, Poison, Bad Poison)
@@ -557,7 +625,9 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     // Trainer logic: check if they have more Pokemon
     if (trainer) {
       const updatedEnemyTeam = [...enemyTeam];
-      const defeatedIdx = updatedEnemyTeam.findIndex(p => p.id === enemy.id && p.hp > 0);
+      const defeatedIdx = updatedEnemyTeam.findIndex(p =>
+        (p.instanceId ? p.instanceId === enemy.instanceId : p.id === enemy.id) && p.hp > 0
+      );
       if (defeatedIdx !== -1) {
         updatedEnemyTeam[defeatedIdx] = { ...updatedEnemyTeam[defeatedIdx], hp: 0 };
         setEnemyTeam(updatedEnemyTeam);
@@ -578,11 +648,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
 
         setEnemy(nextEnemy);
         setEnemyHp(nextEnemyHpVal);
-        setEnemyMoves(nextEnemy.moves.map(m => ({
-          ...m,
-          pp: typeof m.pp === 'number' ? m.pp : (m.maxPp ?? 35),
-          maxPp: m.maxPp ?? m.pp ?? 35
-        })));
+        setEnemyMoves(nextEnemy.moves.map(resolveBattleMove));
         setEnemyStatus({ status: nextEnemyStatusVal, duration: enemyHazardRes.nextStatusDuration ?? nextEnemy.statusDuration });
         const newEnemyStages = { attack: 0, defense: 0, spAtk: 0, spDef: 0, speed: 0, accuracy: 0, evasion: 0 };
         if (enemyHazardRes.nextSpeedStageDelta) {
@@ -597,19 +663,53 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
           return;
         }
 
+        // Trigger switch-in Core Ability for next enemy
+        const enemySwitchInAbility = processSwitchInAbility(
+          nextEnemy,
+          playerActive,
+          playerStages,
+          fieldWeather.type,
+          Boolean(playerVolatile.substituteHp && playerVolatile.substituteHp > 0)
+        );
+        if (enemySwitchInAbility.triggered) {
+          if (enemySwitchInAbility.msg) addLog(enemySwitchInAbility.msg);
+          if (enemySwitchInAbility.nextWeather) {
+            setFieldWeather({ type: enemySwitchInAbility.nextWeather, turns: 5 });
+          }
+          if (enemySwitchInAbility.nextOpponentStages) {
+            setPlayerStages(enemySwitchInAbility.nextOpponentStages);
+          }
+        }
+
         // Apply end-turn status tick to active player Pokemon and next enemy if affected
         let currentLivePlayerHp = finalPlayerHp;
-        if (currentLivePlayerHp > 0 && playerStatus.status) {
+        let currentLivePlayerStatus = { status: playerStatus.status, duration: playerStatus.duration };
+        if (currentLivePlayerHp > 0 && currentLivePlayerStatus.status) {
           currentLivePlayerHp = await handleStatusEndTurn(
             playerActive, 
             currentLivePlayerHp, 
             setPlayerHp, 
-            playerStatus.status, 
+            currentLivePlayerStatus.status, 
             setPlayerStatus
           );
           if (currentLivePlayerHp <= 0) {
             await handlePlayerFaint();
             return;
+          }
+        }
+
+        if (currentLivePlayerHp > 0 && playerVolatile.yawnTurns) {
+          const yawnP = processYawnEndTurn(
+            playerActive,
+            playerVolatile,
+            currentLivePlayerStatus.status,
+            currentLivePlayerStatus.duration
+          );
+          if (yawnP.msg) addLog(yawnP.msg);
+          setPlayerVolatile(yawnP.nextVolatile);
+          if (yawnP.fellAsleep) {
+            currentLivePlayerStatus = { status: yawnP.nextStatus, duration: yawnP.nextDuration };
+            setPlayerStatus(currentLivePlayerStatus);
           }
         }
 
@@ -775,12 +875,36 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
   }, [addLog, playerActive.name, setState, state.player.team]);
 
   // Single enemy turn execution (used after item, switch, or failed flee)
-  const triggerEnemySingleTurn = useCallback(async (curPlayerHp: number, curEnemyHp: number, playerJustSwitched: boolean = false) => {
+  const triggerEnemySingleTurn = useCallback(async (
+    curPlayerHp: number,
+    curEnemyHp: number,
+    playerJustSwitched: boolean = false,
+    overrides?: {
+      playerPokemon?: Pokemon;
+      playerStatus?: { status?: StatusCondition; duration?: number };
+      playerStages?: BattleStages;
+      playerVolatile?: VolatileStatus;
+      enemyStages?: BattleStages;
+      weather?: FieldWeather;
+    }
+  ) => {
     setIsAnimating(true);
     await new Promise(r => setTimeout(r, 800));
 
+    let liveEnemy = enemy;
+    let liveEnemyMoves = enemyMoves;
+    let liveEnemyTeam = [...enemyTeam];
+    let liveEnemyStatus = { ...enemyStatus };
+    let liveEnemyStages = { ...(overrides?.enemyStages || enemyStages) };
+    let liveEnemyVolatile = { ...enemyVolatile };
+    let livePlayer = overrides?.playerPokemon || playerActive;
+    let livePlayerStatus = { ...(overrides?.playerStatus || playerStatus) };
+    let livePlayerStages = { ...(overrides?.playerStages || playerStages) };
+    let livePlayerVolatile = { ...(overrides?.playerVolatile || playerVolatile) };
+    let liveWeather = { ...(overrides?.weather || fieldWeather) };
+
     // 1. Flinch check
-    const flinchCheck = checkFlinch(enemy, enemyVolatile.isFlinched);
+    const flinchCheck = checkFlinch(liveEnemy, liveEnemyVolatile.isFlinched);
     if (!flinchCheck.canAct) {
       addLog(flinchCheck.msg!);
       setEnemyVolatile(prev => ({ ...prev, isFlinched: false }));
@@ -789,9 +913,10 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     }
 
     // 2. Primary Status check
-    const moveCheck = canMove({ ...enemy, status: enemyStatus.status, statusDuration: enemyStatus.duration });
+    const moveCheck = canMove({ ...liveEnemy, status: liveEnemyStatus.status, statusDuration: liveEnemyStatus.duration });
     if (moveCheck.statusChanged) {
-      setEnemyStatus({ status: moveCheck.newStatus, duration: moveCheck.newDuration });
+      liveEnemyStatus = { status: moveCheck.newStatus, duration: moveCheck.newDuration };
+      setEnemyStatus(liveEnemyStatus);
     }
     if (!moveCheck.canMove) {
       if (moveCheck.msg) addLog(moveCheck.msg);
@@ -800,8 +925,9 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     }
 
     // 3. Confusion check
-    if (enemyVolatile.confusionTurns && enemyVolatile.confusionTurns > 0) {
-      const conf = checkConfusion(enemy, enemyVolatile.confusionTurns);
+    if (liveEnemyVolatile.confusionTurns && liveEnemyVolatile.confusionTurns > 0) {
+      const conf = checkConfusion(liveEnemy, liveEnemyVolatile.confusionTurns);
+      liveEnemyVolatile = { ...liveEnemyVolatile, confusionTurns: conf.newTurns };
       setEnemyVolatile(prev => ({ ...prev, confusionTurns: conf.newTurns }));
       if (conf.msg) addLog(conf.msg);
       if (conf.hurtSelf && conf.damage) {
@@ -817,30 +943,53 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     }
 
     // 4. Move Selection & PP
-    const validMoves = enemyMoves.filter(m => (m.pp ?? m.maxPp ?? 35) > 0);
+    const validMoves = liveEnemyMoves.filter(m => (m.pp ?? m.maxPp ?? 35) > 0);
     const chosenMove = validMoves.length > 0
       ? validMoves[Math.floor(Math.random() * validMoves.length)]
       : STRUGGLE_MOVE;
 
     deductEnemyPp(chosenMove.name);
 
+    const canEnemyPivot = Boolean(
+      trainer &&
+      liveEnemyTeam.some(p => (p.instanceId ? p.instanceId !== liveEnemy.instanceId : p.id !== liveEnemy.id) && p.hp > 0)
+    );
+
     // 5. Execute
     const res = executeMoveAction(
       chosenMove,
-      enemy,
-      playerActive,
-      enemyStages,
-      setEnemyStages,
-      playerStages,
-      setPlayerStages,
-      enemyStatus,
-      setEnemyStatus,
-      playerStatus,
-      setPlayerStatus,
-      enemyVolatile,
-      setEnemyVolatile,
-      playerVolatile,
-      setPlayerVolatile,
+      liveEnemy,
+      livePlayer,
+      liveEnemyStages,
+      (updater) => {
+        liveEnemyStages = typeof updater === 'function' ? updater(liveEnemyStages) : updater;
+        setEnemyStages(liveEnemyStages);
+      },
+      livePlayerStages,
+      (updater) => {
+        livePlayerStages = typeof updater === 'function' ? updater(livePlayerStages) : updater;
+        setPlayerStages(livePlayerStages);
+      },
+      liveEnemyStatus,
+      (updater) => {
+        liveEnemyStatus = typeof updater === 'function' ? updater(liveEnemyStatus) : updater;
+        setEnemyStatus(liveEnemyStatus);
+      },
+      livePlayerStatus,
+      (updater) => {
+        livePlayerStatus = typeof updater === 'function' ? updater(livePlayerStatus) : updater;
+        setPlayerStatus(livePlayerStatus);
+      },
+      liveEnemyVolatile,
+      (updater) => {
+        liveEnemyVolatile = typeof updater === 'function' ? updater(liveEnemyVolatile) : updater;
+        setEnemyVolatile(liveEnemyVolatile);
+      },
+      livePlayerVolatile,
+      (updater) => {
+        livePlayerVolatile = typeof updater === 'function' ? updater(livePlayerVolatile) : updater;
+        setPlayerVolatile(livePlayerVolatile);
+      },
       curEnemyHp,
       setEnemyHp,
       curPlayerHp,
@@ -853,13 +1002,18 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
         setUserSideHazards: setEnemySideHazards,
         targetSideHazards: playerSideHazards,
         setTargetSideHazards: setPlayerSideHazards,
-        weather: fieldWeather.type,
-        setWeather: (w) => setFieldWeather({ type: w, turns: 5 }),
+        weather: liveWeather.type,
+        setWeather: (w) => {
+          liveWeather = { type: w, turns: 5 };
+          setFieldWeather(liveWeather);
+        },
         userScreens: enemyScreens,
         setUserScreens: setEnemyScreens,
         targetScreens: playerScreens,
         setTargetScreens: setPlayerScreens,
-        isWildBattle: !trainer
+        isWildBattle: !trainer,
+        canUserPivotSwitch: canEnemyPivot,
+        onCureTeamStatus: cureEnemyTeamStatus
       }
     );
 
@@ -891,27 +1045,112 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       return;
     }
 
-    // End-of-turn status damage (Poison / Burn) for both player and enemy
-    const livePlayerStatus = res.nextTargetStatus || playerStatus;
-    const liveEnemyStatus = res.nextUserStatus || enemyStatus;
-
     let nextPlayerHp = res.nextTargetHp;
-    nextPlayerHp = await handleStatusEndTurn(playerActive, nextPlayerHp, setPlayerHp, livePlayerStatus.status, setPlayerStatus);
+    let nextEnemyHp = res.nextUserHp;
+    if (res.nextTargetStatus) livePlayerStatus = res.nextTargetStatus;
+    if (res.nextUserStatus) liveEnemyStatus = res.nextUserStatus;
+
+    // Handle Enemy Pivot Switch (e.g. U-turn / Volt Switch / Flip Turn)
+    if (res.pivotSwitchRequired && trainer) {
+      const currentEnemyId = liveEnemy.instanceId || liveEnemy.id;
+      liveEnemyTeam = liveEnemyTeam.map(p =>
+        (p.instanceId ? p.instanceId === currentEnemyId : p.id === liveEnemy.id)
+          ? { ...p, hp: nextEnemyHp, status: liveEnemyStatus.status, statusDuration: liveEnemyStatus.duration }
+          : p
+      );
+      const availableEnemies = liveEnemyTeam.filter(p => (p.instanceId || p.id) !== currentEnemyId && p.hp > 0);
+      if (availableEnemies.length > 0) {
+        const nextChosenEnemy = availableEnemies[Math.floor(Math.random() * availableEnemies.length)];
+        addLog(`🔄 ${liveEnemy.name} rientra! ${trainer.name} manda in campo ${nextChosenEnemy.name}!`);
+        await new Promise(r => setTimeout(r, 700));
+        const enemyHazardRes = processEntryHazards(nextChosenEnemy, nextChosenEnemy.hp, enemySideHazards, nextChosenEnemy.status);
+        if (enemyHazardRes.logs.length > 0) enemyHazardRes.logs.forEach(msg => addLog(msg));
+        setEnemySideHazards(enemyHazardRes.updatedSideHazards);
+        liveEnemy = nextChosenEnemy;
+        nextEnemyHp = enemyHazardRes.nextHp;
+        liveEnemyMoves = nextChosenEnemy.moves.map(resolveBattleMove);
+        liveEnemyStatus = { status: enemyHazardRes.nextStatus, duration: enemyHazardRes.nextStatusDuration ?? nextChosenEnemy.statusDuration };
+        liveEnemyStages = {
+          attack: 0,
+          defense: 0,
+          spAtk: 0,
+          spDef: 0,
+          speed: enemyHazardRes.nextSpeedStageDelta ? Math.max(-6, Math.min(6, enemyHazardRes.nextSpeedStageDelta)) : 0,
+          accuracy: 0,
+          evasion: 0
+        };
+        liveEnemyVolatile = {};
+        setEnemy(liveEnemy);
+        setEnemyTeam(liveEnemyTeam);
+        setEnemyHp(nextEnemyHp);
+        setEnemyMoves(liveEnemyMoves);
+        setEnemyStatus(liveEnemyStatus);
+        setEnemyStages(liveEnemyStages);
+        setEnemyVolatile({});
+        if (nextEnemyHp <= 0) {
+          addLog(`${liveEnemy.name} è k.o. a causa delle trappole sul campo!`);
+          await handleWin(nextPlayerHp);
+          return;
+        }
+        const switchAbility = processSwitchInAbility(
+          liveEnemy,
+          livePlayer,
+          livePlayerStages,
+          liveWeather.type,
+          Boolean(livePlayerVolatile.substituteHp && livePlayerVolatile.substituteHp > 0)
+        );
+        if (switchAbility.triggered) {
+          if (switchAbility.msg) addLog(switchAbility.msg);
+          if (switchAbility.nextWeather) {
+            liveWeather = { type: switchAbility.nextWeather, turns: 5 };
+            setFieldWeather(liveWeather);
+          }
+          if (switchAbility.nextOpponentStages) {
+            livePlayerStages = switchAbility.nextOpponentStages;
+            setPlayerStages(livePlayerStages);
+          }
+        }
+      }
+    }
+
+    // End-of-turn status damage (Poison / Burn) for both player and enemy
+    nextPlayerHp = await handleStatusEndTurn(livePlayer, nextPlayerHp, setPlayerHp, livePlayerStatus.status, setPlayerStatus);
     if (nextPlayerHp <= 0) {
       await handlePlayerFaint();
       return;
     }
 
-    let nextEnemyHp = res.nextUserHp;
-    nextEnemyHp = await handleStatusEndTurn(enemy, nextEnemyHp, setEnemyHp, liveEnemyStatus.status, setEnemyStatus);
+    nextEnemyHp = await handleStatusEndTurn(liveEnemy, nextEnemyHp, setEnemyHp, liveEnemyStatus.status, setEnemyStatus);
     if (nextEnemyHp <= 0) {
       await handleWin(nextPlayerHp);
       return;
     }
 
+    // Yawn end-of-turn check
+    if (livePlayerVolatile.yawnTurns) {
+      const yawnP = processYawnEndTurn(livePlayer, livePlayerVolatile, livePlayerStatus.status, livePlayerStatus.duration);
+      if (yawnP.msg) addLog(yawnP.msg);
+      livePlayerVolatile = yawnP.nextVolatile;
+      setPlayerVolatile(livePlayerVolatile);
+      if (yawnP.fellAsleep) {
+        livePlayerStatus = { status: yawnP.nextStatus, duration: yawnP.nextDuration };
+        setPlayerStatus(livePlayerStatus);
+      }
+    }
+    if (liveEnemyVolatile.yawnTurns) {
+      const yawnE = processYawnEndTurn(liveEnemy, liveEnemyVolatile, liveEnemyStatus.status, liveEnemyStatus.duration);
+      if (yawnE.msg) addLog(yawnE.msg);
+      liveEnemyVolatile = yawnE.nextVolatile;
+      setEnemyVolatile(liveEnemyVolatile);
+      if (yawnE.fellAsleep) {
+        liveEnemyStatus = { status: yawnE.nextStatus, duration: yawnE.nextDuration };
+        setEnemyStatus(liveEnemyStatus);
+      }
+    }
+
     // Weather end-of-turn damage
-    if (fieldWeather.type === 'sandstorm' || fieldWeather.type === 'hail') {
-      const weatherP = processWeatherTurnEnd(playerActive, nextPlayerHp, fieldWeather.type);
+    if (liveWeather.type === 'sandstorm' || liveWeather.type === 'hail') {
+      const weatherP = processWeatherTurnEnd(livePlayer, nextPlayerHp, liveWeather.type);
       if (weatherP.damage > 0) {
         addLog(weatherP.msg!);
         nextPlayerHp = weatherP.nextHp;
@@ -922,7 +1161,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
         }
       }
 
-      const weatherE = processWeatherTurnEnd(enemy, nextEnemyHp, fieldWeather.type);
+      const weatherE = processWeatherTurnEnd(liveEnemy, nextEnemyHp, liveWeather.type);
       if (weatherE.damage > 0) {
         addLog(weatherE.msg!);
         nextEnemyHp = weatherE.nextHp;
@@ -934,11 +1173,11 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       }
     }
 
-    if (bossBuff === 'n_harmony' && nextEnemyHp > 0 && nextEnemyHp < enemy.maxHp) {
-      const healAmount = Math.max(1, Math.floor(enemy.maxHp * 0.07));
-      nextEnemyHp = Math.min(enemy.maxHp, nextEnemyHp + healAmount);
+    if (bossBuff === 'n_harmony' && nextEnemyHp > 0 && nextEnemyHp < liveEnemy.maxHp) {
+      const healAmount = Math.max(1, Math.floor(liveEnemy.maxHp * 0.07));
+      nextEnemyHp = Math.min(liveEnemy.maxHp, nextEnemyHp + healAmount);
       setEnemyHp(nextEnemyHp);
-      addLog(`🕊️ Armonia Filosofica rigenera ${healAmount} PS a ${enemy.name}!`);
+      addLog(`🕊️ Armonia Filosofica rigenera ${healAmount} PS a ${liveEnemy.name}!`);
     }
 
     setEnemyVolatile(prev => ({ ...prev, isFlinched: false, isProtected: false, turnsOnField: Math.max(1, prev.turnsOnField ?? 0) }));
@@ -947,8 +1186,8 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     }
     setIsAnimating(false);
   }, [
-    enemy, enemyVolatile, enemyStatus, enemyMoves, enemyStages, playerActive, 
-    playerStages, playerStatus, playerVolatile, deductEnemyPp,
+    enemy, enemyTeam, enemyVolatile, enemyStatus, enemyMoves, enemyStages, playerActive, 
+    playerStages, playerStatus, playerVolatile, deductEnemyPp, cureEnemyTeamStatus,
     handleWin, handlePlayerFaint, handleStatusEndTurn, addLog,
     fieldWeather, playerScreens, enemyScreens, playerSideHazards, enemySideHazards,
     bossBuff, trainer, state.player.team
@@ -956,7 +1195,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
 
   // Main turn execution: Dynamic Turn Order based on Priority & Effective Speed
   const handleMove = useCallback(async (selectedMove: Move) => {
-    if (isAnimating) return;
+    if (isAnimating || isPivotSwitch) return;
 
     // Check if player is locked into a move
     const actualPlayerMove = playerVolatile.lockedMove || selectedMove;
@@ -968,7 +1207,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       ? STRUGGLE_MOVE
       : actualPlayerMove;
 
-    // Pick enemy move
+    // Pick enemy move (pass playerVolatile so AI knows yawnTurns / substitute / protect)
     const enemyMove = enemyVolatile.lockedMove || selectEnemyMove(
       enemyMoves, 
       enemy, 
@@ -979,7 +1218,8 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       playerStages, 
       enemyHp, 
       playerHp,
-      enemyVolatile
+      enemyVolatile,
+      playerVolatile
     );
 
     // Calculate effective speeds
@@ -1005,88 +1245,212 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
 
     const playerFirst = turnWinner === 'player';
 
-    // Local live state tracking for volatile conditions, stat stages & field effects during the multi-phase turn
-    let livePlayerVolatile: VolatileStatus = { ...playerVolatile };
-    let liveEnemyVolatile: VolatileStatus = { ...enemyVolatile };
-    let livePlayerStages: BattleStages = { ...playerStages };
-    let liveEnemyStages: BattleStages = { ...enemyStages };
-    let liveFieldWeather: FieldWeather = { ...fieldWeather };
-    let livePlayerScreens: SideScreens = { ...playerScreens };
-    let liveEnemyScreens: SideScreens = { ...enemyScreens };
-    let livePlayerHazards: SideHazards = { ...playerSideHazards };
-    let liveEnemyHazards: SideHazards = { ...enemySideHazards };
+    // Mutable turn context so pivot switches mid-turn never read stale closures
+    const ctx = {
+      player: playerActive,
+      enemy,
+      enemyTeam: [...enemyTeam],
+      playerHp,
+      enemyHp,
+      playerStatus: { ...playerStatus } as { status?: StatusCondition; duration?: number },
+      enemyStatus: { ...enemyStatus } as { status?: StatusCondition; duration?: number },
+      playerVolatile: { ...playerVolatile } as VolatileStatus,
+      enemyVolatile: { ...enemyVolatile } as VolatileStatus,
+      playerStages: { ...playerStages } as BattleStages,
+      enemyStages: { ...enemyStages } as BattleStages,
+      fieldWeather: { ...fieldWeather } as FieldWeather,
+      playerScreens: { ...playerScreens } as SideScreens,
+      enemyScreens: { ...enemyScreens } as SideScreens,
+      playerHazards: { ...playerSideHazards } as SideHazards,
+      enemyHazards: { ...enemySideHazards } as SideHazards
+    };
+
+    const runEndOfTurnPhase = async () => {
+      // Clear flinch & protect, preserve yawnTurns/flashFireBoosted, and mark turn spent on field
+      ctx.playerVolatile = {
+        ...ctx.playerVolatile,
+        isFlinched: false,
+        isProtected: false,
+        turnsOnField: Math.max(1, ctx.playerVolatile.turnsOnField ?? 0)
+      };
+      ctx.enemyVolatile = {
+        ...ctx.enemyVolatile,
+        isFlinched: false,
+        isProtected: false,
+        turnsOnField: Math.max(1, ctx.enemyVolatile.turnsOnField ?? 0)
+      };
+      setPlayerVolatile(ctx.playerVolatile);
+      setEnemyVolatile(ctx.enemyVolatile);
+
+      // Player status damage (Poison / Burn)
+      ctx.playerHp = await handleStatusEndTurn(ctx.player, ctx.playerHp, setPlayerHp, ctx.playerStatus.status, setPlayerStatus);
+      if (ctx.playerHp <= 0) {
+        await handlePlayerFaint();
+        return;
+      }
+
+      // Enemy status damage (Poison / Burn)
+      ctx.enemyHp = await handleStatusEndTurn(ctx.enemy, ctx.enemyHp, setEnemyHp, ctx.enemyStatus.status, setEnemyStatus);
+      if (ctx.enemyHp <= 0) {
+        await handleWin(ctx.playerHp);
+        return;
+      }
+
+      // Yawn end-of-turn drowsiness countdown / sleep affliction
+      if (ctx.playerVolatile.yawnTurns) {
+        const yawnP = processYawnEndTurn(ctx.player, ctx.playerVolatile, ctx.playerStatus.status, ctx.playerStatus.duration);
+        if (yawnP.msg) addLog(yawnP.msg);
+        ctx.playerVolatile = yawnP.nextVolatile;
+        setPlayerVolatile(ctx.playerVolatile);
+        if (yawnP.fellAsleep) {
+          ctx.playerStatus = { status: yawnP.nextStatus, duration: yawnP.nextDuration };
+          setPlayerStatus(ctx.playerStatus);
+        }
+      }
+
+      if (ctx.enemyVolatile.yawnTurns) {
+        const yawnE = processYawnEndTurn(ctx.enemy, ctx.enemyVolatile, ctx.enemyStatus.status, ctx.enemyStatus.duration);
+        if (yawnE.msg) addLog(yawnE.msg);
+        ctx.enemyVolatile = yawnE.nextVolatile;
+        setEnemyVolatile(ctx.enemyVolatile);
+        if (yawnE.fellAsleep) {
+          ctx.enemyStatus = { status: yawnE.nextStatus, duration: yawnE.nextDuration };
+          setEnemyStatus(ctx.enemyStatus);
+        }
+      }
+
+      // Weather end-of-turn damage (Sandstorm / Hail)
+      if (ctx.fieldWeather.type === 'sandstorm' || ctx.fieldWeather.type === 'hail') {
+        const weatherP = processWeatherTurnEnd(ctx.player, ctx.playerHp, ctx.fieldWeather.type);
+        if (weatherP.damage > 0) {
+          addLog(weatherP.msg!);
+          ctx.playerHp = weatherP.nextHp;
+          setPlayerHp(ctx.playerHp);
+          await new Promise(r => setTimeout(r, 600));
+          if (ctx.playerHp <= 0) {
+            await handlePlayerFaint();
+            return;
+          }
+        }
+
+        const weatherE = processWeatherTurnEnd(ctx.enemy, ctx.enemyHp, ctx.fieldWeather.type);
+        if (weatherE.damage > 0) {
+          addLog(weatherE.msg!);
+          ctx.enemyHp = weatherE.nextHp;
+          setEnemyHp(ctx.enemyHp);
+          await new Promise(r => setTimeout(r, 600));
+          if (ctx.enemyHp <= 0) {
+            await handleWin(ctx.playerHp);
+            return;
+          }
+        }
+      }
+
+      // Tick Weather
+      const tw = tickWeather(ctx.fieldWeather);
+      ctx.fieldWeather = tw.nextWeather;
+      setFieldWeather(tw.nextWeather);
+      if (tw.expiredMsg) {
+        addLog(tw.expiredMsg);
+      }
+
+      // Tick Screens
+      const sp = tickScreens(ctx.playerScreens, ctx.player.name);
+      ctx.playerScreens = sp.nextScreens;
+      setPlayerScreens(sp.nextScreens);
+      sp.expiredMsgs.forEach(m => addLog(m));
+
+      const se = tickScreens(ctx.enemyScreens, ctx.enemy.name);
+      ctx.enemyScreens = se.nextScreens;
+      setEnemyScreens(se.nextScreens);
+      se.expiredMsgs.forEach(m => addLog(m));
+
+      setIsAnimating(false);
+    };
 
     // Helper for executing an individual combatant's attack within this turn
     const runCombatantAttack = async (
       attackerIsPlayer: boolean,
-      isFirst: boolean,
-      cPlayerHp: number,
-      cEnemyHp: number
+      isFirst: boolean
     ): Promise<{ 
-      nextPlayerHp: number; 
-      nextEnemyHp: number; 
       stopped: boolean;
-      nextUserStatus?: { status?: StatusCondition, duration?: number };
-      nextTargetStatus?: { status?: StatusCondition, duration?: number };
+      pivotSwitchRequired?: boolean;
     }> => {
-      const attacker = attackerIsPlayer ? playerActive : enemy;
+      const attacker = attackerIsPlayer ? ctx.player : ctx.enemy;
+      const target = attackerIsPlayer ? ctx.enemy : ctx.player;
       const move = attackerIsPlayer ? activePlayerMove : enemyMove;
       
-      const attackerVolatile = attackerIsPlayer ? livePlayerVolatile : liveEnemyVolatile;
-      const defenderVolatile = attackerIsPlayer ? liveEnemyVolatile : livePlayerVolatile;
+      const attackerVolatile = attackerIsPlayer ? ctx.playerVolatile : ctx.enemyVolatile;
+      const defenderVolatile = attackerIsPlayer ? ctx.enemyVolatile : ctx.playerVolatile;
 
       const setAttackerVolatile = (updater: React.SetStateAction<VolatileStatus>) => {
         if (attackerIsPlayer) {
-          livePlayerVolatile = typeof updater === 'function' ? updater(livePlayerVolatile) : updater;
-          setPlayerVolatile(livePlayerVolatile);
+          ctx.playerVolatile = typeof updater === 'function' ? updater(ctx.playerVolatile) : updater;
+          setPlayerVolatile(ctx.playerVolatile);
         } else {
-          liveEnemyVolatile = typeof updater === 'function' ? updater(liveEnemyVolatile) : updater;
-          setEnemyVolatile(liveEnemyVolatile);
+          ctx.enemyVolatile = typeof updater === 'function' ? updater(ctx.enemyVolatile) : updater;
+          setEnemyVolatile(ctx.enemyVolatile);
         }
       };
 
       const setDefenderVolatile = (updater: React.SetStateAction<VolatileStatus>) => {
         if (attackerIsPlayer) {
-          liveEnemyVolatile = typeof updater === 'function' ? updater(liveEnemyVolatile) : updater;
-          setEnemyVolatile(liveEnemyVolatile);
+          ctx.enemyVolatile = typeof updater === 'function' ? updater(ctx.enemyVolatile) : updater;
+          setEnemyVolatile(ctx.enemyVolatile);
         } else {
-          livePlayerVolatile = typeof updater === 'function' ? updater(livePlayerVolatile) : updater;
-          setPlayerVolatile(livePlayerVolatile);
+          ctx.playerVolatile = typeof updater === 'function' ? updater(ctx.playerVolatile) : updater;
+          setPlayerVolatile(ctx.playerVolatile);
         }
       };
 
-      const attackerStatus = attackerIsPlayer ? playerStatus : enemyStatus;
-      const setAttackerStatus = attackerIsPlayer ? setPlayerStatus : setEnemyStatus;
-      const defenderStatus = attackerIsPlayer ? enemyStatus : playerStatus;
-      const setDefenderStatus = attackerIsPlayer ? setEnemyStatus : setPlayerStatus;
+      const attackerStatus = attackerIsPlayer ? ctx.playerStatus : ctx.enemyStatus;
+      const setAttackerStatus = (updater: React.SetStateAction<{ status?: StatusCondition; duration?: number }>) => {
+        if (attackerIsPlayer) {
+          ctx.playerStatus = typeof updater === 'function' ? updater(ctx.playerStatus) : updater;
+          setPlayerStatus(ctx.playerStatus);
+        } else {
+          ctx.enemyStatus = typeof updater === 'function' ? updater(ctx.enemyStatus) : updater;
+          setEnemyStatus(ctx.enemyStatus);
+        }
+      };
+
+      const defenderStatus = attackerIsPlayer ? ctx.enemyStatus : ctx.playerStatus;
+      const setDefenderStatus = (updater: React.SetStateAction<{ status?: StatusCondition; duration?: number }>) => {
+        if (attackerIsPlayer) {
+          ctx.enemyStatus = typeof updater === 'function' ? updater(ctx.enemyStatus) : updater;
+          setEnemyStatus(ctx.enemyStatus);
+        } else {
+          ctx.playerStatus = typeof updater === 'function' ? updater(ctx.playerStatus) : updater;
+          setPlayerStatus(ctx.playerStatus);
+        }
+      };
       
-      const attackerStages = attackerIsPlayer ? livePlayerStages : liveEnemyStages;
+      const attackerStages = attackerIsPlayer ? ctx.playerStages : ctx.enemyStages;
       const setAttackerStages = (updater: React.SetStateAction<BattleStages>) => {
         if (attackerIsPlayer) {
-          livePlayerStages = typeof updater === 'function' ? updater(livePlayerStages) : updater;
-          setPlayerStages(livePlayerStages);
+          ctx.playerStages = typeof updater === 'function' ? updater(ctx.playerStages) : updater;
+          setPlayerStages(ctx.playerStages);
         } else {
-          liveEnemyStages = typeof updater === 'function' ? updater(liveEnemyStages) : updater;
-          setEnemyStages(liveEnemyStages);
+          ctx.enemyStages = typeof updater === 'function' ? updater(ctx.enemyStages) : updater;
+          setEnemyStages(ctx.enemyStages);
         }
       };
 
-      const defenderStages = attackerIsPlayer ? liveEnemyStages : livePlayerStages;
+      const defenderStages = attackerIsPlayer ? ctx.enemyStages : ctx.playerStages;
       const setDefenderStages = (updater: React.SetStateAction<BattleStages>) => {
         if (attackerIsPlayer) {
-          liveEnemyStages = typeof updater === 'function' ? updater(liveEnemyStages) : updater;
-          setEnemyStages(liveEnemyStages);
+          ctx.enemyStages = typeof updater === 'function' ? updater(ctx.enemyStages) : updater;
+          setEnemyStages(ctx.enemyStages);
         } else {
-          livePlayerStages = typeof updater === 'function' ? updater(livePlayerStages) : updater;
-          setPlayerStages(livePlayerStages);
+          ctx.playerStages = typeof updater === 'function' ? updater(ctx.playerStages) : updater;
+          setPlayerStages(ctx.playerStages);
         }
       };
 
-      const userHp = attackerIsPlayer ? cPlayerHp : cEnemyHp;
+      const userHp = attackerIsPlayer ? ctx.playerHp : ctx.enemyHp;
       const setUserHp = attackerIsPlayer ? setPlayerHp : setEnemyHp;
-      const targetHp = attackerIsPlayer ? cEnemyHp : cPlayerHp;
+      const targetHp = attackerIsPlayer ? ctx.enemyHp : ctx.playerHp;
       const setTargetHp = attackerIsPlayer ? setEnemyHp : setPlayerHp;
-      const target = attackerIsPlayer ? enemy : playerActive;
 
       // 1. Flinch Check (if opponent moved first and flinch occurred)
       const flinch = checkFlinch(attacker, attackerVolatile.isFlinched);
@@ -1100,7 +1464,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
           lockedMove: undefined 
         }));
         await new Promise(r => setTimeout(r, 700));
-        return { nextPlayerHp: cPlayerHp, nextEnemyHp: cEnemyHp, stopped: false };
+        return { stopped: false };
       }
 
       // 1a. Recharge Check
@@ -1108,7 +1472,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
         addLog(`${attacker.name} deve ricaricarsi!`);
         setAttackerVolatile(prev => ({ ...prev, recharging: false, lockedMove: undefined }));
         await new Promise(r => setTimeout(r, 700));
-        return { nextPlayerHp: cPlayerHp, nextEnemyHp: cEnemyHp, stopped: false };
+        return { stopped: false };
       }
 
       // 2. Primary Status Check (Sleep, Frozen, Paralysis)
@@ -1125,7 +1489,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
           lockedMove: undefined 
         }));
         await new Promise(r => setTimeout(r, 700));
-        return { nextPlayerHp: cPlayerHp, nextEnemyHp: cEnemyHp, stopped: false };
+        return { stopped: false };
       }
       if (moveCheck.msg) {
         addLog(moveCheck.msg);
@@ -1143,21 +1507,20 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
 
         if (conf.hurtSelf && conf.damage) {
           const nextUserHp = Math.max(0, userHp - conf.damage);
+          if (attackerIsPlayer) ctx.playerHp = nextUserHp;
+          else ctx.enemyHp = nextUserHp;
           setUserHp(nextUserHp);
           await new Promise(r => setTimeout(r, 800));
-
-          const updatedPlayerHp = attackerIsPlayer ? nextUserHp : cPlayerHp;
-          const updatedEnemyHp = attackerIsPlayer ? cEnemyHp : nextUserHp;
 
           if (nextUserHp <= 0) {
             if (attackerIsPlayer) {
               await handlePlayerFaint();
             } else {
-              await handleWin(updatedPlayerHp);
+              await handleWin(ctx.playerHp);
             }
-            return { nextPlayerHp: updatedPlayerHp, nextEnemyHp: updatedEnemyHp, stopped: true };
+            return { stopped: true };
           }
-          return { nextPlayerHp: updatedPlayerHp, nextEnemyHp: updatedEnemyHp, stopped: false };
+          return { stopped: false };
         }
       }
 
@@ -1200,7 +1563,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
           lockedMove: move 
         }));
         await new Promise(r => setTimeout(r, 700));
-        return { nextPlayerHp: cPlayerHp, nextEnemyHp: cEnemyHp, stopped: false };
+        return { stopped: false };
       }
 
       // If we were charging, clear it as we are now attacking
@@ -1225,7 +1588,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       }
 
       // 6. Execute Move Action
-      const currentLowHpBonus = (cPlayerHp / playerActive.maxHp) < 0.35 ? towerLowHpBonus : 1;
+      const currentLowHpBonus = (ctx.playerHp / ctx.player.maxHp) < 0.35 ? towerLowHpBonus : 1;
       
       let bossAtkMult = 1;
       let bossDefMult = 1;
@@ -1240,70 +1603,80 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
         if (bossBuff === 'blu_arrogance' || bossBuff === 'iridio_synthesis') bossDefMult = 1.12;
       }
 
+      const canPlayerPivot = state.player.team.some((p, idx) => idx !== 0 && p.hp > 0);
+      const canEnemyPivot = Boolean(
+        trainer &&
+        ctx.enemyTeam.some(p => (p.instanceId ? p.instanceId !== ctx.enemy.instanceId : p.id !== ctx.enemy.id) && p.hp > 0)
+      );
+
       const combatOptions = attackerIsPlayer ? {
         attackMultiplier: towerAttackMult * currentLowHpBonus,
         critChanceBonus: towerCritChanceBonus,
         lifestealPercent: towerLifeStealPercent,
         accuracyPenalty: towerAccuracyPenalty + (bossBuff === 'blu_arrogance' ? 8 : 0),
         bossMutationType: bossMutation?.type,
-        userSideHazards: livePlayerHazards,
+        userSideHazards: ctx.playerHazards,
         setUserSideHazards: (updater: React.SetStateAction<SideHazards>) => {
-          livePlayerHazards = typeof updater === 'function' ? updater(livePlayerHazards) : updater;
-          setPlayerSideHazards(livePlayerHazards);
+          ctx.playerHazards = typeof updater === 'function' ? updater(ctx.playerHazards) : updater;
+          setPlayerSideHazards(ctx.playerHazards);
         },
-        targetSideHazards: liveEnemyHazards,
+        targetSideHazards: ctx.enemyHazards,
         setTargetSideHazards: (updater: React.SetStateAction<SideHazards>) => {
-          liveEnemyHazards = typeof updater === 'function' ? updater(liveEnemyHazards) : updater;
-          setEnemySideHazards(liveEnemyHazards);
+          ctx.enemyHazards = typeof updater === 'function' ? updater(ctx.enemyHazards) : updater;
+          setEnemySideHazards(ctx.enemyHazards);
         },
-        weather: liveFieldWeather.type,
+        weather: ctx.fieldWeather.type,
         setWeather: (w: WeatherType) => {
-          liveFieldWeather = { type: w, turns: 5 };
-          setFieldWeather(liveFieldWeather);
+          ctx.fieldWeather = { type: w, turns: 5 };
+          setFieldWeather(ctx.fieldWeather);
         },
-        userScreens: livePlayerScreens,
+        userScreens: ctx.playerScreens,
         setUserScreens: (updater: React.SetStateAction<SideScreens>) => {
-          livePlayerScreens = typeof updater === 'function' ? updater(livePlayerScreens) : updater;
-          setPlayerScreens(livePlayerScreens);
+          ctx.playerScreens = typeof updater === 'function' ? updater(ctx.playerScreens) : updater;
+          setPlayerScreens(ctx.playerScreens);
         },
-        targetScreens: liveEnemyScreens,
+        targetScreens: ctx.enemyScreens,
         setTargetScreens: (updater: React.SetStateAction<SideScreens>) => {
-          liveEnemyScreens = typeof updater === 'function' ? updater(liveEnemyScreens) : updater;
-          setEnemyScreens(liveEnemyScreens);
+          ctx.enemyScreens = typeof updater === 'function' ? updater(ctx.enemyScreens) : updater;
+          setEnemyScreens(ctx.enemyScreens);
         },
-        isWildBattle: !trainer
+        isWildBattle: !trainer,
+        canUserPivotSwitch: canPlayerPivot,
+        onCureTeamStatus: curePlayerTeamStatus
       } : {
         attackMultiplier: bossAtkMult,
         defenseMultiplier: towerDefMult * bossDefMult,
         incomingDamageMultiplier: towerIncomingDmgMult,
         dodgeChance: towerDodgeChance,
         bossMutationType: bossMutation?.type,
-        userSideHazards: liveEnemyHazards,
+        userSideHazards: ctx.enemyHazards,
         setUserSideHazards: (updater: React.SetStateAction<SideHazards>) => {
-          liveEnemyHazards = typeof updater === 'function' ? updater(liveEnemyHazards) : updater;
-          setEnemySideHazards(liveEnemyHazards);
+          ctx.enemyHazards = typeof updater === 'function' ? updater(ctx.enemyHazards) : updater;
+          setEnemySideHazards(ctx.enemyHazards);
         },
-        targetSideHazards: livePlayerHazards,
+        targetSideHazards: ctx.playerHazards,
         setTargetSideHazards: (updater: React.SetStateAction<SideHazards>) => {
-          livePlayerHazards = typeof updater === 'function' ? updater(livePlayerHazards) : updater;
-          setPlayerSideHazards(livePlayerHazards);
+          ctx.playerHazards = typeof updater === 'function' ? updater(ctx.playerHazards) : updater;
+          setPlayerSideHazards(ctx.playerHazards);
         },
-        weather: liveFieldWeather.type,
+        weather: ctx.fieldWeather.type,
         setWeather: (w: WeatherType) => {
-          liveFieldWeather = { type: w, turns: 5 };
-          setFieldWeather(liveFieldWeather);
+          ctx.fieldWeather = { type: w, turns: 5 };
+          setFieldWeather(ctx.fieldWeather);
         },
-        userScreens: liveEnemyScreens,
+        userScreens: ctx.enemyScreens,
         setUserScreens: (updater: React.SetStateAction<SideScreens>) => {
-          liveEnemyScreens = typeof updater === 'function' ? updater(liveEnemyScreens) : updater;
-          setEnemyScreens(liveEnemyScreens);
+          ctx.enemyScreens = typeof updater === 'function' ? updater(ctx.enemyScreens) : updater;
+          setEnemyScreens(ctx.enemyScreens);
         },
-        targetScreens: livePlayerScreens,
+        targetScreens: ctx.playerScreens,
         setTargetScreens: (updater: React.SetStateAction<SideScreens>) => {
-          livePlayerScreens = typeof updater === 'function' ? updater(livePlayerScreens) : updater;
-          setPlayerScreens(livePlayerScreens);
+          ctx.playerScreens = typeof updater === 'function' ? updater(ctx.playerScreens) : updater;
+          setPlayerScreens(ctx.playerScreens);
         },
-        isWildBattle: !trainer
+        isWildBattle: !trainer,
+        canUserPivotSwitch: canEnemyPivot,
+        onCureTeamStatus: cureEnemyTeamStatus
       };
 
       const actionRes = executeMoveAction(
@@ -1339,31 +1712,72 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
 
       await new Promise(r => setTimeout(r, 800));
 
-      const finalPlayerHp = attackerIsPlayer ? actionRes.nextUserHp : actionRes.nextTargetHp;
-      const finalEnemyHp = attackerIsPlayer ? actionRes.nextTargetHp : actionRes.nextUserHp;
+      ctx.playerHp = attackerIsPlayer ? actionRes.nextUserHp : actionRes.nextTargetHp;
+      ctx.enemyHp = attackerIsPlayer ? actionRes.nextTargetHp : actionRes.nextUserHp;
+      if (attackerIsPlayer) {
+        if (actionRes.nextUserStatus) ctx.playerStatus = actionRes.nextUserStatus;
+        if (actionRes.nextTargetStatus) ctx.enemyStatus = actionRes.nextTargetStatus;
+      } else {
+        if (actionRes.nextUserStatus) ctx.enemyStatus = actionRes.nextUserStatus;
+        if (actionRes.nextTargetStatus) ctx.playerStatus = actionRes.nextTargetStatus;
+      }
 
       if (actionRes.forceFlee) {
         await new Promise(r => setTimeout(r, 600));
         setBattleResult({ type: 'escape' });
-        return { nextPlayerHp: finalPlayerHp, nextEnemyHp: finalEnemyHp, stopped: true };
+        return { stopped: true };
       }
 
       if (actionRes.forceSwitchTarget) {
         await new Promise(r => setTimeout(r, 600));
         if (attackerIsPlayer) {
-          const currentEnemyId = enemy.instanceId || enemy.id;
-          const availableEnemies = enemyTeam.filter(p => (p.instanceId || p.id) !== currentEnemyId && p.hp > 0);
+          const currentEnemyId = ctx.enemy.instanceId || ctx.enemy.id;
+          const availableEnemies = ctx.enemyTeam.filter(p => (p.instanceId || p.id) !== currentEnemyId && p.hp > 0);
           if (availableEnemies.length > 0) {
             const nextChosenEnemy = availableEnemies[Math.floor(Math.random() * availableEnemies.length)];
             addLog(`🔄 ${trainer?.name || 'L\'avversario'} manda in campo ${nextChosenEnemy.name}!`);
-            const enemyHazardRes = processEntryHazards(nextChosenEnemy, nextChosenEnemy.hp, enemySideHazards, nextChosenEnemy.status);
-            setEnemy(nextChosenEnemy);
-            setEnemyHp(enemyHazardRes.nextHp);
+            const enemyHazardRes = processEntryHazards(nextChosenEnemy, nextChosenEnemy.hp, ctx.enemyHazards, nextChosenEnemy.status);
+            if (enemyHazardRes.logs.length > 0) enemyHazardRes.logs.forEach(m => addLog(m));
+            ctx.enemyHazards = enemyHazardRes.updatedSideHazards;
+            ctx.enemy = nextChosenEnemy;
+            ctx.enemyHp = enemyHazardRes.nextHp;
+            ctx.enemyStatus = { status: enemyHazardRes.nextStatus, duration: enemyHazardRes.nextStatusDuration ?? nextChosenEnemy.statusDuration };
+            ctx.enemyStages = {
+              attack: 0,
+              defense: 0,
+              spAtk: 0,
+              spDef: 0,
+              speed: enemyHazardRes.nextSpeedStageDelta ? Math.max(-6, Math.min(6, enemyHazardRes.nextSpeedStageDelta)) : 0,
+              accuracy: 0,
+              evasion: 0
+            };
+            ctx.enemyVolatile = {};
+            setEnemySideHazards(ctx.enemyHazards);
+            setEnemy(ctx.enemy);
+            setEnemyHp(ctx.enemyHp);
             setEnemyMoves(nextChosenEnemy.moves.map(resolveBattleMove));
-            setEnemyStatus({ status: enemyHazardRes.nextStatus, duration: enemyHazardRes.nextStatusDuration ?? nextChosenEnemy.statusDuration });
-            setEnemyStages({ attack: 0, defense: 0, spAtk: 0, spDef: 0, speed: 0, accuracy: 0, evasion: 0 });
+            setEnemyStatus(ctx.enemyStatus);
+            setEnemyStages(ctx.enemyStages);
             setEnemyVolatile({});
-            return { nextPlayerHp: finalPlayerHp, nextEnemyHp: enemyHazardRes.nextHp, stopped: true };
+            const swAbility = processSwitchInAbility(
+              ctx.enemy,
+              ctx.player,
+              ctx.playerStages,
+              ctx.fieldWeather.type,
+              Boolean(ctx.playerVolatile.substituteHp && ctx.playerVolatile.substituteHp > 0)
+            );
+            if (swAbility.triggered) {
+              if (swAbility.msg) addLog(swAbility.msg);
+              if (swAbility.nextWeather) {
+                ctx.fieldWeather = { type: swAbility.nextWeather, turns: 5 };
+                setFieldWeather(ctx.fieldWeather);
+              }
+              if (swAbility.nextOpponentStages) {
+                ctx.playerStages = swAbility.nextOpponentStages;
+                setPlayerStages(ctx.playerStages);
+              }
+            }
+            return { stopped: true };
           } else {
             addLog("Ma è fallita! Non ci sono altri Pokémon nella squadra avversaria!");
           }
@@ -1374,7 +1788,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
           if (availablePlayerIndices.length > 0) {
             const chosen = availablePlayerIndices[Math.floor(Math.random() * availablePlayerIndices.length)];
             handleSwitch(chosen.idx);
-            return { nextPlayerHp: finalPlayerHp, nextEnemyHp: finalEnemyHp, stopped: true };
+            return { stopped: true };
           } else {
             addLog("Ma è fallita! Non ci sono altri Pokémon pronti a lottare!");
           }
@@ -1383,28 +1797,88 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
 
       if (actionRes.targetFainted) {
         if (attackerIsPlayer) {
-          await handleWin(finalPlayerHp);
+          await handleWin(ctx.playerHp);
         } else {
           await handlePlayerFaint();
         }
-        return { nextPlayerHp: finalPlayerHp, nextEnemyHp: finalEnemyHp, stopped: true };
+        return { stopped: true };
       }
 
       if (actionRes.userFainted) {
         if (attackerIsPlayer) {
           await handlePlayerFaint();
         } else {
-          await handleWin(finalPlayerHp);
+          await handleWin(ctx.playerHp);
         }
-        return { nextPlayerHp: finalPlayerHp, nextEnemyHp: finalEnemyHp, stopped: true };
+        return { stopped: true };
+      }
+
+      // Enemy Pivot Switch (Retromarcia / Invertivolt / Virata)
+      if (!attackerIsPlayer && actionRes.pivotSwitchRequired && trainer) {
+        const currentEnemyId = ctx.enemy.instanceId || ctx.enemy.id;
+        ctx.enemyTeam = ctx.enemyTeam.map(p =>
+          (p.instanceId ? p.instanceId === currentEnemyId : p.id === ctx.enemy.id)
+            ? { ...p, hp: ctx.enemyHp, status: ctx.enemyStatus.status, statusDuration: ctx.enemyStatus.duration }
+            : p
+        );
+        const availableEnemies = ctx.enemyTeam.filter(p => (p.instanceId || p.id) !== currentEnemyId && p.hp > 0);
+        if (availableEnemies.length > 0) {
+          const nextChosenEnemy = availableEnemies[Math.floor(Math.random() * availableEnemies.length)];
+          addLog(`🔄 ${ctx.enemy.name} rientra! ${trainer.name} manda in campo ${nextChosenEnemy.name}!`);
+          await new Promise(r => setTimeout(r, 700));
+          const enemyHazardRes = processEntryHazards(nextChosenEnemy, nextChosenEnemy.hp, ctx.enemyHazards, nextChosenEnemy.status);
+          if (enemyHazardRes.logs.length > 0) enemyHazardRes.logs.forEach(msg => addLog(msg));
+          ctx.enemyHazards = enemyHazardRes.updatedSideHazards;
+          ctx.enemy = nextChosenEnemy;
+          ctx.enemyHp = enemyHazardRes.nextHp;
+          ctx.enemyStatus = { status: enemyHazardRes.nextStatus, duration: enemyHazardRes.nextStatusDuration ?? nextChosenEnemy.statusDuration };
+          ctx.enemyStages = {
+            attack: 0,
+            defense: 0,
+            spAtk: 0,
+            spDef: 0,
+            speed: enemyHazardRes.nextSpeedStageDelta ? Math.max(-6, Math.min(6, enemyHazardRes.nextSpeedStageDelta)) : 0,
+            accuracy: 0,
+            evasion: 0
+          };
+          ctx.enemyVolatile = {};
+          setEnemySideHazards(ctx.enemyHazards);
+          setEnemyTeam(ctx.enemyTeam);
+          setEnemy(ctx.enemy);
+          setEnemyHp(ctx.enemyHp);
+          setEnemyMoves(nextChosenEnemy.moves.map(resolveBattleMove));
+          setEnemyStatus(ctx.enemyStatus);
+          setEnemyStages(ctx.enemyStages);
+          setEnemyVolatile({});
+          if (ctx.enemyHp <= 0) {
+            addLog(`${ctx.enemy.name} è k.o. a causa delle trappole sul campo!`);
+            await handleWin(ctx.playerHp);
+            return { stopped: true };
+          }
+          const swAbility = processSwitchInAbility(
+            ctx.enemy,
+            ctx.player,
+            ctx.playerStages,
+            ctx.fieldWeather.type,
+            Boolean(ctx.playerVolatile.substituteHp && ctx.playerVolatile.substituteHp > 0)
+          );
+          if (swAbility.triggered) {
+            if (swAbility.msg) addLog(swAbility.msg);
+            if (swAbility.nextWeather) {
+              ctx.fieldWeather = { type: swAbility.nextWeather, turns: 5 };
+              setFieldWeather(ctx.fieldWeather);
+            }
+            if (swAbility.nextOpponentStages) {
+              ctx.playerStages = swAbility.nextOpponentStages;
+              setPlayerStages(ctx.playerStages);
+            }
+          }
+        }
       }
 
       return { 
-        nextPlayerHp: finalPlayerHp, 
-        nextEnemyHp: finalEnemyHp, 
         stopped: false,
-        nextUserStatus: actionRes.nextUserStatus,
-        nextTargetStatus: actionRes.nextTargetStatus
+        pivotSwitchRequired: attackerIsPlayer ? actionRes.pivotSwitchRequired : false
       };
     };
 
@@ -1430,196 +1904,99 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       try { playLevelUp(); } catch { /* ignore */ }
 
       const healedHp = enemy.maxHp;
+      ctx.enemyHp = healedHp;
+      ctx.enemyStatus = { status: undefined, duration: undefined };
       setEnemyHp(healedHp);
       setEnemyStatus({ status: undefined, duration: undefined });
       addLog(`✨ I PS di ${enemy.name} tornano al massimo e ogni problema di stato è stato curato! (${enemyHealsRemaining - 1} rimaste)`);
       await new Promise(r => setTimeout(r, 900));
 
-      // The enemy used their turn to heal, so only the player executes their attack!
-      let curPlayerHp = playerHp;
-      let curEnemyHp = healedHp;
-      let livePlayerStatus: { status?: StatusCondition; duration?: number } = { ...playerStatus };
-      let liveEnemyStatus: { status?: StatusCondition; duration?: number } = { status: undefined, duration: undefined };
+      const playerResult = await runCombatantAttack(true, true);
+      if (playerResult.stopped) return;
 
-      const playerResult = await runCombatantAttack(true, true, curPlayerHp, curEnemyHp);
-      curPlayerHp = playerResult.nextPlayerHp;
-      curEnemyHp = playerResult.nextEnemyHp;
-      if (playerResult.nextUserStatus) livePlayerStatus = playerResult.nextUserStatus;
-      if (playerResult.nextTargetStatus) liveEnemyStatus = playerResult.nextTargetStatus;
-
-      if (playerResult.stopped) {
+      if (playerResult.pivotSwitchRequired && state.player.team.some((p, i) => i !== 0 && p.hp > 0)) {
+        pendingPivotRef.current = async (switchedIn, switchedHp, switchedStatus, switchedStages, updatedWeather) => {
+          ctx.player = switchedIn;
+          ctx.playerHp = switchedHp;
+          ctx.playerStatus = switchedStatus;
+          ctx.playerStages = switchedStages;
+          ctx.playerVolatile = {};
+          ctx.fieldWeather = updatedWeather;
+          await new Promise(r => setTimeout(r, 400));
+          await runEndOfTurnPhase();
+        };
+        setIsPivotSwitch(true);
+        setShowSwitch(true);
+        setIsAnimating(false);
         return;
       }
 
       await new Promise(r => setTimeout(r, 500));
-
-      // End of turn effects
-      setPlayerVolatile(prev => ({ ...prev, isFlinched: false, isProtected: false, turnsOnField: Math.max(1, prev.turnsOnField ?? 0) }));
-      setEnemyVolatile(prev => ({ ...prev, isFlinched: false, isProtected: false, turnsOnField: Math.max(1, prev.turnsOnField ?? 0) }));
-
-      curPlayerHp = await handleStatusEndTurn(playerActive, curPlayerHp, setPlayerHp, livePlayerStatus.status, setPlayerStatus);
-      if (curPlayerHp <= 0) {
-        await handlePlayerFaint();
-        return;
-      }
-
-      curEnemyHp = await handleStatusEndTurn(enemy, curEnemyHp, setEnemyHp, liveEnemyStatus.status, setEnemyStatus);
-      if (curEnemyHp <= 0) {
-        await handleWin(curPlayerHp);
-        return;
-      }
-
-      // Weather end-of-turn damage (Sandstorm / Hail)
-      if (liveFieldWeather.type === 'sandstorm' || liveFieldWeather.type === 'hail') {
-        const weatherP = processWeatherTurnEnd(playerActive, curPlayerHp, liveFieldWeather.type);
-        if (weatherP.damage > 0) {
-          addLog(weatherP.msg!);
-          curPlayerHp = weatherP.nextHp;
-          setPlayerHp(curPlayerHp);
-          if (curPlayerHp <= 0) {
-            await handlePlayerFaint();
-            return;
-          }
-        }
-
-        const weatherE = processWeatherTurnEnd(enemy, curEnemyHp, liveFieldWeather.type);
-        if (weatherE.damage > 0) {
-          addLog(weatherE.msg!);
-          curEnemyHp = weatherE.nextHp;
-          setEnemyHp(curEnemyHp);
-          if (curEnemyHp <= 0) {
-            await handleWin(curPlayerHp);
-            return;
-          }
-        }
-      }
-
-      // Tick Weather
-      const tw = tickWeather(liveFieldWeather);
-      setFieldWeather(tw.nextWeather);
-      if (tw.expiredMsg) addLog(tw.expiredMsg);
-
-      // Tick Screens
-      const sp = tickScreens(livePlayerScreens, playerActive.name);
-      setPlayerScreens(sp.nextScreens);
-      sp.expiredMsgs.forEach(m => addLog(m));
-
-      const se = tickScreens(liveEnemyScreens, enemy.name);
-      setEnemyScreens(se.nextScreens);
-      se.expiredMsgs.forEach(m => addLog(m));
-
-      setIsAnimating(false);
+      await runEndOfTurnPhase();
       return;
     }
 
     // --- EXECUTION PHASE 1: FIRST COMBATANT ---
-    let curPlayerHp = playerHp;
-    let curEnemyHp = enemyHp;
-    let livePlayerStatus = { ...playerStatus };
-    let liveEnemyStatus = { ...enemyStatus };
-
-    const firstResult = await runCombatantAttack(playerFirst, true, curPlayerHp, curEnemyHp);
-    curPlayerHp = firstResult.nextPlayerHp;
-    curEnemyHp = firstResult.nextEnemyHp;
-    if (playerFirst) {
-      if (firstResult.nextUserStatus) livePlayerStatus = firstResult.nextUserStatus;
-      if (firstResult.nextTargetStatus) liveEnemyStatus = firstResult.nextTargetStatus;
-    } else {
-      if (firstResult.nextUserStatus) liveEnemyStatus = firstResult.nextUserStatus;
-      if (firstResult.nextTargetStatus) livePlayerStatus = firstResult.nextTargetStatus;
+    const firstResult = await runCombatantAttack(playerFirst, true);
+    if (firstResult.stopped) {
+      return;
     }
 
-    if (firstResult.stopped) {
+    if (playerFirst && firstResult.pivotSwitchRequired && state.player.team.some((p, i) => i !== 0 && p.hp > 0)) {
+      pendingPivotRef.current = async (switchedIn, switchedHp, switchedStatus, switchedStages, updatedWeather) => {
+        ctx.player = switchedIn;
+        ctx.playerHp = switchedHp;
+        ctx.playerStatus = switchedStatus;
+        ctx.playerStages = switchedStages;
+        ctx.playerVolatile = {};
+        ctx.fieldWeather = updatedWeather;
+        await new Promise(r => setTimeout(r, 500));
+        const secondResAfterPivot = await runCombatantAttack(false, false);
+        if (secondResAfterPivot.stopped) return;
+        await runEndOfTurnPhase();
+      };
+      setIsPivotSwitch(true);
+      setShowSwitch(true);
+      setIsAnimating(false);
       return;
     }
 
     await new Promise(r => setTimeout(r, 500));
 
     // --- EXECUTION PHASE 2: SECOND COMBATANT ---
-    const secondResult = await runCombatantAttack(!playerFirst, false, curPlayerHp, curEnemyHp);
-    curPlayerHp = secondResult.nextPlayerHp;
-    curEnemyHp = secondResult.nextEnemyHp;
-    if (!playerFirst) {
-      if (secondResult.nextUserStatus) livePlayerStatus = secondResult.nextUserStatus;
-      if (secondResult.nextTargetStatus) liveEnemyStatus = secondResult.nextTargetStatus;
-    } else {
-      if (secondResult.nextUserStatus) liveEnemyStatus = secondResult.nextUserStatus;
-      if (secondResult.nextTargetStatus) livePlayerStatus = secondResult.nextTargetStatus;
-    }
-
+    const secondResult = await runCombatantAttack(!playerFirst, false);
     if (secondResult.stopped) {
       return;
     }
 
-    // --- EXECUTION PHASE 3: END OF TURN (Clear flinch, status tick damage, weather, screens) ---
-    // Clear flinch & protect, and mark turn spent on field for Fake Out
-    setPlayerVolatile(prev => ({ ...prev, isFlinched: false, isProtected: false, turnsOnField: Math.max(1, prev.turnsOnField ?? 0) }));
-    setEnemyVolatile(prev => ({ ...prev, isFlinched: false, isProtected: false, turnsOnField: Math.max(1, prev.turnsOnField ?? 0) }));
-
-    // Player status damage (Poison / Burn)
-    curPlayerHp = await handleStatusEndTurn(playerActive, curPlayerHp, setPlayerHp, livePlayerStatus.status, setPlayerStatus);
-    if (curPlayerHp <= 0) {
-      await handlePlayerFaint();
+    if (!playerFirst && secondResult.pivotSwitchRequired && state.player.team.some((p, i) => i !== 0 && p.hp > 0)) {
+      pendingPivotRef.current = async (switchedIn, switchedHp, switchedStatus, switchedStages, updatedWeather) => {
+        ctx.player = switchedIn;
+        ctx.playerHp = switchedHp;
+        ctx.playerStatus = switchedStatus;
+        ctx.playerStages = switchedStages;
+        ctx.playerVolatile = {};
+        ctx.fieldWeather = updatedWeather;
+        await new Promise(r => setTimeout(r, 400));
+        await runEndOfTurnPhase();
+      };
+      setIsPivotSwitch(true);
+      setShowSwitch(true);
+      setIsAnimating(false);
       return;
     }
 
-    // Enemy status damage (Poison / Burn)
-    curEnemyHp = await handleStatusEndTurn(enemy, curEnemyHp, setEnemyHp, liveEnemyStatus.status, setEnemyStatus);
-    if (curEnemyHp <= 0) {
-      await handleWin(curPlayerHp);
-      return;
-    }
-
-    // Weather end-of-turn damage (Sandstorm / Hail)
-    if (liveFieldWeather.type === 'sandstorm' || liveFieldWeather.type === 'hail') {
-      const weatherP = processWeatherTurnEnd(playerActive, curPlayerHp, liveFieldWeather.type);
-      if (weatherP.damage > 0) {
-        addLog(weatherP.msg!);
-        curPlayerHp = weatherP.nextHp;
-        setPlayerHp(curPlayerHp);
-        await new Promise(r => setTimeout(r, 600));
-        if (curPlayerHp <= 0) {
-          await handlePlayerFaint();
-          return;
-        }
-      }
-
-      const weatherE = processWeatherTurnEnd(enemy, curEnemyHp, liveFieldWeather.type);
-      if (weatherE.damage > 0) {
-        addLog(weatherE.msg!);
-        curEnemyHp = weatherE.nextHp;
-        setEnemyHp(curEnemyHp);
-        await new Promise(r => setTimeout(r, 600));
-        if (curEnemyHp <= 0) {
-          await handleWin(curPlayerHp);
-          return;
-        }
-      }
-    }
-
-    // Tick Weather
-    const tw = tickWeather(liveFieldWeather);
-    setFieldWeather(tw.nextWeather);
-    if (tw.expiredMsg) {
-      addLog(tw.expiredMsg);
-    }
-
-    // Tick Screens
-    const sp = tickScreens(livePlayerScreens, playerActive.name);
-    setPlayerScreens(sp.nextScreens);
-    sp.expiredMsgs.forEach(m => addLog(m));
-
-    const se = tickScreens(liveEnemyScreens, enemy.name);
-    setEnemyScreens(se.nextScreens);
-    se.expiredMsgs.forEach(m => addLog(m));
-
-    setIsAnimating(false);
+    // --- EXECUTION PHASE 3: END OF TURN ---
+    await runEndOfTurnPhase();
   }, [
-    isAnimating, playerMoves, enemyMoves, getEffectiveSpeed, playerActive, 
-    playerStages, playerStatus, enemy, enemyStages, enemyStatus, playerVolatile, 
-    enemyVolatile, deductPlayerPp, deductEnemyPp, handleWin, 
-    handlePlayerFaint, handleStatusEndTurn, addLog, playerHp, enemyHp,
-    fieldWeather, playerScreens, enemyScreens, playerSideHazards, enemySideHazards
+    isAnimating, isPivotSwitch, playerMoves, enemyMoves, getEffectiveSpeed, playerActive, 
+    playerStages, playerStatus, enemy, enemyTeam, enemyStages, enemyStatus, playerVolatile, 
+    enemyVolatile, deductPlayerPp, deductEnemyPp, curePlayerTeamStatus, cureEnemyTeamStatus,
+    handleWin, handlePlayerFaint, handleStatusEndTurn, addLog, playerHp, enemyHp,
+    fieldWeather, playerScreens, enemyScreens, playerSideHazards, enemySideHazards,
+    bossBuff, bossMutation, trainer, state.player.team, state.settings?.moveAnimationsEnabled,
+    enemyHealsRemaining, towerSpeedMult, towerLowHpBonus, towerAttackMult, towerCritChanceBonus,
+    towerLifeStealPercent, towerAccuracyPenalty, towerDefMult, towerIncomingDmgMult, towerDodgeChance
   ]);
 
   // Auto-trigger locked / multi-turn moves on Turn 2 (e.g. Volo, Fossa, Sub, Solarraggio, Iper Raggio ricarica)
@@ -1725,16 +2102,22 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
 
   // Switch Pokemon handler
   const handleSwitch = useCallback(async (index: number) => {
-    if (index === 0 || (isAnimating && playerHp > 0)) return;
+    const wasPivot = isPivotSwitch;
+    if (index === 0 || (isAnimating && playerHp > 0 && !wasPivot)) return;
     const nextPkmn = state.player.team[index];
-    if (nextPkmn.hp <= 0) return;
+    if (!nextPkmn || nextPkmn.hp <= 0) return;
+
+    if (wasPivot) {
+      setIsAnimating(true);
+    }
 
     const wasFainted = playerHp <= 0;
     addLog(`Torna, ${playerActive.name}! Vai, ${nextPkmn.name}!`);
     
     // Reset volatile states and stages on switch
     setPlayerVolatile({});
-    setPlayerStages({ attack: 0, defense: 0, spAtk: 0, spDef: 0, speed: 0, accuracy: 0, evasion: 0 });
+    let incomingStages: BattleStages = { attack: 0, defense: 0, spAtk: 0, spDef: 0, speed: 0, accuracy: 0, evasion: 0 };
+    setPlayerStages(incomingStages);
 
     setState(prev => {
       const team = [...prev.player.team];
@@ -1754,6 +2137,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     const hazardRes = processEntryHazards(nextPkmn, nextPkmn.hp, playerSideHazards, nextPkmn.status);
     let switchedHp = hazardRes.nextHp;
     let switchedStatus = hazardRes.nextStatus;
+    const switchedDuration = hazardRes.nextStatusDuration ?? nextPkmn.statusDuration;
     
     if (hazardRes.logs.length > 0) {
       hazardRes.logs.forEach(msg => addLog(msg));
@@ -1761,25 +2145,65 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
     setPlayerSideHazards(hazardRes.updatedSideHazards);
     setPlayerHp(switchedHp);
     setPlayerMoves(nextPkmn.moves.map(resolveBattleMove));
-    setPlayerStatus({ 
+    const switchedStatusObj = { 
       status: switchedStatus, 
-      duration: hazardRes.nextStatusDuration ?? nextPkmn.statusDuration 
-    });
+      duration: switchedDuration 
+    };
+    setPlayerStatus(switchedStatusObj);
     if (hazardRes.nextSpeedStageDelta) {
-      setPlayerStages(prev => ({ 
-        ...prev, 
-        speed: Math.max(-6, Math.min(6, prev.speed + hazardRes.nextSpeedStageDelta!)) 
-      }));
+      incomingStages = {
+        ...incomingStages,
+        speed: Math.max(-6, Math.min(6, incomingStages.speed + hazardRes.nextSpeedStageDelta))
+      };
+      setPlayerStages(incomingStages);
     }
     setShowSwitch(false);
+    setIsPivotSwitch(false);
     
     if (switchedHp <= 0) {
+      pendingPivotRef.current = null;
       await handlePlayerFaint();
       return;
     }
 
+    // Trigger incoming player's Switch-In Core Ability (Prepotenza / Meteo)
+    let updatedEnemyStages = { ...enemyStages };
+    let updatedWeather: FieldWeather = { ...fieldWeather };
+    const switchInAbility = processSwitchInAbility(
+      nextPkmn,
+      enemy,
+      updatedEnemyStages,
+      updatedWeather.type,
+      Boolean(enemyVolatile.substituteHp && enemyVolatile.substituteHp > 0)
+    );
+    if (switchInAbility.triggered) {
+      if (switchInAbility.msg) addLog(switchInAbility.msg);
+      if (switchInAbility.nextWeather) {
+        updatedWeather = { type: switchInAbility.nextWeather, turns: 5 };
+        setFieldWeather(updatedWeather);
+      }
+      if (switchInAbility.nextOpponentStages) {
+        updatedEnemyStages = switchInAbility.nextOpponentStages;
+        setEnemyStages(updatedEnemyStages);
+      }
+    }
+
+    if (wasPivot && pendingPivotRef.current) {
+      const continuation = pendingPivotRef.current;
+      pendingPivotRef.current = null;
+      await continuation(nextPkmn, switchedHp, switchedStatusObj, incomingStages, updatedWeather);
+      return;
+    }
+
     if (!wasFainted) {
-      await triggerEnemySingleTurn(switchedHp, enemyHp, true);
+      await triggerEnemySingleTurn(switchedHp, enemyHp, true, {
+        playerPokemon: nextPkmn,
+        playerStatus: switchedStatusObj,
+        playerStages: incomingStages,
+        playerVolatile: {},
+        enemyStages: updatedEnemyStages,
+        weather: updatedWeather
+      });
     } else {
       if (enemyHp > 0 && enemyStatus.status) {
         const nextE = await handleStatusEndTurn(
@@ -1797,9 +2221,10 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       setIsAnimating(false);
     }
   }, [
-    isAnimating, playerHp, state.player.team, addLog, playerActive.name, 
-    setState, playerStatus, playerMoves, triggerEnemySingleTurn, enemyHp,
-    enemyStatus, handleStatusEndTurn, handleWin
+    isAnimating, isPivotSwitch, playerHp, state.player.team, addLog, playerActive.name, 
+    setState, playerStatus, playerMoves, playerSideHazards, triggerEnemySingleTurn, enemy,
+    enemyHp, enemyStatus, enemyStages, enemyVolatile.substituteHp, fieldWeather,
+    handlePlayerFaint, handleStatusEndTurn, handleWin
   ]);
 
   // Item Use in Battle
@@ -1937,12 +2362,14 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
                 state.player?.box?.some(p => p.id === enemy.id)
               )}
               status={enemyStatus.status} 
+              isDrowsy={Boolean(enemyVolatile.yawnTurns && enemyVolatile.yawnTurns > 0)}
               isConfused={Boolean(enemyVolatile.confusionTurns && enemyVolatile.confusionTurns > 0)}
               isShiny={enemy.isShiny}
-              team={trainer ? enemyTeam.map(p => p.id === enemy.id ? { ...p, hp: enemyHp } : p) : [{ hp: enemyHp }]}
+              team={trainer ? enemyTeam.map(p => (p.instanceId ? p.instanceId === enemy.instanceId : p.id === enemy.id) ? { ...p, hp: enemyHp } : p) : [{ hp: enemyHp }]}
               stages={enemyStages}
               substituteHp={enemyVolatile.substituteHp}
               screens={enemyScreens}
+              abilityName={resolvePokemonAbility(enemy)?.name}
             />
             <img 
               src={enemy?.sprites?.artwork || enemy?.sprites?.front || (enemy as any)?.spriteUrl} 
@@ -2035,12 +2462,14 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
               types={playerActive.types}
               isPlayer 
               status={playerStatus.status}
+              isDrowsy={Boolean(playerVolatile.yawnTurns && playerVolatile.yawnTurns > 0)}
               isConfused={Boolean(playerVolatile.confusionTurns && playerVolatile.confusionTurns > 0)}
               isShiny={playerActive.isShiny}
               team={state.player.team.map((p, i) => i === 0 ? { ...p, hp: playerHp } : p)}
               stages={playerStages}
               substituteHp={playerVolatile.substituteHp}
               screens={playerScreens}
+              abilityName={resolvePokemonAbility(playerActive)?.name}
             />
           </motion.div>
         </div>
@@ -2052,7 +2481,7 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
           onBag={() => setShowBag(true)} 
           onEscape={handleEscape}
           onSwitch={() => setShowSwitch(true)}
-          disabled={isAnimating || Boolean(playerVolatile.lockedMove || playerVolatile.charging || playerVolatile.recharging)}
+          disabled={isAnimating || isPivotSwitch || Boolean(playerVolatile.lockedMove || playerVolatile.charging || playerVolatile.recharging)}
           enemyTypes={enemy.types}
           encryptedMoveIndex={encryptedMoveIndex}
           onEncryptedMoveClick={() => setShowRansomModal(true)}
@@ -2129,8 +2558,10 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       {showSwitch && (
         <div className="fixed inset-0 z-[90] bg-black/80 p-8 flex flex-col gap-4">
           <div className="flex justify-between items-center text-white mb-4">
-            <h2 className="text-xl font-black uppercase italic">Scegli Pokémon</h2>
-            {playerHp > 0 && (
+            <h2 className="text-xl font-black uppercase italic">
+              {isPivotSwitch ? 'Cambio Tattico — Scegli Pokémon' : 'Scegli Pokémon'}
+            </h2>
+            {playerHp > 0 && !isPivotSwitch && (
               <button onClick={() => setShowSwitch(false)} className="text-2xl hover:text-red-400">✕</button>
             )}
           </div>

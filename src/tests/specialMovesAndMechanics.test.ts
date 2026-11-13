@@ -16,7 +16,14 @@ import { SideHazards, defaultSideHazards, setHazardFromMove } from '../lib/battl
 import { determineTurnOrder } from '../lib/battle/turnOrder';
 import { selectEnemyMove } from '../lib/battle/battleAi';
 import { Pokemon, BattleStages, Move } from '../types/game';
-import { VolatileStatus } from '../lib/battle/statusEffects';
+import { VolatileStatus, processYawnEndTurn } from '../lib/battle/statusEffects';
+import {
+  resolvePokemonAbility,
+  processSwitchInAbility,
+  hasSturdyAbility,
+  CORE_ABILITIES
+} from '../lib/battle/abilities';
+import { encodePokemon, decodePokemon, normalizePokemon } from '../lib/utils';
 
 const createMockPokemon = (overrides: Partial<Pokemon> = {}): Pokemon => ({
   id: 25,
@@ -1585,6 +1592,509 @@ describe('Special Moves & Field Mechanics Test Suite', () => {
         { turnsOnField: 1 }
       );
       expect(pickTurn2.name).toBe('Corposcontro');
+    });
+  });
+
+  describe('7. Mosse di Ricambio Tattico (Retromarcia, Invertivolt, Virata)', () => {
+    it('resolves aliases and properties for Retromarcia, Invertivolt, and Virata', () => {
+      const uTurn = getMoveByName('Retromarcia');
+      const uTurnAlias = getMoveByName('u-turn');
+      const voltSwitch = getMoveByName('Invertivolt');
+      const flipTurn = getMoveByName('Virata');
+      const flipTurnAlias = getMoveByName('flip-turn');
+
+      expect(uTurn.name).toBe('Retromarcia');
+      expect(uTurnAlias.name).toBe('Retromarcia');
+      expect(uTurn.type).toBe('bug');
+      expect(uTurn.power).toBe(70);
+
+      expect(voltSwitch.name).toBe('Invertivolt');
+      expect(voltSwitch.type).toBe('electric');
+      expect(voltSwitch.power).toBe(70);
+
+      expect(flipTurn.name).toBe('Virata');
+      expect(flipTurnAlias.name).toBe('Virata');
+      expect(flipTurn.type).toBe('water');
+      expect(flipTurn.power).toBe(60);
+    });
+
+    it('requests pivot switch when attack connects and user has bench teammates', () => {
+      const user = createMockPokemon({ name: 'Scizor', types: ['bug', 'steel'] });
+      const target = createMockPokemon({ name: 'Snorlax', types: ['normal'], hp: 250, maxHp: 250 });
+
+      const res = executeMoveAction(
+        getMoveByName('Retromarcia'),
+        user,
+        target,
+        defaultStages(),
+        () => {},
+        defaultStages(),
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        120,
+        () => {},
+        250,
+        () => {},
+        true,
+        true,
+        () => {},
+        { canUserPivotSwitch: true }
+      );
+
+      expect(res.nextTargetHp).toBeLessThan(250);
+      expect(res.pivotSwitchRequired).toBe(true);
+    });
+
+    it('does NOT trigger pivot switch when canUserPivotSwitch is false, target is protected, or target is immune', () => {
+      const user = createMockPokemon({ name: 'Jolteon', types: ['electric'] });
+      const groundTarget = createMockPokemon({ name: 'Onix', types: ['rock', 'ground'], hp: 150, maxHp: 150 });
+      const normalTarget = createMockPokemon({ name: 'Snorlax', types: ['normal'], hp: 200, maxHp: 200 });
+
+      // No bench pokemon
+      const noBenchRes = executeMoveAction(
+        getMoveByName('Retromarcia'),
+        user,
+        normalTarget,
+        defaultStages(),
+        () => {},
+        defaultStages(),
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        120,
+        () => {},
+        200,
+        () => {},
+        true,
+        true,
+        () => {},
+        { canUserPivotSwitch: false }
+      );
+      expect(noBenchRes.pivotSwitchRequired).toBe(false);
+
+      // Blocked by Protect
+      const protectedRes = executeMoveAction(
+        getMoveByName('Virata'),
+        user,
+        normalTarget,
+        defaultStages(),
+        () => {},
+        defaultStages(),
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        { isProtected: true },
+        () => {},
+        120,
+        () => {},
+        200,
+        () => {},
+        true,
+        true,
+        () => {},
+        { canUserPivotSwitch: true }
+      );
+      expect(protectedRes.pivotSwitchRequired).toBeFalsy();
+
+      // Blocked by Ground immunity vs Invertivolt
+      const immuneRes = executeMoveAction(
+        getMoveByName('Invertivolt'),
+        user,
+        groundTarget,
+        defaultStages(),
+        () => {},
+        defaultStages(),
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        120,
+        () => {},
+        150,
+        () => {},
+        true,
+        true,
+        () => {},
+        { canUserPivotSwitch: true }
+      );
+      expect(immuneRes.nextTargetHp).toBe(150);
+      expect(immuneRes.pivotSwitchRequired).toBeFalsy();
+    });
+  });
+
+  describe('8. Sbadiglio (Yawn) Mechanics', () => {
+    it('inflicts drowsiness (yawnTurns=2) and puts target to sleep after 2 end-turn ticks', () => {
+      const user = createMockPokemon({ name: 'Slowbro', types: ['water', 'psychic'] });
+      const target = createMockPokemon({ name: 'Snorlax', types: ['normal'], hp: 200, maxHp: 200 });
+      let targetVolatile: VolatileStatus = {};
+      const logs: string[] = [];
+
+      const yawn = getMoveByName('Sbadiglio');
+      expect(yawn.name).toBe('Sbadiglio');
+
+      executeMoveAction(
+        yawn,
+        user,
+        target,
+        defaultStages(),
+        () => {},
+        defaultStages(),
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        targetVolatile,
+        (u) => { targetVolatile = typeof u === 'function' ? u(targetVolatile) : u; },
+        120,
+        () => {},
+        200,
+        () => {},
+        true,
+        true,
+        (msg) => logs.push(msg)
+      );
+
+      expect(targetVolatile.yawnTurns).toBe(2);
+      expect(logs.some(l => l.includes('sonnolenza'))).toBe(true);
+
+      // End of Turn 1: counts down 2 -> 1, still awake
+      const tick1 = processYawnEndTurn(target, targetVolatile, undefined, undefined);
+      expect(tick1.nextVolatile.yawnTurns).toBe(1);
+      expect(tick1.fellAsleep).toBe(false);
+
+      // End of Turn 2: counts down 1 -> undefined, target falls asleep!
+      const tick2 = processYawnEndTurn(target, tick1.nextVolatile, undefined, undefined);
+      expect(tick2.nextVolatile.yawnTurns).toBeUndefined();
+      expect(tick2.fellAsleep).toBe(true);
+      expect(tick2.nextStatus).toBe('sleep');
+      expect(tick2.nextDuration).toBeGreaterThanOrEqual(2);
+      expect(tick2.nextDuration).toBeLessThanOrEqual(4);
+      expect(tick2.msg).toContain('addormenta');
+    });
+
+    it('is blocked by Substitute, existing status, or existing drowsiness', () => {
+      const user = createMockPokemon({ name: 'Slowbro' });
+      const target = createMockPokemon({ name: 'Pikachu' });
+      const yawn = getMoveByName('yawn');
+
+      // Behind Substitute
+      let subVolatile: VolatileStatus = { substituteHp: 30 };
+      executeMoveAction(
+        yawn, user, target, defaultStages(), () => {}, defaultStages(), () => {},
+        {}, () => {}, {}, () => {}, {}, () => {},
+        subVolatile, (u) => { subVolatile = typeof u === 'function' ? u(subVolatile) : u; },
+        100, () => {}, 100, () => {}, true, true, () => {}
+      );
+      expect(subVolatile.yawnTurns).toBeUndefined();
+
+      // Existing primary status
+      let statusTargetVolatile: VolatileStatus = {};
+      executeMoveAction(
+        yawn, user, target, defaultStages(), () => {}, defaultStages(), () => {},
+        {}, () => {}, { status: 'paralyzed' }, () => {}, {}, () => {},
+        statusTargetVolatile, (u) => { statusTargetVolatile = typeof u === 'function' ? u(statusTargetVolatile) : u; },
+        100, () => {}, 100, () => {}, true, true, () => {}
+      );
+      expect(statusTargetVolatile.yawnTurns).toBeUndefined();
+    });
+  });
+
+  describe('9. Rintoccasana (Heal Bell) & Aromaterapia (Aromatherapy)', () => {
+    it('cures active status and triggers team-wide cure callback', () => {
+      const user = createMockPokemon({ name: 'Blissey', types: ['normal'] });
+      const target = createMockPokemon({ name: 'Snorlax' });
+      let userStatus: { status?: any; duration?: number } = { status: 'paralyzed' };
+      const cureTeamMock = vi.fn();
+      const logs: string[] = [];
+
+      const healBell = getMoveByName('Rintoccasana');
+      expect(healBell.name).toBe('Rintoccasana');
+      expect(getMoveByName('Aromaterapia').name).toBe('Aromaterapia');
+
+      const res = executeMoveAction(
+        healBell,
+        user,
+        target,
+        defaultStages(),
+        () => {},
+        defaultStages(),
+        () => {},
+        userStatus,
+        (u) => { userStatus = typeof u === 'function' ? u(userStatus) : u; },
+        {},
+        () => {},
+        {},
+        () => {},
+        {},
+        () => {},
+        200,
+        () => {},
+        120,
+        () => {},
+        true,
+        true,
+        (msg) => logs.push(msg),
+        { onCureTeamStatus: cureTeamMock }
+      );
+
+      expect(userStatus.status).toBeUndefined();
+      expect(res.nextUserStatus?.status).toBeUndefined();
+      expect(res.curedTeamStatus).toBe(true);
+      expect(cureTeamMock).toHaveBeenCalledTimes(1);
+      expect(logs.some(l => l.includes('cura tutti i problemi di stato'))).toBe(true);
+    });
+
+    it('AI selects Rintoccasana when enemy is afflicted by status and skips it when healthy', () => {
+      const healBell = getMoveByName('Rintoccasana');
+      const tackle = getMoveByName('Azione');
+      const enemy = createMockPokemon({ name: 'Miltank', types: ['normal'], moves: [healBell, tackle] });
+      const player = createMockPokemon({ name: 'Pikachu', types: ['electric'] });
+
+      const pickHealthy = selectEnemyMove([healBell, tackle], enemy, player, {}, {}, defaultStages(), defaultStages(), 120, 120);
+      expect(pickHealthy.name).toBe('Azione');
+
+      const pickParalyzed = selectEnemyMove([healBell, tackle], enemy, player, { status: 'paralyzed' }, {}, defaultStages(), defaultStages(), 120, 120);
+      expect(pickParalyzed.name).toBe('Rintoccasana');
+    });
+  });
+
+  describe('10. Core Abilities (15 Abilità Curate) & External Pokedex Trade Compatibility', () => {
+    it('triggers Prepotenza (Intimidate) on switch-in and respects Substitute', () => {
+      const gyarados = createMockPokemon({ id: 130, name: 'Gyarados', types: ['water', 'flying'], ability: CORE_ABILITIES.prepotenza });
+      const target = createMockPokemon({ id: 143, name: 'Snorlax', types: ['normal'] });
+
+      const resNormal = processSwitchInAbility(gyarados, target, defaultStages(), 'none', false);
+      expect(resNormal.triggered).toBe(true);
+      expect(resNormal.nextOpponentStages?.attack).toBe(-1);
+
+      const resSub = processSwitchInAbility(gyarados, target, defaultStages(), 'none', true);
+      expect(resSub.triggered).toBe(true);
+      expect(resSub.nextOpponentStages).toBeUndefined();
+    });
+
+    it('triggers switch-in Weather setters (Siccità, Piovischio, Sabbiafiume, Scendineve)', () => {
+      const opp = createMockPokemon({ name: 'Pikachu' });
+
+      expect(processSwitchInAbility(createMockPokemon({ id: 383, name: 'Groudon', ability: CORE_ABILITIES.siccita }), opp, defaultStages(), 'none').nextWeather).toBe('sun');
+      expect(processSwitchInAbility(createMockPokemon({ id: 382, name: 'Kyogre', ability: CORE_ABILITIES.piovischio }), opp, defaultStages(), 'none').nextWeather).toBe('rain');
+      expect(processSwitchInAbility(createMockPokemon({ id: 248, name: 'Tyranitar', ability: CORE_ABILITIES.sabbiafiume }), opp, defaultStages(), 'none').nextWeather).toBe('sandstorm');
+      expect(processSwitchInAbility(createMockPokemon({ id: 460, name: 'Abomasnow', ability: CORE_ABILITIES.scendineve }), opp, defaultStages(), 'none').nextWeather).toBe('hail');
+
+      // Does not re-trigger if same weather is already active
+      expect(processSwitchInAbility(createMockPokemon({ id: 383, ability: CORE_ABILITIES.siccita }), opp, defaultStages(), 'sun').triggered).toBe(false);
+    });
+
+    it('grants immunities & absorptions for Levitazione, Assorbacqua, Fuocardore, and Parafulmine', () => {
+      const attacker = createMockPokemon({ name: 'Charizard', types: ['fire', 'flying'], stats: { attack: 110, defense: 80, spAtk: 120, spDef: 85, speed: 100 } });
+
+      // Levitazione vs Terremoto
+      const gengar = createMockPokemon({ id: 94, name: 'Gengar', types: ['ghost', 'poison'], hp: 120, maxHp: 120, ability: CORE_ABILITIES.levitazione });
+      const resLev = executeMoveAction(
+        getMoveByName('Terremoto'), attacker, gengar,
+        defaultStages(), () => {}, defaultStages(), () => {},
+        {}, () => {}, {}, () => {}, {}, () => {}, {}, () => {},
+        120, () => {}, 120, () => {}, true, true, () => {}
+      );
+      expect(resLev.nextTargetHp).toBe(120);
+
+      // Assorbacqua heals 25% on Water move
+      const vaporeon = createMockPokemon({ id: 134, name: 'Vaporeon', types: ['water'], hp: 100, maxHp: 200, ability: CORE_ABILITIES.assorbacqua });
+      const resWater = executeMoveAction(
+        getMoveByName('Surf'), attacker, vaporeon,
+        defaultStages(), () => {}, defaultStages(), () => {},
+        {}, () => {}, {}, () => {}, {}, () => {}, {}, () => {},
+        120, () => {}, 100, () => {}, true, true, () => {}
+      );
+      expect(resWater.nextTargetHp).toBe(150); // +25% of 200 = +50
+
+      // Fuocardore blocks Fire move, sets flashFireBoosted, and boosts subsequent Fire move by 1.5x
+      let arcanineVolatile: VolatileStatus = {};
+      const arcanine = createMockPokemon({ id: 59, name: 'Arcanine', types: ['fire'], hp: 150, maxHp: 150, ability: CORE_ABILITIES.fuocardore });
+      const flamethrower = getMoveByName('Lanciafiamme');
+      const resFireAbsorb = executeMoveAction(
+        flamethrower, attacker, arcanine,
+        defaultStages(), () => {}, defaultStages(), () => {},
+        {}, () => {}, {}, () => {}, {}, () => {},
+        arcanineVolatile, (u) => { arcanineVolatile = typeof u === 'function' ? u(arcanineVolatile) : u; },
+        120, () => {}, 150, () => {}, true, true, () => {}
+      );
+      expect(resFireAbsorb.nextTargetHp).toBe(150);
+      expect(arcanineVolatile.flashFireBoosted).toBe(true);
+
+      const spyRand = vi.spyOn(Math, 'random').mockReturnValue(0.5);
+      const dummy = createMockPokemon({ name: 'Snorlax', types: ['normal'], hp: 500, maxHp: 500 });
+      const unboosted = executeMoveAction(
+        flamethrower, arcanine, dummy,
+        defaultStages(), () => {}, defaultStages(), () => {},
+        {}, () => {}, {}, () => {}, {}, () => {}, {}, () => {},
+        150, () => {}, 500, () => {}, true, true, () => {}
+      );
+      const boosted = executeMoveAction(
+        flamethrower, arcanine, dummy,
+        defaultStages(), () => {}, defaultStages(), () => {},
+        {}, () => {}, {}, () => {}, arcanineVolatile, () => {}, {}, () => {},
+        150, () => {}, 500, () => {}, true, true, () => {}
+      );
+      spyRand.mockRestore();
+      const unboostedDmg = 500 - unboosted.nextTargetHp;
+      const boostedDmg = 500 - boosted.nextTargetHp;
+      expect(boostedDmg).toBeGreaterThan(unboostedDmg);
+
+      // Parafulmine absorbs Electric move and raises Sp.Atk by +1
+      let marowakStages = defaultStages();
+      const marowak = createMockPokemon({ id: 105, name: 'Marowak', types: ['ground'], hp: 150, maxHp: 150, ability: CORE_ABILITIES.parafulmine });
+      const resRod = executeMoveAction(
+        getMoveByName('Fulmine'), attacker, marowak,
+        defaultStages(), () => {}, marowakStages, (u) => { marowakStages = typeof u === 'function' ? u(marowakStages) : u; },
+        {}, () => {}, {}, () => {}, {}, () => {}, {}, () => {},
+        120, () => {}, 150, () => {}, true, true, () => {}
+      );
+      expect(resRod.nextTargetHp).toBe(150);
+      expect(marowakStages.spAtk).toBe(1);
+    });
+
+    it('triggers Vigore (Sturdy) at full HP only, Tecnico on <=60 BP moves, and Statica on physical contact', () => {
+      const attacker = createMockPokemon({
+        name: 'Scizor',
+        types: ['bug', 'steel'],
+        level: 100,
+        stats: { attack: 250, defense: 100, spAtk: 50, spDef: 80, speed: 65 },
+        ability: CORE_ABILITIES.tecnico
+      });
+      const golem = createMockPokemon({
+        id: 76,
+        name: 'Golem',
+        types: ['rock', 'ground'],
+        hp: 100,
+        maxHp: 100,
+        stats: { attack: 100, defense: 60, spAtk: 40, spDef: 40, speed: 45 },
+        ability: CORE_ABILITIES.vigore
+      });
+
+      expect(hasSturdyAbility(golem)).toBe(true);
+
+      // Vigore keeps Golem at 1 HP from full HP against lethal blow
+      const resFull = executeMoveAction(
+        { name: 'Cannonflash', type: 'steel', category: 'special', power: 150, accuracy: 100 },
+        { ...attacker, stats: { ...attacker.stats, spAtk: 280 } },
+        golem,
+        defaultStages(), () => {}, defaultStages(), () => {},
+        {}, () => {}, {}, () => {}, {}, () => {}, {}, () => {},
+        200, () => {}, 100, () => {}, true, true, () => {}
+      );
+      expect(resFull.nextTargetHp).toBe(1);
+      expect(resFull.targetFainted).toBe(false);
+
+      // Below maxHp -> Vigore does NOT save Golem
+      const resDamaged = executeMoveAction(
+        { name: 'Cannonflash', type: 'steel', category: 'special', power: 150, accuracy: 100 },
+        { ...attacker, stats: { ...attacker.stats, spAtk: 280 } },
+        golem,
+        defaultStages(), () => {}, defaultStages(), () => {},
+        {}, () => {}, {}, () => {}, {}, () => {}, {}, () => {},
+        200, () => {}, 99, () => {}, true, true, () => {}
+      );
+      expect(resDamaged.nextTargetHp).toBe(0);
+      expect(resDamaged.targetFainted).toBe(true);
+
+      // Tecnico: 40 BP Attacco Rapido gets 1.5x boost compared to non-Technician user
+      const nonTech = createMockPokemon({ ...attacker, id: 143, ability: undefined });
+      const target = createMockPokemon({ name: 'Snorlax', types: ['normal'], hp: 400, maxHp: 400 });
+      const spy = vi.spyOn(Math, 'random').mockReturnValue(0.5);
+      const rTech = executeMoveAction(
+        getMoveByName('Attacco Rapido'), attacker, target,
+        defaultStages(), () => {}, defaultStages(), () => {},
+        {}, () => {}, {}, () => {}, {}, () => {}, {}, () => {},
+        200, () => {}, 400, () => {}, true, true, () => {}
+      );
+      const rNormal = executeMoveAction(
+        getMoveByName('Attacco Rapido'), nonTech, target,
+        defaultStages(), () => {}, defaultStages(), () => {},
+        {}, () => {}, {}, () => {}, {}, () => {}, {}, () => {},
+        200, () => {}, 400, () => {}, true, true, () => {}
+      );
+      spy.mockRestore();
+      expect(400 - rTech.nextTargetHp).toBeGreaterThan(400 - rNormal.nextTargetHp);
+
+      // Statica paralyzes attacker on physical contact
+      const pikachu = createMockPokemon({ id: 25, name: 'Pikachu', types: ['electric'], hp: 150, maxHp: 150, ability: CORE_ABILITIES.statica });
+      let attackerStatus: { status?: any; duration?: number } = {};
+      const spyStat = vi.spyOn(Math, 'random').mockReturnValue(0.1);
+      executeMoveAction(
+        getMoveByName('Azione'), attacker, pikachu,
+        defaultStages(), () => {}, defaultStages(), () => {},
+        attackerStatus, (u) => { attackerStatus = typeof u === 'function' ? u(attackerStatus) : u; },
+        {}, () => {}, {}, () => {}, {}, () => {},
+        200, () => {}, 150, () => {}, true, true, () => {}
+      );
+      spyStat.mockRestore();
+      expect(attackerStatus.status).toBe('paralyzed');
+    });
+
+    it('resolves abilities seamlessly from legacy saves & external Pokedex codes without ability field', () => {
+      // Simulate an external app Base64 payload omitting `ability` entirely
+      const externalPayload = {
+        id: 94,
+        name: 'Gengar',
+        level: 50,
+        hp: 135,
+        maxHp: 135,
+        types: ['ghost', 'poison'],
+        moves: [{ name: 'Palla Ombra', type: 'ghost', category: 'special', power: 80, accuracy: 100, pp: 15, maxPp: 15 }]
+      } as any;
+
+      const exportedCode = encodePokemon(externalPayload);
+      const decoded = decodePokemon(exportedCode);
+      expect(decoded).not.toBeNull();
+      const normalized = normalizePokemon(decoded!);
+
+      // Never errors, deterministically maps Gengar (#94) -> Levitazione
+      expect(resolvePokemonAbility(normalized)?.name).toBe('Levitazione');
+
+      // Legacy placeholder 'Tenacia' automatically upgrades for mapped species (Gyarados #130 -> Prepotenza)
+      const legacyGyarados = createMockPokemon({
+        id: 130,
+        name: 'Gyarados',
+        ability: { name: 'Tenacia', description: 'Capacità di resistere ai momenti difficili in lotta.' }
+      });
+      expect(resolvePokemonAbility(legacyGyarados)?.name).toBe('Prepotenza');
+
+      // English PokéAPI ability names resolve cleanly to Italian Core Abilities
+      const enAbilityMon = createMockPokemon({
+        id: 9999,
+        name: 'Custom',
+        ability: { name: 'water-absorb', description: '' }
+      });
+      expect(resolvePokemonAbility(enAbilityMon)?.name).toBe('Assorbacqua');
+
+      // Unmapped species without `ability` returns null safely without crashing
+      const unmappedSnorlax = createMockPokemon({ id: 143, name: 'Snorlax', ability: undefined });
+      expect(resolvePokemonAbility(unmappedSnorlax)).toBeNull();
     });
   });
 });

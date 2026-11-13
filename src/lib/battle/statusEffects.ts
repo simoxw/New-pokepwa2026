@@ -15,6 +15,8 @@ export interface VolatileStatus {
   protectStreak?: number;
   substituteHp?: number;
   turnsOnField?: number;
+  yawnTurns?: number;
+  flashFireBoosted?: boolean;
 }
 
 export function checkConfusion(pokemon: Pokemon, confusionTurns: number = 0): {
@@ -224,3 +226,61 @@ export function applyStatusStatModifiers(stats: Pokemon['stats'], status?: Statu
 
   return modifiedStats;
 }
+
+/**
+ * Processes end-of-turn Yawn countdown.
+ * When yawnTurns === 2 -> ticks down to 1 (stays awake on the next turn).
+ * When yawnTurns === 1 -> clears yawnTurns and inflicts sleep (2–4 turns) if not already afflicted.
+ */
+export function processYawnEndTurn(
+  pokemon: Pokemon,
+  volatile: VolatileStatus,
+  currentStatus?: StatusCondition,
+  currentDuration?: number
+): {
+  nextVolatile: VolatileStatus;
+  nextStatus?: StatusCondition;
+  nextDuration?: number;
+  fellAsleep: boolean;
+  msg?: string;
+} {
+  const yawn = volatile.yawnTurns;
+  if (!yawn || yawn <= 0) {
+    return {
+      nextVolatile: volatile,
+      nextStatus: currentStatus,
+      nextDuration: currentDuration,
+      fellAsleep: false
+    };
+  }
+
+  if (currentStatus) {
+    // Already afflicted with a primary status: drowsiness wears off harmlessly
+    return {
+      nextVolatile: { ...volatile, yawnTurns: undefined },
+      nextStatus: currentStatus,
+      nextDuration: currentDuration,
+      fellAsleep: false
+    };
+  }
+
+  if (yawn > 1) {
+    return {
+      nextVolatile: { ...volatile, yawnTurns: yawn - 1 },
+      nextStatus: currentStatus,
+      nextDuration: currentDuration,
+      fellAsleep: false
+    };
+  }
+
+  // yawn === 1 -> Target falls asleep!
+  const sleepDuration = Math.floor(Math.random() * 3) + 2;
+  return {
+    nextVolatile: { ...volatile, yawnTurns: undefined },
+    nextStatus: 'sleep',
+    nextDuration: sleepDuration,
+    fellAsleep: true,
+    msg: `💤 ${pokemon.name} cede alla sonnolenza e si addormenta profondamente!`
+  };
+}
+
