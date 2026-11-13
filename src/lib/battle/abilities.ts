@@ -20,7 +20,18 @@ export type CoreAbilityKey =
   | 'tecnico'
   | 'corpodifuoco'
   | 'velenopunto'
-  | 'cartavetro';
+  | 'cartavetro'
+  | 'assorbivolt'
+  | 'mangiaerba'
+  | 'insonnia'
+  | 'spiritovivo'
+  | 'grassospesso'
+  | 'multisquame'
+  | 'nuotovelox'
+  | 'clorofilla'
+  | 'forzapura'
+  | 'macroforza'
+  | 'muta';
 
 export const CORE_ABILITIES: Record<CoreAbilityKey, Ability> = {
   erbaiuto: {
@@ -112,6 +123,61 @@ export const CORE_ABILITIES: Record<CoreAbilityKey, Ability> = {
     name: 'Cartavetro',
     description: 'Infligge 1/8 dei PS massimi di danno a chi colpisce con una mossa fisica.',
     effect: 'contact_recoil'
+  },
+  assorbivolt: {
+    name: 'Assorbivolt',
+    description: 'Immune alle mosse Elettro e recupera il 25% dei PS massimi se colpito.',
+    effect: 'volt_absorb'
+  },
+  mangiaerba: {
+    name: 'Mangiaerba',
+    description: 'Immune alle mosse Erba e aumenta di 1 livello l\'Attacco se colpito.',
+    effect: 'sap_sipper'
+  },
+  insonnia: {
+    name: 'Insonnia',
+    description: 'Impedisce al Pokémon di addormentarsi o subire gli effetti di Sbadiglio.',
+    effect: 'sleep_immune'
+  },
+  spiritovivo: {
+    name: 'Spiritovivo',
+    description: 'Mantiene il Pokémon vigile, impedendo Sonno e Sbadiglio.',
+    effect: 'sleep_immune'
+  },
+  grassospesso: {
+    name: 'Grassospesso',
+    description: 'Dimezza i danni subiti dagli attacchi di tipo Fuoco e Ghiaccio.',
+    effect: 'thick_fat'
+  },
+  multisquame: {
+    name: 'Multisquame',
+    description: 'Dimezza i danni subiti dagli attacchi quando il Pokémon ha i PS pieni.',
+    effect: 'multiscale'
+  },
+  nuotovelox: {
+    name: 'Nuotovelox',
+    description: 'Raddoppia la Velocità durante la pioggia.',
+    effect: 'swift_swim'
+  },
+  clorofilla: {
+    name: 'Clorofilla',
+    description: 'Raddoppia la Velocità sotto la luce solare intensa.',
+    effect: 'chlorophyll'
+  },
+  forzapura: {
+    name: 'Forzapura',
+    description: 'Raddoppia l\'Attacco fisico effettivo del Pokémon.',
+    effect: 'pure_power'
+  },
+  macroforza: {
+    name: 'Macroforza',
+    description: 'Raddoppia l\'Attacco fisico effettivo del Pokémon.',
+    effect: 'huge_power'
+  },
+  muta: {
+    name: 'Muta',
+    description: '30% di probabilità di curare il proprio stato alterato a fine turno.',
+    effect: 'shed_skin'
   }
 };
 
@@ -136,6 +202,17 @@ const ABILITY_ALIASES: Record<string, CoreAbilityKey> = {
   'corpodifuoco': 'corpodifuoco',
   'velenopunto': 'velenopunto',
   'cartavetro': 'cartavetro',
+  'assorbivolt': 'assorbivolt',
+  'mangiaerba': 'mangiaerba',
+  'insonnia': 'insonnia',
+  'spiritovivo': 'spiritovivo',
+  'grassospesso': 'grassospesso',
+  'multisquame': 'multisquame',
+  'nuotovelox': 'nuotovelox',
+  'clorofilla': 'clorofilla',
+  'forzapura': 'forzapura',
+  'macroforza': 'macroforza',
+  'muta': 'muta',
   // English / PokéAPI slugs
   'overgrow': 'erbaiuto',
   'blaze': 'aiutofuoco',
@@ -162,7 +239,26 @@ const ABILITY_ALIASES: Record<string, CoreAbilityKey> = {
   'poison-point': 'velenopunto',
   'poison point': 'velenopunto',
   'rough-skin': 'cartavetro',
-  'rough skin': 'cartavetro'
+  'rough skin': 'cartavetro',
+  'volt-absorb': 'assorbivolt',
+  'volt absorb': 'assorbivolt',
+  'sap-sipper': 'mangiaerba',
+  'sap sipper': 'mangiaerba',
+  'insomnia': 'insonnia',
+  'vital-spirit': 'spiritovivo',
+  'vital spirit': 'spiritovivo',
+  'thick-fat': 'grassospesso',
+  'thick fat': 'grassospesso',
+  'multiscale': 'multisquame',
+  'swift-swim': 'nuotovelox',
+  'swift swim': 'nuotovelox',
+  'chlorophyll': 'clorofilla',
+  'pure-power': 'forzapura',
+  'pure power': 'forzapura',
+  'huge-power': 'macroforza',
+  'huge power': 'macroforza',
+  'shed-skin': 'muta',
+  'shed skin': 'muta'
 };
 
 /**
@@ -210,7 +306,7 @@ export const SPECIES_ABILITY_MAP: Record<number, CoreAbilityKey> = {
   397: 'prepotenza', 398: 'prepotenza',
   403: 'prepotenza', 404: 'prepotenza', 405: 'prepotenza',
   551: 'prepotenza', 552: 'prepotenza', 553: 'prepotenza',
-  559: 'prepotenza', 560: 'prepotenza', 645: 'prepotenza',
+  559: 'prepotenza', 645: 'prepotenza',
   943: 'prepotenza',
   // Levitazione (Levitate)
   92: 'levitazione', 93: 'levitazione', 94: 'levitazione',
@@ -284,7 +380,46 @@ export const SPECIES_ABILITY_MAP: Record<number, CoreAbilityKey> = {
   // Cartavetro (Rough Skin)
   318: 'cartavetro', 319: 'cartavetro',
   443: 'cartavetro', 444: 'cartavetro', 445: 'cartavetro',
-  621: 'cartavetro'
+  621: 'cartavetro',
+  // Assorbivolt (Volt Absorb)
+  135: 'assorbivolt', 170: 'assorbivolt', 171: 'assorbivolt',
+  417: 'assorbivolt', 807: 'assorbivolt', 922: 'assorbivolt', 923: 'assorbivolt',
+  // Mangiaerba (Sap Sipper)
+  203: 'mangiaerba', 234: 'mangiaerba', 241: 'mangiaerba',
+  585: 'mangiaerba', 586: 'mangiaerba', 626: 'mangiaerba',
+  672: 'mangiaerba', 673: 'mangiaerba',
+  704: 'mangiaerba', 705: 'mangiaerba', 706: 'mangiaerba',
+  899: 'mangiaerba', 981: 'mangiaerba',
+  // Insonnia (Insomnia) & Spiritovivo (Vital Spirit)
+  96: 'insonnia', 97: 'insonnia', 163: 'insonnia', 164: 'insonnia',
+  167: 'insonnia', 168: 'insonnia', 198: 'insonnia', 353: 'insonnia', 354: 'insonnia', 430: 'insonnia',
+  56: 'spiritovivo', 57: 'spiritovivo', 225: 'spiritovivo', 288: 'spiritovivo', 979: 'spiritovivo',
+  // Grassospesso (Thick Fat)
+  143: 'grassospesso', 446: 'grassospesso',
+  220: 'grassospesso', 221: 'grassospesso', 473: 'grassospesso',
+  296: 'grassospesso', 297: 'grassospesso', 325: 'grassospesso', 326: 'grassospesso',
+  363: 'grassospesso', 364: 'grassospesso', 365: 'grassospesso',
+  432: 'grassospesso', 842: 'grassospesso', 974: 'grassospesso', 975: 'grassospesso',
+  // Multisquame (Multiscale)
+  149: 'multisquame', 249: 'multisquame',
+  // Nuotovelox (Swift Swim) & Clorofilla (Chlorophyll)
+  54: 'nuotovelox', 55: 'nuotovelox', 116: 'nuotovelox', 138: 'nuotovelox', 139: 'nuotovelox',
+  140: 'nuotovelox', 141: 'nuotovelox', 230: 'nuotovelox',
+  270: 'nuotovelox', 271: 'nuotovelox', 272: 'nuotovelox',
+  418: 'nuotovelox', 419: 'nuotovelox', 535: 'nuotovelox', 536: 'nuotovelox',
+  846: 'nuotovelox', 847: 'nuotovelox',
+  43: 'clorofilla', 44: 'clorofilla', 45: 'clorofilla', 182: 'clorofilla',
+  69: 'clorofilla', 70: 'clorofilla', 71: 'clorofilla',
+  102: 'clorofilla', 103: 'clorofilla', 114: 'clorofilla', 465: 'clorofilla',
+  191: 'clorofilla', 192: 'clorofilla', 273: 'clorofilla', 274: 'clorofilla', 275: 'clorofilla',
+  357: 'clorofilla', 548: 'clorofilla', 549: 'clorofilla', 952: 'clorofilla',
+  // Forzapura (Pure Power) & Macroforza (Huge Power)
+  307: 'forzapura', 308: 'forzapura',
+  183: 'macroforza', 184: 'macroforza', 298: 'macroforza', 659: 'macroforza', 660: 'macroforza',
+  // Muta (Shed Skin)
+  11: 'muta', 14: 'muta', 23: 'muta', 24: 'muta',
+  147: 'muta', 148: 'muta', 246: 'muta', 247: 'muta',
+  266: 'muta', 268: 'muta', 336: 'muta', 412: 'muta', 560: 'muta'
 };
 
 export function normalizeAbilityKey(rawName?: string): CoreAbilityKey | null {
@@ -436,6 +571,28 @@ export function checkAbility(
         };
       }
       break;
+    case 'assorbivolt':
+      if (context === 'on_hit' && moveType === 'electric') {
+        const healHp = Math.max(1, Math.floor(pokemon.maxHp * 0.25));
+        return {
+          type: 'damage_mult',
+          value: 0,
+          healHp,
+          msg: `⚡ Assorbivolt di ${pokemon.name} assorbe l'elettricità e rigenera PS!`
+        };
+      }
+      break;
+    case 'mangiaerba':
+      if (context === 'on_hit' && moveType === 'grass') {
+        return {
+          type: 'damage_mult',
+          value: 0,
+          boostStat: 'attack',
+          boostAmount: 1,
+          msg: `🌿 Mangiaerba di ${pokemon.name} assorbe la mossa Erba e aumenta l'Attacco!`
+        };
+      }
+      break;
     case 'statica':
       if (context === 'on_hit' && options?.move?.category === 'physical' && Math.random() < 0.3) {
         const attacker = options.target;
@@ -572,4 +729,43 @@ export function processSwitchInAbility(
 
 export function hasSturdyAbility(pokemon: Pokemon): boolean {
   return getResolvedCoreAbilityKey(pokemon) === 'vigore';
+}
+
+export function isAbilityImmuneToSleep(pokemon?: Partial<Pokemon> | null): boolean {
+  const key = getResolvedCoreAbilityKey(pokemon);
+  return key === 'insonnia' || key === 'spiritovivo';
+}
+
+export function getWeatherSpeedMultiplier(
+  pokemon?: Partial<Pokemon> | null,
+  weather: WeatherType = 'none'
+): number {
+  const key = getResolvedCoreAbilityKey(pokemon);
+  if (key === 'nuotovelox' && weather === 'rain') return 2;
+  if (key === 'clorofilla' && weather === 'sun') return 2;
+  return 1;
+}
+
+export function processShedSkinEndTurn(
+  pokemon: Pokemon,
+  currentStatus?: StatusCondition,
+  currentDuration?: number
+): {
+  cured: boolean;
+  nextStatus?: StatusCondition;
+  nextDuration?: number;
+  msg?: string;
+} {
+  if (!currentStatus || getResolvedCoreAbilityKey(pokemon) !== 'muta') {
+    return { cured: false, nextStatus: currentStatus, nextDuration: currentDuration };
+  }
+  if (Math.random() < 0.30) {
+    return {
+      cured: true,
+      nextStatus: undefined,
+      nextDuration: undefined,
+      msg: `🐍 La Muta di ${pokemon.name} cura il suo problema di stato!`
+    };
+  }
+  return { cured: false, nextStatus: currentStatus, nextDuration: currentDuration };
 }

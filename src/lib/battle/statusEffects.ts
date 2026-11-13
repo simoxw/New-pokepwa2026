@@ -1,4 +1,5 @@
 import { Pokemon, Move, StatusCondition } from '../../types/game';
+import { isAbilityImmuneToSleep } from './abilities';
 
 export type { StatusCondition };
 
@@ -261,6 +262,16 @@ export function processYawnEndTurn(
       nextStatus: currentStatus,
       nextDuration: currentDuration,
       fellAsleep: false
+    };
+  }
+
+  if (isAbilityImmuneToSleep(pokemon)) {
+    return {
+      nextVolatile: { ...volatile, yawnTurns: undefined },
+      nextStatus: currentStatus,
+      nextDuration: currentDuration,
+      fellAsleep: false,
+      msg: `👁️ ${pokemon.name} scaccia la sonnolenza grazie alla sua abilità!`
     };
   }
 

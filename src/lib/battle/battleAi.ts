@@ -2,6 +2,7 @@ import { Pokemon, Move, BattleStages, StatusCondition } from '../../types/game';
 import { calculateDamage } from './battleMath';
 import { STRUGGLE_MOVE } from '../pokeapi';
 import { VolatileStatus } from './statusEffects';
+import { getResolvedCoreAbilityKey, isAbilityImmuneToSleep } from './abilities';
 
 /**
  * Determines whether an Elite Four, Champion, or Legendary Boss trainer
@@ -51,6 +52,35 @@ export function selectEnemyMove(
   const playerHpPercent = playerHp / playerActive.maxHp;
   const playerTypes = (playerActive.types || []).map(t => t.toLowerCase());
 
+  const playerAbilityKey = getResolvedCoreAbilityKey(playerActive);
+  const playerSleepImmune = isAbilityImmuneToSleep(playerActive);
+
+  const isBlockedByPlayerAbility = (m: Move): boolean => {
+    const mType = (m.type || '').toLowerCase();
+    const isTargetingOpponent =
+      m.target !== 'user' &&
+      m.target !== 'entire-field' &&
+      m.target !== 'users-field' &&
+      m.target !== 'opponents-field';
+
+    if (m.category !== 'status') {
+      if (playerAbilityKey === 'levitazione' && mType === 'ground') return true;
+      if (playerAbilityKey === 'assorbacqua' && mType === 'water') return true;
+      if (playerAbilityKey === 'fuocardore' && mType === 'fire') return true;
+      if ((playerAbilityKey === 'parafulmine' || playerAbilityKey === 'assorbivolt') && mType === 'electric') return true;
+      if (playerAbilityKey === 'mangiaerba' && mType === 'grass') return true;
+      return false;
+    }
+
+    if (!isTargetingOpponent) return false;
+    if (playerAbilityKey === 'assorbacqua' && mType === 'water') return true;
+    if (playerAbilityKey === 'fuocardore' && mType === 'fire') return true;
+    if ((playerAbilityKey === 'parafulmine' || playerAbilityKey === 'assorbivolt') && mType === 'electric') return true;
+    if (playerAbilityKey === 'mangiaerba' && mType === 'grass') return true;
+    if (playerSleepImmune && (m.statusEffect === 'sleep' || m.name.toLowerCase() === 'sbadiglio' || m.name.toLowerCase() === 'yawn')) return true;
+    return false;
+  };
+
   // Pre-calculate effectiveness and damage for all valid damaging moves to identify best options
   const damagingMovesAnalysis = validMoves
     .filter(m => m.category !== 'status')
@@ -61,7 +91,8 @@ export function selectEnemyMove(
         m,
         { attackerStages: enemyStages, targetStages: playerStages }
       );
-      return { move: m, damage: dmgRes.damage, effectiveness: dmgRes.effectiveness };
+      const abilityImmunity = isBlockedByPlayerAbility(m);
+      return { move: m, damage: abilityImmunity ? 0 : dmgRes.damage, effectiveness: abilityImmunity ? 0 : dmgRes.effectiveness };
     });
 
   // Check if enemy has at least one damaging move that is neutral (>= 1x) or super-effective (> 1x)
@@ -81,18 +112,19 @@ export function selectEnemyMove(
       { attackerStages: enemyStages, targetStages: playerStages }
     );
 
-    const predictedDamage = dmgRes.damage;
-    const eff = dmgRes.effectiveness;
+    const abilityBlocked = isBlockedByPlayerAbility(move);
+    const predictedDamage = abilityBlocked ? 0 : dmgRes.damage;
+    const eff = abilityBlocked ? 0 : dmgRes.effectiveness;
 
     // 1. KNOCKOUT OPPORTUNITY: If this move can faint the player, prioritize heavily!
     if (move.category !== 'status' && predictedDamage >= playerHp) {
       score += 150;
     }
 
-    // 2. TYPE EFFECTIVENESS & IMMUNITY (Proposal A)
+    // 2. TYPE EFFECTIVENESS & IMMUNITY (Proposal A + Core Ability awareness)
     if (move.category !== 'status') {
       if (eff === 0) {
-        // Absolute immunity (0x damage) - NEVER use unless nothing else exists!
+        // Absolute immunity (0x damage or ability immunity) - NEVER use unless nothing else exists!
         score = -9999;
       } else if (eff > 1) {
         // Super effective (2x or 4x)
@@ -135,8 +167,8 @@ export function selectEnemyMove(
           const isPoisonImmune = (move.statusEffect === 'poisoned' || move.statusEffect === 'badly-poisoned' || move.type.toLowerCase() === 'poison') &&
             (playerTypes.includes('poison') || playerTypes.includes('steel'));
 
-          if (isElectricImmune || isFireImmune || isPoisonImmune) {
-            score = -9999; // Immune to this status condition
+          if (isElectricImmune || isFireImmune || isPoisonImmune || isBlockedByPlayerAbility(move)) {
+            score = -9999; // Immune to this status condition or blocked by ability
           } else if (playerHpPercent > 0.35) {
             score += 35; // Good time to inflict status
           } else {
@@ -210,9 +242,9 @@ export function selectEnemyMove(
         }
       }
 
-      // 3E2. Yawn (Sbadiglio): don't spam if target already has status, yawn active, or is nearly KO
+      // 3E2. Yawn (Sbadiglio): don't spam if target already has status, yawn active, sleep immune, or nearly KO
       if (mNameLower === 'sbadiglio' || mNameLower === 'yawn') {
-        if (playerStatus.status || (playerVolatile.yawnTurns && playerVolatile.yawnTurns > 0)) {
+        if (playerStatus.status || playerSleepImmune || (playerVolatile.yawnTurns && playerVolatile.yawnTurns > 0)) {
           score = -9999;
         } else if (playerHpPercent <= 0.25) {
           score -= 50;

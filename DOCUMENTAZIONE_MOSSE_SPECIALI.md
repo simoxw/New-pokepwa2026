@@ -361,42 +361,65 @@ Questo documento elenca **tutte le mosse** implementate nel gioco che possiedono
 
 ---
 
-## 7. Sistema Abilità Core (18 Abilità Curate e Compatibilità Scambi)
+## 7. Sistema Abilità Core (29 Abilità Curate e Compatibilità Scambi)
 
-Il motore supporta **18 Abilità Core** selezionate senza appesantire l'architettura dati e con **compatibilità al 100% con codici Base64 esterni/Pokédex e vecchi salvataggi** (che possono omettere il campo `ability`).
+Il motore supporta **29 Abilità Core** selezionate senza appesantire l'architettura dati e con **compatibilità al 100% con codici Base64 esterni/Pokédex e vecchi salvataggi** (che possono omettere il campo `ability`).
 
 * **Risoluzione deterministica & Salvataggio all'import (`resolvePokemonAbility` + `normalizePokemon`)**:
   * Se `pokemon.ability` è assente o è il placeholder generico `'Tenacia'`, viene risolta tramite `SPECIES_ABILITY_MAP[pokemon.id]` e **salvata automaticamente sull'oggetto Pokémon al momento della normalizzazione/importazione** (in caso di specie non mappata, resta `null` senza errori).
-  * I nomi in inglese provenienti da PokéAPI o app esterne (es. `'intimidate'`, `'flame-body'`, `'rough-skin'`) vengono convertiti automaticamente nelle rispettive Abilità Core italiane.
+  * I nomi in inglese provenienti da PokéAPI o app esterne (es. `'intimidate'`, `'volt-absorb'`, `'thick-fat'`, `'multiscale'`, `'huge-power'`) vengono convertiti automaticamente nelle rispettive Abilità Core italiane.
   * I codici di esportazione/importazione (`encodePokemon` / `decodePokemon` in `src/lib/utils.ts`) restano retrocompatibili al 100%.
 
 | Abilità Core | Effetto in Lotta |
 |---|---|
 | **Erbaiuto / Aiutofuoco / Acquaiuto** | +50% potenza alle mosse Erba / Fuoco / Acqua quando i PS sono <= 1/3 |
 | **Tecnico** | +50% potenza alle mosse offensive con potenza base <= 60 |
+| **Forzapura / Macroforza** | Raddoppia l'Attacco fisico effettivo nel calcolo danni |
 | **Prepotenza** | Riduce di 1 livello l'Attacco avversario all'ingresso in campo (bloccata da Sostituto) |
-| **Levitazione** | Immunità totale alle mosse di tipo Terra |
+| **Levitazione** | Immunità totale alle mosse di tipo Terra e alle trappole a terra (*Punte, Fielepunte, Ragnatela*) |
 | **Vigore** | Con PS pieni resiste a un colpo letale con 1 PS |
-| **Statica** | 30% di probabilità di paralizzare chi sferra una mossa fisica |
-| **Corpodifuoco** | 30% di probabilità di scottare chi sferra una mossa fisica |
-| **Velenopunto** | 30% di probabilità di avvelenare chi sferra una mossa fisica |
+| **Grassospesso** | Dimezza i danni subiti dagli attacchi di tipo Fuoco e Ghiaccio |
+| **Multisquame** | Dimezza i danni subiti dagli attacchi quando il Pokémon ha i PS pieni |
+| **Statica / Corpodifuoco / Velenopunto** | 30% di probabilità di paralizzare / scottare / avvelenare chi sferra una mossa fisica |
 | **Cartavetro** | Infligge 1/8 dei PS massimi di danno a chi sferra una mossa fisica |
-| **Assorbacqua** | Immunità Acqua e recupero del 25% dei PS massimi se colpito |
-| **Fuocardore** | Immunità Fuoco e +50% alle proprie mosse Fuoco dopo l'assorbimento |
-| **Parafulmine** | Immunità Elettro e +1 Attacco Speciale se colpito |
+| **Assorbacqua / Assorbivolt** | Immunità Acqua / Elettro e recupero del 25% dei PS massimi se colpito |
+| **Fuocardore** | Immunità Fuoco (incluso *Fuocofatuo*) e +50% alle proprie mosse Fuoco dopo l'assorbimento |
+| **Parafulmine** | Immunità Elettro (inclusa *Tuononda*) e +1 Attacco Speciale se colpito |
+| **Mangiaerba** | Immunità Erba (incluse *Spora*/*Sonnifero*) e +1 Attacco se colpito |
+| **Insonnia / Spiritovivo** | Immunità al Sonno, a *Riposo* e a *Sbadiglio* |
+| **Nuotovelox / Clorofilla** | Raddoppia la Velocità effettiva sotto Pioggia / Sole |
+| **Muta** | 30% di probabilità di curare lo stato alterato a fine turno |
 | **Siccità / Piovischio / Sabbiafiume / Scendineve** | Attiva Sole / Pioggia / Tempesta di Sabbia / Grandine (5 turni) all'ingresso |
 
-* **File di Implementazione**:
-  * `src/lib/battle/abilities.ts`: definizioni `CORE_ABILITIES`, `SPECIES_ABILITY_MAP`, `resolvePokemonAbility()`, `processSwitchInAbility()`, `checkAbility()`, `hasSturdyAbility()`.
-  * `src/lib/utils.ts`: risoluzione e salvataggio automatico dell'abilità in `normalizePokemon()`.
-  * `src/lib/battle/battleActionRunner.ts`: applicazione immunità, assorbimenti, Vigore, Tecnico, abilità di contatto (`Statica`, `Corpodifuoco`, `Velenopunto`, `Cartavetro`) e potenziamenti.
-  * `src/components/BattleScreen.tsx`: attivazione abilità d'ingresso e passaggio a `BattleHUD`.
-  * `src/components/battle/BattleHUD.tsx` & `src/components/PokemonDetails.tsx`: visualizzazione chiara dell'abilità attiva.
+* **Dettaglio Codice Aggiunto per File (cosa fa ogni modulo)**:
+  * `src/lib/battle/abilities.ts`:
+    * `CORE_ABILITIES` & `ABILITY_ALIASES`: registro delle 29 abilità italiane con mappatura bilingue (IT/EN PokéAPI).
+    * `SPECIES_ABILITY_MAP`: dizionario ID specie → abilità core di default per recuperare Pokémon privi del campo `ability`.
+    * `resolvePokemonAbility()` & `getResolvedCoreAbilityKey()`: normalizza l'abilità, sostituisce il segnaposto legacy `'Tenacia'` e applica il fallback per specie senza mai generare errori.
+    * `processSwitchInAbility()`: gestisce l'ingresso in campo (*Prepotenza* bloccata da Sostituto e i 4 evocatori Meteo).
+    * `checkAbility()` & `hasSturdyAbility()`: applica i moltiplicatori offensivi (`on_move_use`), le immunità/assorbimenti (`on_hit` pre-danno e su mosse di stato elementali come *Tuononda*/*Fuocofatuo*/*Spora*), le abilità di contatto fisico (*Statica*, *Corpodifuoco*, *Velenopunto*, *Cartavetro*) e *Vigore*.
+    * `isAbilityImmuneToSleep()`, `getWeatherSpeedMultiplier()`, `processShedSkinEndTurn()`: helper dedicati a *Insonnia*/*Spiritovivo*, *Nuotovelox*/*Clorofilla* e *Muta*.
+  * `src/lib/battle/battleMath.ts`:
+    * `calculateDamage()`: applica il raddoppio dell'Attacco fisico per *Forzapura*/*Macroforza* e i dimezzamenti difensivi di *Grassospesso* (Fuoco/Ghiaccio) e *Multisquame* (PS al 100%, leggendo `options.targetHp`).
+  * `src/lib/battle/statusEffects.ts`:
+    * `processYawnEndTurn()`: verifica `isAbilityImmuneToSleep()` impedendo l'addormentamento da *Sbadiglio* su *Insonnia* e *Spiritovivo*.
+  * `src/lib/battle/battleAi.ts`:
+    * `selectEnemyMove()` + `isBlockedByPlayerAbility()`: rende l'IA consapevole delle immunità da abilità del giocatore (*Levitazione, Assorbacqua, Fuocardore, Parafulmine, Assorbivolt, Mangiaerba, Insonnia/Spiritovivo*) evitando di sprecare mosse a effetto nullo.
+  * `src/lib/utils.ts`:
+    * `normalizePokemon()`: richiama `resolvePokemonAbility()` al termine della normalizzazione per salvare permanentemente l'abilità risolta sui Pokémon importati da Pokédex esterno o salvataggi legacy.
+  * `src/lib/battle/hazards.ts`:
+    * `processEntryHazards()`: verifica `getResolvedCoreAbilityKey(pokemon) !== 'levitazione'` per rendere i Pokémon con *Levitazione* immuni a *Punte*, *Fielepunte* e *Rete Vischiosa*.
+  * `src/lib/battle/battleActionRunner.ts`:
+    * Controllo `statusPreHitImmunity` in Sezione 3 (*Status Moves*), blocco *Insonnia*/*Spiritovivo* su *Sbadiglio*/*Riposo*/Sonno, passaggio di `targetHp: curTargetHp` per *Multisquame* e gestione completa di contatto/multi-hit.
+  * `src/components/BattleScreen.tsx`:
+    * Attivazione abilità all'ingresso, `getEffectiveSpeed()` integrata con `getWeatherSpeedMultiplier()` (*Nuotovelox*/*Clorofilla*) e tick `processShedSkinEndTurn()` (*Muta*) a fine turno.
+  * `src/components/battle/BattleHUD.tsx` & `src/components/PokemonDetails.tsx`:
+    * Mostra il nome dell'abilità risolta nell'HUD di battaglia (insieme al badge `SBAD` di Sbadiglio) e nome + descrizione nella scheda dettagli del Pokémon.
 
 ---
 
 ## 🧪 Suite di Test Automatici
 
 Tutte queste meccaniche sono coperte da una suite completa di test automatizzati con **Vitest**:
-* File test: `src/tests/specialMovesAndMechanics.test.ts` (test dedicati a Falsofinale, Sostituto, Meteo, Schermi, Metronomo, Scambio Forzato, Stordiraggio, Trespolo, Splash, Nube, Scaccianebbia, Bruciapelo, Retromarcia/Invertivolt/Virata, Sbadiglio, Rintoccasana/Aromaterapia, tutte le 18 Abilità Core e compatibilità codici Base64 esterni).
+* File test: `src/tests/specialMovesAndMechanics.test.ts` (test dedicati a Falsofinale, Sostituto, Meteo, Schermi, Metronomo, Scambio Forzato, Stordiraggio, Trespolo, Splash, Nube, Scaccianebbia, Bruciapelo, Retromarcia/Invertivolt/Virata, Sbadiglio, Rintoccasana/Aromaterapia, tutte le **29 Abilità Core**, IA consapevole delle abilità, casi limite e compatibilità codici Base64 esterni).
 * Esecuzione comandi: `npm test` oppure `npx vitest run src/tests/specialMovesAndMechanics.test.ts`.

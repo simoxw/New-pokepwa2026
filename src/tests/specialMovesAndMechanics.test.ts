@@ -12,7 +12,7 @@ import {
   SideScreens,
   defaultSideScreens
 } from '../lib/battle/fieldEffects';
-import { SideHazards, defaultSideHazards, setHazardFromMove } from '../lib/battle/hazards';
+import { SideHazards, defaultSideHazards, setHazardFromMove, processEntryHazards } from '../lib/battle/hazards';
 import { determineTurnOrder } from '../lib/battle/turnOrder';
 import { selectEnemyMove } from '../lib/battle/battleAi';
 import { Pokemon, BattleStages, Move } from '../types/game';
@@ -21,6 +21,9 @@ import {
   resolvePokemonAbility,
   processSwitchInAbility,
   hasSturdyAbility,
+  isAbilityImmuneToSleep,
+  getWeatherSpeedMultiplier,
+  processShedSkinEndTurn,
   CORE_ABILITIES
 } from '../lib/battle/abilities';
 import { encodePokemon, decodePokemon, normalizePokemon } from '../lib/utils';
@@ -354,6 +357,7 @@ describe('Special Moves & Field Mechanics Test Suite', () => {
       const logs: string[] = [];
 
       const screech = getMoveByName('Stridio'); // -2 Defense
+      const accSpy = vi.spyOn(Math, 'random').mockReturnValue(0.1);
 
       executeMoveAction(
         screech,
@@ -379,6 +383,7 @@ describe('Special Moves & Field Mechanics Test Suite', () => {
         true,
         (msg) => logs.push(msg)
       );
+      accSpy.mockRestore();
 
       expect(targetStages.defense).toBe(0);
       expect(logs.some(l => l.includes('Sostituto') && l.includes('blocca il calo'))).toBe(true);
@@ -2092,9 +2097,11 @@ describe('Special Moves & Field Mechanics Test Suite', () => {
       });
       expect(resolvePokemonAbility(enAbilityMon)?.name).toBe('Assorbacqua');
 
-      // Unmapped species without `ability` returns null safely without crashing
-      const unmappedSnorlax = createMockPokemon({ id: 143, name: 'Snorlax', ability: undefined });
-      expect(resolvePokemonAbility(unmappedSnorlax)).toBeNull();
+      // Snorlax (#143) now maps deterministically to Grassospesso; unmapped species (#86 Seel) returns null safely
+      const snorlaxMapped = createMockPokemon({ id: 143, name: 'Snorlax', ability: undefined });
+      expect(resolvePokemonAbility(snorlaxMapped)?.name).toBe('Grassospesso');
+      const unmappedSeel = createMockPokemon({ id: 86, name: 'Seel', ability: undefined });
+      expect(resolvePokemonAbility(unmappedSeel)).toBeNull();
 
       // normalizePokemon / decodePokemon persists resolved ability directly on the Pokemon object
       expect(normalized.ability?.name).toBe('Levitazione');
@@ -2199,6 +2206,223 @@ describe('Special Moves & Field Mechanics Test Suite', () => {
         160, () => {}, 180, () => {}, true, true, () => {}
       );
       expect(resRoughSpecial.nextUserHp).toBe(160);
+    });
+
+    it('protects Parafulmine/Fuocardore from Electric/Fire status moves, floats Levitazione over Spikes, and triggers Cartavetro per multi-hit', () => {
+      // 1. Tuononda (status/electric) absorbed by Parafulmine -> +1 SpAtk, no paralysis
+      const raichu = createMockPokemon({ id: 26, name: 'Raichu', types: ['electric'], hp: 150, maxHp: 150 });
+      const rhydon = createMockPokemon({ id: 112, name: 'Rhydon', types: ['ground', 'rock'], hp: 200, maxHp: 200, ability: CORE_ABILITIES.parafulmine });
+      let rhydonStages = defaultStages();
+      let rhydonStatus: { status?: any } = {};
+      executeMoveAction(
+        getMoveByName('Tuononda'), raichu, rhydon,
+        defaultStages(), () => {}, rhydonStages, (u) => { rhydonStages = typeof u === 'function' ? u(rhydonStages) : u; },
+        {}, () => {}, rhydonStatus, (u) => { rhydonStatus = typeof u === 'function' ? u(rhydonStatus) : u; },
+        {}, () => {}, {}, () => {},
+        150, () => {}, 200, () => {}, true, true, () => {}
+      );
+      expect(rhydonStatus.status).toBeUndefined();
+      expect(rhydonStages.spAtk).toBe(1);
+
+      // 2. Fuocofatuo (status/fire) absorbed by Fuocardore -> flashFireBoosted, no burn
+      const gengar = createMockPokemon({ id: 94, name: 'Gengar', types: ['ghost', 'poison'], hp: 150, maxHp: 150 });
+      const arcanine = createMockPokemon({ id: 59, name: 'Arcanine', types: ['fire'], hp: 200, maxHp: 200, ability: CORE_ABILITIES.fuocardore });
+      let arcanineStatus: { status?: any } = {};
+      let arcanineVolatile: VolatileStatus = {};
+      executeMoveAction(
+        getMoveByName('Fuocofatuo'), gengar, arcanine,
+        defaultStages(), () => {}, defaultStages(), () => {},
+        {}, () => {}, arcanineStatus, (u) => { arcanineStatus = typeof u === 'function' ? u(arcanineStatus) : u; },
+        {}, () => {}, arcanineVolatile, (u) => { arcanineVolatile = typeof u === 'function' ? u(arcanineVolatile) : u; },
+        150, () => {}, 200, () => {}, true, true, () => {}
+      );
+      expect(arcanineStatus.status).toBeUndefined();
+      expect(arcanineVolatile.flashFireBoosted).toBe(true);
+
+      // 3. Levitazione floats over Spikes, Toxic Spikes, and Sticky Web (but still takes Stealth Rock)
+      const levGengar = createMockPokemon({ id: 94, name: 'Gengar', types: ['ghost', 'poison'], hp: 160, maxHp: 160, ability: CORE_ABILITIES.levitazione });
+      const hazardRes = processEntryHazards(levGengar, 160, { spikesLayers: 3, toxicSpikesLayers: 2, stickyWeb: true, stealthRock: false });
+      expect(hazardRes.nextHp).toBe(160);
+      expect(hazardRes.nextStatus).toBeUndefined();
+      expect(hazardRes.nextSpeedStageDelta).toBe(0);
+
+      // 4. Physical multi-hit move triggers Cartavetro for each direct hit
+      const multiAttacker = createMockPokemon({ id: 115, name: 'Kangaskhan', types: ['normal'], hp: 160, maxHp: 160 });
+      const garchomp = createMockPokemon({ id: 445, name: 'Garchomp', types: ['dragon', 'ground'], hp: 300, maxHp: 300, ability: CORE_ABILITIES.cartavetro });
+      const doubleHit: Move = { name: 'Doppia Sberla', type: 'normal', category: 'physical', power: 15, accuracy: 100, pp: 10, maxPp: 10, multiTurn: { type: 'multi-hit', minHits: 2, maxHits: 2 } };
+      const multiRes = executeMoveAction(
+        doubleHit, multiAttacker, garchomp,
+        defaultStages(), () => {}, defaultStages(), () => {},
+        {}, () => {}, {}, () => {}, {}, () => {}, {}, () => {},
+        160, () => {}, 300, () => {}, true, true, () => {}
+      );
+      // 2 hits * (160 / 8 = 20) = 40 contact damage
+      expect(multiRes.nextUserHp).toBe(120);
+    });
+
+    it('handles Assorbivolt, Mangiaerba, Insonnia/Spiritovivo, Grassospesso, Multisquame, Forzapura/Macroforza, Nuotovelox/Clorofilla, and Muta', () => {
+      // 1. Assorbivolt: immune to Electric + heals 25% maxHp
+      const pikachu = createMockPokemon({ id: 25, name: 'Pikachu', types: ['electric'], hp: 150, maxHp: 150 });
+      const jolteon = createMockPokemon({ id: 135, name: 'Jolteon', types: ['electric'], hp: 100, maxHp: 200, ability: CORE_ABILITIES.assorbivolt });
+      const resVolt = executeMoveAction(
+        getMoveByName('Fulmine'), pikachu, jolteon,
+        defaultStages(), () => {}, defaultStages(), () => {},
+        {}, () => {}, {}, () => {}, {}, () => {}, {}, () => {},
+        150, () => {}, 100, () => {}, true, true, () => {}
+      );
+      expect(resVolt.nextTargetHp).toBe(150);
+
+      // 2. Mangiaerba: immune to Grass attacks and Grass status moves +1 Attack
+      const venusaur = createMockPokemon({ id: 3, name: 'Venusaur', types: ['grass', 'poison'], hp: 200, maxHp: 200 });
+      const goodra = createMockPokemon({ id: 706, name: 'Goodra', types: ['dragon'], hp: 200, maxHp: 200, ability: CORE_ABILITIES.mangiaerba });
+      let goodraStages = defaultStages();
+      const resSapDmg = executeMoveAction(
+        getMoveByName('Energipalla'), venusaur, goodra,
+        defaultStages(), () => {}, goodraStages, (u) => { goodraStages = typeof u === 'function' ? u(goodraStages) : u; },
+        {}, () => {}, {}, () => {}, {}, () => {}, {}, () => {},
+        200, () => {}, 200, () => {}, true, true, () => {}
+      );
+      expect(resSapDmg.nextTargetHp).toBe(200);
+      expect(goodraStages.attack).toBe(1);
+
+      let goodraStatus: { status?: any } = {};
+      const sleepPowderSpy = vi.spyOn(Math, 'random').mockReturnValue(0.1);
+      executeMoveAction(
+        getMoveByName('Sonnifero'), venusaur, goodra,
+        defaultStages(), () => {}, goodraStages, (u) => { goodraStages = typeof u === 'function' ? u(goodraStages) : u; },
+        {}, () => {}, goodraStatus, (u) => { goodraStatus = typeof u === 'function' ? u(goodraStatus) : u; },
+        {}, () => {}, {}, () => {},
+        200, () => {}, 200, () => {}, true, true, () => {}
+      );
+      sleepPowderSpy.mockRestore();
+      expect(goodraStatus.status).toBeUndefined();
+      expect(goodraStages.attack).toBe(2);
+
+      // 3. Insonnia / Spiritovivo: blocks Ipnosi, Sbadiglio, Riposo, and clears Yawn ticks
+      const hypno = createMockPokemon({ id: 97, name: 'Hypno', types: ['psychic'], hp: 200, maxHp: 200, ability: CORE_ABILITIES.insonnia });
+      const primeape = createMockPokemon({ id: 57, name: 'Primeape', types: ['fighting'], hp: 200, maxHp: 200, ability: CORE_ABILITIES.spiritovivo });
+      expect(isAbilityImmuneToSleep(hypno)).toBe(true);
+      expect(isAbilityImmuneToSleep(primeape)).toBe(true);
+
+      let hypnoStatus: { status?: any; duration?: number } = {};
+      let hypnoVolatile: VolatileStatus = {};
+      executeMoveAction(
+        getMoveByName('Ipnosi'), venusaur, hypno,
+        defaultStages(), () => {}, defaultStages(), () => {},
+        {}, () => {}, hypnoStatus, (u) => { hypnoStatus = typeof u === 'function' ? u(hypnoStatus) : u; },
+        {}, () => {}, hypnoVolatile, (u) => { hypnoVolatile = typeof u === 'function' ? u(hypnoVolatile) : u; },
+        200, () => {}, 200, () => {}, true, true, () => {}
+      );
+      expect(hypnoStatus.status).toBeUndefined();
+
+      executeMoveAction(
+        getMoveByName('Sbadiglio'), venusaur, hypno,
+        defaultStages(), () => {}, defaultStages(), () => {},
+        {}, () => {}, hypnoStatus, (u) => { hypnoStatus = typeof u === 'function' ? u(hypnoStatus) : u; },
+        {}, () => {}, hypnoVolatile, (u) => { hypnoVolatile = typeof u === 'function' ? u(hypnoVolatile) : u; },
+        200, () => {}, 200, () => {}, true, true, () => {}
+      );
+      expect(hypnoVolatile.yawnTurns).toBeUndefined();
+
+      const yawnTickImmune = processYawnEndTurn(primeape, { yawnTurns: 1 });
+      expect(yawnTickImmune.fellAsleep).toBe(false);
+      expect(yawnTickImmune.nextVolatile.yawnTurns).toBeUndefined();
+
+      // 4. Grassospesso: halves Fire & Ice damage
+      const snorlax = createMockPokemon({ id: 143, name: 'Snorlax', types: ['normal'], hp: 300, maxHp: 300, ability: CORE_ABILITIES.grassospesso });
+      const normalWall = createMockPokemon({ id: 9998, name: 'PlainNormal', types: ['normal'], hp: 300, maxHp: 300, stats: snorlax.stats });
+      const flamethrower = getMoveByName('Lanciafiamme');
+      const iceBeam = getMoveByName('Geloraggio');
+      const randSpy = vi.spyOn(Math, 'random').mockReturnValue(0.5);
+      const fireVsFat = calculateDamage(venusaur, snorlax, flamethrower, { isCrit: false });
+      const fireVsPlain = calculateDamage(venusaur, normalWall, flamethrower, { isCrit: false });
+      const iceVsFat = calculateDamage(venusaur, snorlax, iceBeam, { isCrit: false });
+      const iceVsPlain = calculateDamage(venusaur, normalWall, iceBeam, { isCrit: false });
+      expect(fireVsFat.damage).toBe(Math.floor(fireVsPlain.damage * 0.5));
+      expect(iceVsFat.damage).toBe(Math.floor(iceVsPlain.damage * 0.5));
+
+      // 5. Multisquame: halves damage at full HP, full damage when below maxHp
+      const dragonite = createMockPokemon({ id: 149, name: 'Dragonite', types: ['dragon', 'flying'], hp: 200, maxHp: 200, ability: CORE_ABILITIES.multisquame });
+      const dmgAtFull = calculateDamage(venusaur, dragonite, flamethrower, { isCrit: false, targetHp: 200 });
+      const dmgDamaged = calculateDamage(venusaur, dragonite, flamethrower, { isCrit: false, targetHp: 199 });
+      expect(dmgAtFull.damage).toBe(Math.floor(dmgDamaged.damage * 0.5));
+
+      // 6. Forzapura / Macroforza: doubles physical attack power, leaves special moves unchanged
+      const azumarill = createMockPokemon({ id: 184, name: 'Azumarill', types: ['water', 'fairy'], hp: 200, maxHp: 200, stats: { attack: 60, defense: 80, spAtk: 60, spDef: 80, speed: 50 }, ability: CORE_ABILITIES.macroforza });
+      const plainWater = createMockPokemon({ id: 9997, name: 'PlainWater', types: ['water', 'fairy'], hp: 200, maxHp: 200, stats: azumarill.stats });
+      const physMove = getMoveByName('Cascata');
+      const specMove = getMoveByName('Idropompa');
+      const physHuge = calculateDamage(azumarill, normalWall, physMove, { isCrit: false });
+      const physPlain = calculateDamage(plainWater, normalWall, physMove, { isCrit: false });
+      const specHuge = calculateDamage(azumarill, normalWall, specMove, { isCrit: false });
+      const specPlain = calculateDamage(plainWater, normalWall, specMove, { isCrit: false });
+      expect(physHuge.damage).toBeGreaterThan(physPlain.damage * 1.8);
+      expect(specHuge.damage).toBe(specPlain.damage);
+      randSpy.mockRestore();
+
+      // 7. Nuotovelox & Clorofilla: double speed in Rain / Sun
+      const kingdra = createMockPokemon({ id: 230, name: 'Kingdra', ability: CORE_ABILITIES.nuotovelox });
+      expect(getWeatherSpeedMultiplier(kingdra, 'rain')).toBe(2);
+      expect(getWeatherSpeedMultiplier(kingdra, 'sun')).toBe(1);
+      expect(getWeatherSpeedMultiplier(venusaur, 'sun')).toBe(1);
+      const exeggutor = createMockPokemon({ id: 103, name: 'Exeggutor', ability: CORE_ABILITIES.clorofilla });
+      expect(getWeatherSpeedMultiplier(exeggutor, 'sun')).toBe(2);
+      expect(getWeatherSpeedMultiplier(exeggutor, 'rain')).toBe(1);
+
+      // 8. Muta: 30% chance to cure status at end of turn
+      const arbok = createMockPokemon({ id: 24, name: 'Arbok', types: ['poison'], ability: CORE_ABILITIES.muta });
+      const shedSpy = vi.spyOn(Math, 'random').mockReturnValue(0.1);
+      const shedCured = processShedSkinEndTurn(arbok, 'paralyzed', undefined);
+      expect(shedCured.cured).toBe(true);
+      expect(shedCured.nextStatus).toBeUndefined();
+      shedSpy.mockReturnValue(0.9);
+      const shedMiss = processShedSkinEndTurn(arbok, 'paralyzed', undefined);
+      expect(shedMiss.cured).toBe(false);
+      expect(shedMiss.nextStatus).toBe('paralyzed');
+      shedSpy.mockRestore();
+    });
+
+    it('AI avoids moves blocked by Core Abilities (Levitazione, Assorbacqua, Fuocardore, Parafulmine, Assorbivolt, Mangiaerba, Insonnia)', () => {
+      const attacker = createMockPokemon({ id: 149, name: 'Dragonite', types: ['dragon', 'flying'], hp: 300, maxHp: 300 });
+      const eq = getMoveByName('Terremoto');
+      const surf = getMoveByName('Surf');
+      const flamethrower = getMoveByName('Lanciafiamme');
+      const thunderbolt = getMoveByName('Fulmine');
+      const energyBall = getMoveByName('Energipalla');
+      const thunderWave = getMoveByName('Tuononda');
+      const spore = getMoveByName('Spora');
+      const tackle = getMoveByName('Azione');
+
+      // Vs Levitazione -> avoids Terremoto
+      const levGengar = createMockPokemon({ id: 94, name: 'Gengar', types: ['poison'], hp: 200, maxHp: 200, ability: CORE_ABILITIES.levitazione });
+      const pickLev = selectEnemyMove([eq, tackle], attacker, levGengar, {}, {}, defaultStages(), defaultStages(), 300, 200);
+      expect(pickLev.name).toBe(tackle.name);
+
+      // Vs Assorbacqua -> avoids Surf
+      const vaporeon = createMockPokemon({ id: 134, name: 'Vaporeon', types: ['water'], hp: 200, maxHp: 200, ability: CORE_ABILITIES.assorbacqua });
+      const pickWater = selectEnemyMove([surf, tackle], attacker, vaporeon, {}, {}, defaultStages(), defaultStages(), 300, 200);
+      expect(pickWater.name).toBe(tackle.name);
+
+      // Vs Fuocardore -> avoids Lanciafiamme
+      const arcanine = createMockPokemon({ id: 59, name: 'Arcanine', types: ['normal'], hp: 200, maxHp: 200, ability: CORE_ABILITIES.fuocardore });
+      const pickFire = selectEnemyMove([flamethrower, tackle], attacker, arcanine, {}, {}, defaultStages(), defaultStages(), 300, 200);
+      expect(pickFire.name).toBe(tackle.name);
+
+      // Vs Parafulmine / Assorbivolt -> avoids Fulmine & Tuononda
+      const jolteon = createMockPokemon({ id: 135, name: 'Jolteon', types: ['normal'], hp: 200, maxHp: 200, ability: CORE_ABILITIES.assorbivolt });
+      const pickElec = selectEnemyMove([thunderbolt, thunderWave, tackle], attacker, jolteon, {}, {}, defaultStages(), defaultStages(), 300, 200);
+      expect(pickElec.name).toBe(tackle.name);
+
+      // Vs Mangiaerba -> avoids Energipalla & Spora
+      const goodra = createMockPokemon({ id: 706, name: 'Goodra', types: ['normal'], hp: 200, maxHp: 200, ability: CORE_ABILITIES.mangiaerba });
+      const pickGrass = selectEnemyMove([energyBall, spore, tackle], attacker, goodra, {}, {}, defaultStages(), defaultStages(), 300, 200);
+      expect(pickGrass.name).toBe(tackle.name);
+
+      // Vs Insonnia -> avoids Spora / Sbadiglio
+      const hypno = createMockPokemon({ id: 97, name: 'Hypno', types: ['normal'], hp: 200, maxHp: 200, ability: CORE_ABILITIES.insonnia });
+      const yawn = getMoveByName('Sbadiglio');
+      const pickSleep = selectEnemyMove([yawn, tackle], attacker, hypno, {}, {}, defaultStages(), defaultStages(), 300, 200);
+      expect(pickSleep.name).toBe(tackle.name);
     });
   });
 });

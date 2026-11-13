@@ -1,6 +1,7 @@
 import { Pokemon, StatusCondition } from '../../types/game';
 import { getEffectiveness } from './typeChart';
 import { isImmuneToStatus } from './statusEffects';
+import { getResolvedCoreAbilityKey } from './abilities';
 
 export interface SideHazards {
   stealthRock?: boolean;
@@ -121,7 +122,7 @@ export function processEntryHazards(
   }
 
   const typesLower = pokemon.types.map(t => t.toLowerCase());
-  const isGrounded = !typesLower.includes('flying');
+  const isGrounded = !typesLower.includes('flying') && getResolvedCoreAbilityKey(pokemon) !== 'levitazione';
 
   // 1. Stealth Rock (Levitoroccia) - applies to ALL Pokemon
   if (updatedSideHazards.stealthRock) {

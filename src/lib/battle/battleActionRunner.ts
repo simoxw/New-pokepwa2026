@@ -2,7 +2,7 @@ import React from 'react';
 import { Pokemon, Move, BattleStages, StatusCondition } from '../../types/game';
 import { calculateDamage, getAccuracyMultiplier, CalculateDamageOptions } from './battleMath';
 import { isImmuneToStatus, VolatileStatus } from './statusEffects';
-import { checkAbility, hasSturdyAbility } from './abilities';
+import { checkAbility, hasSturdyAbility, isAbilityImmuneToSleep, resolvePokemonAbility } from './abilities';
 import { playProtect, playHit } from '../sound';
 import { SideHazards, setHazardFromMove, defaultSideHazards } from './hazards';
 import { getMoveByName, getRandomMetronomeMove } from '../../data/movesData';
@@ -543,6 +543,13 @@ export function executeMoveAction(
       addLog(`${target.name} è immune a questo problema di stato!`);
       return;
     }
+    if (status === 'sleep' && isAbilityImmuneToSleep(target)) {
+      if (move.category === 'status') {
+        const abName = resolvePokemonAbility(target)?.name || 'la sua abilità';
+        addLog(`👁️ ${target.name} non può addormentarsi grazie a ${abName}!`);
+      }
+      return;
+    }
     const procChance = chance ?? (move.category === 'status' ? 100 : 100);
     if (Math.random() * 100 < procChance) {
       const duration = status === 'sleep' ? Math.floor(Math.random() * 3) + 2 : undefined;
@@ -566,6 +573,18 @@ export function executeMoveAction(
   const isRest = move.name.toLowerCase().includes('riposo') || move.name.toLowerCase().includes('rest');
 
   if (isRest) {
+    if (isAbilityImmuneToSleep(user)) {
+      const abName = resolvePokemonAbility(user)?.name || 'la sua abilità';
+      addLog(`👁️ ${user.name} non riesce a dormire con Riposo grazie a ${abName}!`);
+      return {
+        nextUserHp: curUserHp,
+        nextTargetHp: curTargetHp,
+        targetFainted: curTargetHp <= 0,
+        userFainted: curUserHp <= 0,
+        nextUserStatus: nextUserStatusObj,
+        nextTargetStatus: nextTargetStatusObj
+      };
+    }
     if (userStatus.status === 'sleep') {
       addLog(`Ma non ha avuto effetto! ${user.name} sta già dormendo!`);
       return {
@@ -705,6 +724,9 @@ export function executeMoveAction(
     if (mLower === 'sbadiglio' || mLower === 'yawn' || rawLower === 'yawn') {
       if (targetVolatile.substituteHp && targetVolatile.substituteHp > 0) {
         addLog(`Il Sostituto protegge ${target.name} dallo sbadiglio!`);
+      } else if (isAbilityImmuneToSleep(target)) {
+        const abName = resolvePokemonAbility(target)?.name || 'la sua abilità';
+        addLog(`👁️ ${target.name} resta vigile e blocca Sbadiglio grazie a ${abName}!`);
       } else if (targetStatus.status) {
         addLog(`Ma non ha avuto effetto! ${target.name} ha già un problema di stato!`);
       } else if (targetVolatile.yawnTurns && targetVolatile.yawnTurns > 0) {
@@ -722,6 +744,46 @@ export function executeMoveAction(
         nextUserStatus: nextUserStatusObj,
         nextTargetStatus: nextTargetStatusObj
       };
+    }
+
+    const mTypeLower = (move.type || '').toLowerCase();
+    const isTargetDirectedStatus =
+      move.target !== 'user' &&
+      move.target !== 'entire-field' &&
+      move.target !== 'users-field' &&
+      move.target !== 'opponents-field' &&
+      !isRest;
+
+    if (isTargetDirectedStatus && (mTypeLower === 'electric' || mTypeLower === 'fire' || mTypeLower === 'water' || mTypeLower === 'grass')) {
+      const statusPreHitImmunity = checkAbility(target, 'on_hit', { move, target: user, currentHp: curTargetHp });
+      if (statusPreHitImmunity?.type === 'damage_mult' && statusPreHitImmunity.value === 0) {
+        if (statusPreHitImmunity.msg) addLog(statusPreHitImmunity.msg);
+        if (statusPreHitImmunity.healHp && curTargetHp < target.maxHp) {
+          curTargetHp = Math.min(target.maxHp, curTargetHp + statusPreHitImmunity.healHp);
+          setTargetHp(curTargetHp);
+        }
+        if (statusPreHitImmunity.flashFireBoost) {
+          targetVolatile.flashFireBoosted = true;
+          setTargetVolatile(prev => ({ ...prev, flashFireBoosted: true }));
+        }
+        if (statusPreHitImmunity.boostStat && statusPreHitImmunity.boostAmount) {
+          const stKey = statusPreHitImmunity.boostStat;
+          const curStage = targetStages[stKey] ?? 0;
+          if (curStage < 6) {
+            const nextStage = Math.min(6, curStage + statusPreHitImmunity.boostAmount);
+            targetStages[stKey] = nextStage;
+            setTargetStages(prev => ({ ...prev, [stKey]: nextStage }));
+          }
+        }
+        return {
+          nextUserHp: curUserHp,
+          nextTargetHp: curTargetHp,
+          targetFainted: false,
+          userFainted: false,
+          nextUserStatus: nextUserStatusObj,
+          nextTargetStatus: nextTargetStatusObj
+        };
+      }
     }
 
     if (move.stat_changes && move.stat_changes.length > 0) {
@@ -829,6 +891,7 @@ export function executeMoveAction(
       hits = r < 0.375 ? 2 : r < 0.75 ? 3 : r < 0.875 ? 4 : 5;
     }
     let actualHits = 0;
+    let directHitsOnPokemon = 0;
     let totalDamage = 0;
     let effectiveness = 1;
 
@@ -836,9 +899,9 @@ export function executeMoveAction(
       if (curTargetHp <= 0) break;
       const res = calculateDamage(
         { ...user, status: userStatus.status },
-        { ...target, status: targetStatus.status },
+        { ...target, hp: curTargetHp, status: targetStatus.status },
         move,
-        { attackerStages: userStages, targetStages, weather: options?.weather, defenderScreens: options?.targetScreens, ...options }
+        { attackerStages: userStages, targetStages, weather: options?.weather, defenderScreens: options?.targetScreens, targetHp: curTargetHp, ...options }
       );
       const hitDmg = Math.max(1, Math.floor(res.damage * damageMult));
       if (targetVolatile.substituteHp && targetVolatile.substituteHp > 0) {
@@ -852,7 +915,13 @@ export function executeMoveAction(
           setTargetVolatile(prev => ({ ...prev, substituteHp: left }));
         }
       } else {
-        curTargetHp = Math.max(0, curTargetHp - hitDmg);
+        if (curTargetHp === target.maxHp && hitDmg >= curTargetHp && hasSturdyAbility(target)) {
+          curTargetHp = 1;
+          addLog(`🛡️ ${target.name} resiste con 1 PS grazie a Vigore!`);
+        } else {
+          curTargetHp = Math.max(0, curTargetHp - hitDmg);
+        }
+        directHitsOnPokemon++;
       }
       totalDamage += hitDmg;
       actualHits++;
@@ -870,15 +939,38 @@ export function executeMoveAction(
       playHit('normal');
     }
     addLog(`${user.name} infligge un totale di ${totalDamage} danni colpendo ${actualHits} volte!`);
-    
-    return { nextUserHp: curUserHp, nextTargetHp: curTargetHp, targetFainted: curTargetHp <= 0, userFainted: false };
+
+    for (let h = 0; h < directHitsOnPokemon; h++) {
+      if (curUserHp <= 0) break;
+      const onHitEffect = checkAbility(target, 'on_hit', { move, target: user, currentHp: curTargetHp });
+      if (onHitEffect?.type === 'other') {
+        if (onHitEffect.contactDamage && onHitEffect.contactDamage > 0) {
+          curUserHp = Math.max(0, curUserHp - onHitEffect.contactDamage);
+          setUserHp(curUserHp);
+          if (onHitEffect.msg) addLog(onHitEffect.msg);
+        } else if (onHitEffect.inflictStatus && !nextUserStatusObj.status && !isImmuneToStatus(user.types, onHitEffect.inflictStatus)) {
+          nextUserStatusObj = { status: onHitEffect.inflictStatus };
+          setUserStatus({ status: onHitEffect.inflictStatus });
+          if (onHitEffect.msg) addLog(onHitEffect.msg);
+        }
+      }
+    }
+
+    return {
+      nextUserHp: curUserHp,
+      nextTargetHp: curTargetHp,
+      targetFainted: curTargetHp <= 0,
+      userFainted: curUserHp <= 0,
+      nextUserStatus: nextUserStatusObj,
+      nextTargetStatus: nextTargetStatusObj
+    };
   }
 
   const result = calculateDamage(
     { ...user, status: userStatus.status },
-    { ...target, status: targetStatus.status },
+    { ...target, hp: curTargetHp, status: targetStatus.status },
     move,
-    { attackerStages: userStages, targetStages, weather: options?.weather, defenderScreens: options?.targetScreens, ...options }
+    { attackerStages: userStages, targetStages, weather: options?.weather, defenderScreens: options?.targetScreens, targetHp: curTargetHp, ...options }
   );
   const finalDamage = Math.floor(result.damage * damageMult);
 

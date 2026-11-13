@@ -109,6 +109,7 @@ poke-pwa/
 │   │   ├── leveling.test.ts
 │   │   ├── multiTurnMoves.test.ts
 │   │   ├── selfStatChanges.test.ts
+│   │   ├── specialMovesAndMechanics.test.ts # Test mosse speciali, tattiche (Pivot/Yawn/Heal Bell), 18 Abilità Core e scambi
 │   │   └── status.test.ts
 │   ├── types/                  # Definizioni dei tipi TypeScript del gioco
 │   │   └── game.ts
@@ -148,10 +149,10 @@ poke-pwa/
 - **`PlayerProfile.tsx`**: Profilo dell'allenatore con tempo di gioco, ID allenatore, soldi, vittorie e statistiche.
 - **`StarterSelection.tsx`**: Scena introduttiva con il Professor Scordarello per la scelta del Pokémon iniziale.
 - **`Settings.tsx`**: Menu delle preferenze (audio, player brani BGM per esplorazione e lotte, velocità testo, backup salvataggio, reset e **Menù Trucchi protetto da PIN `190693`** con fumetto satirico di errore del Prof. Scordarello e pulsante per evocare Pokémon speciali dai Boss).
-- **`PokemonDetails.tsx`**: Scheda informativa del Pokémon catturato con gestione dello stato **Preferito ⭐**, statistiche avanzate, mosse e calcolo potenziale della natura.
+- **`PokemonDetails.tsx`**: Scheda informativa del Pokémon catturato con gestione dello stato **Preferito ⭐**, abilità risolta con descrizione (`resolvePokemonAbility`), statistiche avanzate, mosse e calcolo potenziale della natura.
 
 ### Sottocomponenti di Lotta (`/src/components/battle/`)
-- **`BattleHUD.tsx`**: Barre dei PS dinamiche con valore numerico reale (es. `48 / 48 HP`) sia per il giocatore che per l'avversario, colore in base alla percentuale residua, badge dei tipi sotto la barra HP, targhetta di livello, chip dello stato alterato (SLP, PAR, BRN, PSN, FRZ) e meteo attivo.
+- **`BattleHUD.tsx`**: Barre dei PS dinamiche con valore numerico reale (es. `48 / 48 HP`) sia per il giocatore che per l'avversario, colore in base alla percentuale residua, badge dei tipi sotto la barra HP, targhetta di livello, chip dello stato alterato (`SLP`, `PAR`, `BRN`, `PSN`, `FRZ`), indicatore sonnolenza (`SBAD`) da *Sbadiglio*, nome dell'abilità attiva e meteo attivo.
 - **`BattleControls.tsx`**: Pannello di comando con i 4 tasti principali (*Lotta*, *Zaino*, *Pokémon*, *Fuga*) e supporto all'ispezione con pressione prolungata (600ms).
 - **`MoveInfoModal.tsx`**: Overlay popup per l'ispezione dettagliata della mossa (tipo, potenza, precisione, priorità, classe di danno, descrizione ed efficacia relativa).
 - **`BattleBag.tsx`**: Menu rapido degli strumenti utilizzabili durante la lotta (Pozioni, Cura Totale e Poké Ball).
@@ -174,12 +175,12 @@ poke-pwa/
 ## ⚙️ Logica Core e Servizi (`/src/lib/`)
 
 ### Motore di Lotta (`/src/lib/battle/`)
-- **`battleMath.ts`**: Calcolo del danno secondo la formula ufficiale Pokémon, tenendo conto di Livello, Statistiche Attaccante/Difensore, Potenza mossa, STAB (1.5x), colpi critici (1.5x), fattore di casualità (0.85-1.00), e interazioni di tipo.
-- **`abilities.ts`**: Implementazione di decine di abilità passive (es. *Erbaiuto*, *Aiutofuoco*, *Acquaiuto*, *Prepotenza*, *Levitazione*, *Statico*, *Pressione*, *Corpo di Fuoco*, *Sincronismo*, ecc.).
-- **`battleActionRunner.ts`**: Gestore dell'esecuzione sequenziale delle azioni durante il turno di lotta.
-- **`battleAi.ts`**: Routine decisionale di intelligenza artificiale per la selezione della mossa ottimale da parte degli avversari.
-- **`hazards.ts`**: Gestione trappole e pericoli sul campo di battaglia.
-- **`statusEffects.ts`**: Gestione del ciclo di vita degli stati alterati (calcolo del danno ricorrente a fine turno, sveglia dal sonno con contatore 1-3 turni, blocco paralisi al 25%, scongelamento).
+- **`battleMath.ts`**: Calcolo del danno secondo la formula ufficiale Pokémon, tenendo conto di Livello, Statistiche Attaccante/Difensore, Potenza mossa, STAB (1.5x), colpi critici (1.5x), casualità, *Forzapura*/*Macroforza* (2x Attacco fisico), *Grassospesso* (0.5x Fuoco/Ghiaccio) e *Multisquame* (0.5x a PS pieni).
+- **`abilities.ts`**: Implementazione delle **29 Abilità Core** (*Erbaiuto, Aiutofuoco, Acquaiuto, Statica, Corpodifuoco, Velenopunto, Cartavetro, Levitazione, Prepotenza, Vigore, Assorbacqua, Fuocardore, Parafulmine, Assorbivolt, Mangiaerba, Insonnia, Spiritovivo, Grassospesso, Multisquame, Nuotovelox, Clorofilla, Forzapura, Macroforza, Muta, Siccità, Piovischio, Sabbiafiume, Scendineve, Tecnico*) con mappatura specie (`SPECIES_ABILITY_MAP`) e fallback deterministico `resolvePokemonAbility()` per piena compatibilità con importazioni esterne prive del campo `ability`.
+- **`battleActionRunner.ts`**: Gestore dell'esecuzione sequenziale delle azioni durante il turno di lotta, incluse mosse di ricambio (*Retromarcia, Invertivolt, Virata*), cure di squadra (*Rintoccasana, Aromaterapia*), *Sbadiglio*, controllo pre-colpo delle abilità d'immunità (anche su mosse di stato), blocco sonno *Insonnia/Spiritovivo* e reazioni di contatto fisico (*Statica, Corpodifuoco, Velenopunto, Cartavetro*).
+- **`battleAi.ts`**: Routine decisionale di intelligenza artificiale consapevole sia dei tipi sia delle Abilità Core difensive del giocatore (*Levitazione, Assorbacqua, Fuocardore, Parafulmine, Assorbivolt, Mangiaerba, Insonnia/Spiritovivo*), oltre a *Sbadiglio*, *Rintoccasana*, *Nube*, *Bruciapelo* e mosse di ricambio.
+- **`hazards.ts`**: Gestione trappole e pericoli sul campo di battaglia (*Levitoroccia, Punte, Fielepunte, Rete Vischiosa*), pulizia bilaterale da *Scaccianebbia* e immunità alle trappole a terra per i Pokémon con *Levitazione*.
+- **`statusEffects.ts`**: Gestione del ciclo di vita degli stati alterati (danni a fine turno, sonno 1-3 turni, paralisi, scongelamento, conto alla rovescia di *Sbadiglio*, stato `turnsOnField` per *Bruciapelo* e `flashFireBoosted` per *Fuocardore*).
 - **`statModifiers.ts`**: Gestione delle variazioni di livello delle statistiche in lotta (da -6 a +6 turn-based) e moltiplicatori percentuali.
 - **`turnOrder.ts`**: Algoritmo di ordinamento delle mosse per priorità e velocità dei Pokémon.
 - **`typeChart.ts`**: Matrice bidimensionale completa dell'efficacia elementale Pokémon (18 tipi con calcolo dei doppi tipi difensivi).
@@ -197,7 +198,7 @@ poke-pwa/
 - **`dayNight.ts`**: Calcolatore delle fasce orarie (Giorno, Tramonto, Notte) per la modulazione grafica e gli incontri.
 - **`sound.ts`**: Riproduzione SFX, WAV nativi, e riproduzione BGM in loop per mappa e lotte con upload personalizzato salvato in `localStorage`.
 - **`storage.ts`**: Driver di persistenza affidabile con fallback LocalStorage / IndexedDB.
-- **`utils.ts`**: Funzioni di normalizzazione Pokémon, serializzazione team, decodifica Base64 con riparazione automatica JSON per scambi.
+- **`utils.ts`**: Funzioni di normalizzazione Pokémon (`normalizePokemon` con salvataggio automatico dell'abilità risolta per specie se mancante), serializzazione team e decodifica Base64 con riparazione automatica JSON per scambi.
 
 ---
 

@@ -25,7 +25,13 @@ import {
 } from '../lib/battle/statusEffects';
 import { determineTurnOrder } from '../lib/battle/turnOrder';
 import { calculateEscape } from '../lib/battle/escapeFormula';
-import { checkAbility, resolvePokemonAbility, processSwitchInAbility } from '../lib/battle/abilities';
+import {
+  checkAbility,
+  resolvePokemonAbility,
+  processSwitchInAbility,
+  getWeatherSpeedMultiplier,
+  processShedSkinEndTurn
+} from '../lib/battle/abilities';
 import { useItemInBattle } from '../lib/battle/items';
 import { BattleBag } from './battle/BattleBag';
 import { getBadgeForBoss } from '../lib/badges';
@@ -376,11 +382,14 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
   const getEffectiveSpeed = useCallback((
     baseSpeed: number, 
     stage: number, 
-    status?: StatusCondition
+    status?: StatusCondition,
+    pokemon?: Pokemon,
+    weather: WeatherType = 'none'
   ) => {
     const stageMult = getStageMultiplier(stage);
     const parMult = status === 'paralyzed' ? 0.5 : 1.0;
-    return Math.max(1, Math.floor(baseSpeed * stageMult * parMult));
+    const weatherAbilityMult = pokemon ? getWeatherSpeedMultiplier(pokemon, weather) : 1.0;
+    return Math.max(1, Math.floor(baseSpeed * stageMult * parMult * weatherAbilityMult));
   }, []);
 
   // Decrement PP and persist to state
@@ -698,6 +707,15 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
           }
         }
 
+        if (currentLivePlayerHp > 0 && currentLivePlayerStatus.status) {
+          const shedP = processShedSkinEndTurn(playerActive, currentLivePlayerStatus.status, currentLivePlayerStatus.duration);
+          if (shedP.cured) {
+            currentLivePlayerStatus = { status: undefined, duration: undefined };
+            setPlayerStatus({});
+            if (shedP.msg) addLog(shedP.msg);
+          }
+        }
+
         if (currentLivePlayerHp > 0 && playerVolatile.yawnTurns) {
           const yawnP = processYawnEndTurn(
             playerActive,
@@ -724,6 +742,11 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
           if (nextEnemyHpVal <= 0) {
             await handleWin(currentLivePlayerHp);
             return;
+          }
+          const shedE = processShedSkinEndTurn(nextEnemy, nextEnemyStatusVal);
+          if (shedE.cured) {
+            setEnemyStatus({});
+            if (shedE.msg) addLog(shedE.msg);
           }
         }
 
@@ -1126,6 +1149,24 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       return;
     }
 
+    // Muta (Shed Skin) end-of-turn cure check
+    if (livePlayerStatus.status) {
+      const shedP = processShedSkinEndTurn(livePlayer, livePlayerStatus.status, livePlayerStatus.duration);
+      if (shedP.cured) {
+        livePlayerStatus = { status: undefined, duration: undefined };
+        setPlayerStatus({});
+        if (shedP.msg) addLog(shedP.msg);
+      }
+    }
+    if (liveEnemyStatus.status) {
+      const shedE = processShedSkinEndTurn(liveEnemy, liveEnemyStatus.status, liveEnemyStatus.duration);
+      if (shedE.cured) {
+        liveEnemyStatus = { status: undefined, duration: undefined };
+        setEnemyStatus({});
+        if (shedE.msg) addLog(shedE.msg);
+      }
+    }
+
     // Yawn end-of-turn check
     if (livePlayerVolatile.yawnTurns) {
       const yawnP = processYawnEndTurn(livePlayer, livePlayerVolatile, livePlayerStatus.status, livePlayerStatus.duration);
@@ -1224,8 +1265,8 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
 
     // Calculate effective speeds
     const bossSpeedBonus = (bossBuff === 'dandel_gigamax' || bossBuff === 'nardo_spirit' || bossBuff === 'nemona_passion' || bossBuff === 'cyrus_void' || bossBuff === 'silver_instinct') ? 1.12 : 1.0;
-    const effPlayerSpeed = getEffectiveSpeed(playerActive.stats.speed, playerStages.speed ?? 0, playerStatus.status) * towerSpeedMult;
-    const effEnemySpeed = getEffectiveSpeed(enemy.stats.speed, enemyStages.speed ?? 0, enemyStatus.status) * (bossMutation?.type === 'overclocked' ? 1.20 : 1) * bossSpeedBonus;
+    const effPlayerSpeed = getEffectiveSpeed(playerActive.stats.speed, playerStages.speed ?? 0, playerStatus.status, playerActive, fieldWeather.type) * towerSpeedMult;
+    const effEnemySpeed = getEffectiveSpeed(enemy.stats.speed, enemyStages.speed ?? 0, enemyStatus.status, enemy, fieldWeather.type) * (bossMutation?.type === 'overclocked' ? 1.20 : 1) * bossSpeedBonus;
 
     // Determine Turn Order
     const turnWinner = determineTurnOrder(
@@ -1294,6 +1335,24 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       if (ctx.enemyHp <= 0) {
         await handleWin(ctx.playerHp);
         return;
+      }
+
+      // Muta (Shed Skin) end-of-turn cure check
+      if (ctx.playerStatus.status) {
+        const shedP = processShedSkinEndTurn(ctx.player, ctx.playerStatus.status, ctx.playerStatus.duration);
+        if (shedP.cured) {
+          ctx.playerStatus = { status: undefined, duration: undefined };
+          setPlayerStatus({});
+          if (shedP.msg) addLog(shedP.msg);
+        }
+      }
+      if (ctx.enemyStatus.status) {
+        const shedE = processShedSkinEndTurn(ctx.enemy, ctx.enemyStatus.status, ctx.enemyStatus.duration);
+        if (shedE.cured) {
+          ctx.enemyStatus = { status: undefined, duration: undefined };
+          setEnemyStatus({});
+          if (shedE.msg) addLog(shedE.msg);
+        }
       }
 
       // Yawn end-of-turn drowsiness countdown / sleep affliction
@@ -2071,8 +2130,8 @@ export const BattleScreen: React.FC<BattleScreenProps> = ({ enemy: initialEnemy,
       return;
     }
 
-    const effPlayerSpeed = getEffectiveSpeed(playerActive.stats.speed, playerStages.speed ?? 0, playerStatus.status);
-    const effEnemySpeed = getEffectiveSpeed(enemy.stats.speed, enemyStages.speed ?? 0, enemyStatus.status);
+    const effPlayerSpeed = getEffectiveSpeed(playerActive.stats.speed, playerStages.speed ?? 0, playerStatus.status, playerActive, fieldWeather.type);
+    const effEnemySpeed = getEffectiveSpeed(enemy.stats.speed, enemyStages.speed ?? 0, enemyStatus.status, enemy, fieldWeather.type);
 
     const nextAttempts = escapeAttempts + 1;
     setEscapeAttempts(nextAttempts);

@@ -17,16 +17,21 @@ Questo documento descrive le principali funzioni, algoritmi e metodi esportati n
   - **Varianza Casuale**: Numero casuale uniforme tra 0.85 e 1.00.
   - **Meteo**: Incremento del 50% per mosse Fuoco sotto Sole o Acqua sotto Pioggia.
   - **Bruciatura**: Dimezza il danno delle mosse fisiche se l'attaccante è scottato (a meno che non abbia *Dentistretti*).
+  - **Abilità di Danno & Difesa**: Raddoppia l'Attacco fisico per *Forzapura*/*Macroforza*; dimezza i danni Fuoco/Ghiaccio su *Grassospesso* e dimezza i danni a PS pieni su *Multisquame*.
 - **`isCriticalHit(move, attacker)`**:  
   Determina se un attacco è un brutto colpo, basandosi sullo stadio di probabilità della mossa (es. *Foglielama* ha probabilità incrementata).
 
 ### `abilities.ts`
-- **`checkAbility(pokemon, opponent, trigger, context)`**:  
-  Controlla e applica l'effetto dell'abilità passiva del Pokémon in risposta a trigger specifici:
-  - `onSwitchIn`: Abilità che si attivano all'ingresso in campo (es. *Prepotenza* riduce l'attacco avversario, *Siccità* o *Piovischio* impostano il meteo).
-  - `beforeMove`: Abilità che proteggono dai danni (es. *Levitazione* annulla mosse Terra, *Assorbacqua* cura con mosse Acqua).
-  - `onDamageDealt`: Incrementa la potenza a salute bassa (es. *Erbaiuto*, *Aiutofuoco*, *Acquaiuto* potenziano del 50% quando HP < 33%).
-  - `onContact`: Effetti di contatto (es. *Statico* paralizza al contatto, *Corpo di Fuoco* brucia).
+- **`CORE_ABILITIES` & `SPECIES_ABILITY_MAP`**:  
+  Registro delle **29 Abilità Core** in italiano (*Erbaiuto, Aiutofuoco, Acquaiuto, Statica, Corpodifuoco, Velenopunto, Cartavetro, Levitazione, Prepotenza, Vigore, Assorbacqua, Fuocardore, Parafulmine, Assorbivolt, Mangiaerba, Insonnia, Spiritovivo, Grassospesso, Multisquame, Nuotovelox, Clorofilla, Forzapura, Macroforza, Muta, Siccità, Piovischio, Sabbiafiume, Scendineve, Tecnico*) con mappa alias IT/EN PokéAPI e dizionario specie → abilità di default.
+- **`resolvePokemonAbility(pokemon)` & `getResolvedCoreAbilityKey(pokemon)`**:  
+  Risolve in modo sicuro l'abilità attiva del Pokémon, convertendo automaticamente eventuali nomi inglesi o aggiornando il segnaposto legacy `'Tenacia'` tramite `SPECIES_ABILITY_MAP`.
+- **`processSwitchInAbility(incoming, opponent, opponentStages, currentWeather, opponentHasSubstitute)`**:  
+  Gestisce le abilità all'ingresso in campo (*Prepotenza* e gli evocatori Meteo da 5 turni).
+- **`checkAbility(pokemon, context, options)` & `hasSturdyAbility(pokemon)`**:  
+  Valuta e applica potenziamenti (`on_move_use`), immunità/assorbimenti pre-colpo (`Levitazione, Assorbacqua, Assorbivolt, Fuocardore, Parafulmine, Mangiaerba`), reazioni al contatto fisico (`Statica, Corpodifuoco, Velenopunto, Cartavetro`) e sopravvivenza a 1 PS (`Vigore`).
+- **`isAbilityImmuneToSleep(pokemon)`, `getWeatherSpeedMultiplier(pokemon, weather)`, `processShedSkinEndTurn(pokemon, status, duration)`**:  
+  Gestiscono l'immunità al Sonno/Sbadiglio/Riposo (*Insonnia, Spiritovivo*), il raddoppio Velocità sotto Pioggia/Sole (*Nuotovelox, Clorofilla*) e il 30% di cura stato a fine turno (*Muta*).
 
 ### `statusEffects.ts`
 - **`canMove(pokemon)`**:  
@@ -34,6 +39,8 @@ Questo documento descrive le principali funzioni, algoritmi e metodi esportati n
   - **Sonno**: Riduce il contatore dei turni rimanenti; se raggiunge zero, il Pokémon si sveglia e attacca.
   - **Paralisi**: Verifica con probabilità del 25% se il Pokémon è completamente bloccato.
   - **Congelamento**: Concede una probabilità del 20% per turno di scongelamento.
+- **`processYawnEndTurn(...)`**:  
+  Gestisce il conto alla rovescia di *Sbadiglio* (`yawnTurns`: 2 → 1 → addormentamento di 2-4 turni al termine del turno successivo se ancora in campo e sano).
 - **`getStatusEffect(pokemon)`**:  
   Calcola i danni da logoramento al termine del turno (1/16 dei PS massimi per Scottatura e Avvelenamento; 1/8 per Tossina progressiva).
 - **`applyStatusStatModifiers(stats, status)`**:  
@@ -62,7 +69,7 @@ Questo documento descrive le principali funzioni, algoritmi e metodi esportati n
 ### `battleAi.ts`
 - **`selectEnemyMove(enemyMoves, enemy, playerActive, enemyStatus, playerStatus, enemyStages, playerStages, enemyHp, playerHp)`**:  
   Algoritmo di decisione tattica dell'avversario:
-  - **Filtro Assoluto Immunità (`eff === 0`)**: Assegna punteggio `-9999` ad attacchi a danno zero (es. Elettro su Terra, Normale/Lotta su Spettro, Terra su Volante).
+  - **Filtro Assoluto Immunità (`eff === 0` e Abilità Core)**: Assegna punteggio `-9999` ad attacchi a danno zero sia per tipo sia per abilità difensive del giocatore (*Levitazione, Assorbacqua, Fuocardore, Parafulmine, Assorbivolt, Mangiaerba, Insonnia/Spiritovivo*).
   - **Priorità Mosse Neutre e Superefficaci**: Penalizza severamente le mosse poco efficaci (`eff < 1`) se l'avversario possiede alternative offensive con `eff >= 1`.
   - **Anti-Spam Setup e Debuff**: Assegna punteggio `-9999` a mosse di potenziamento se la statistica del Pokémon è già a +6, o a debuff se la statistica del giocatore è già a -6.
   - **Anti-Spam Status Alterati**: Punteggio `-9999` a mosse di stato se il bersaglio ha già una condizione primaria attiva o è immune per tipo elementale.
@@ -109,7 +116,7 @@ Questo documento descrive le principali funzioni, algoritmi e metodi esportati n
 
 ### `utils.ts` & Scambio Codici (`Trade.tsx`)
 - **`normalizePokemon(raw)`**:
-  Normalizza qualsiasi oggetto Pokémon proveniente da LocalStorage, N64 o Pokedesk. Sincronizza sprite, curve di esperienza $N^3$, mosse e genera `instanceId` univoci.
+  Normalizza qualsiasi oggetto Pokémon proveniente da LocalStorage, N64 o Pokedesk. Sincronizza sprite, curve di esperienza $N^3$, mosse, genera `instanceId` univoci e chiama `resolvePokemonAbility()` per assegnare e salvare automaticamente l'abilità core della specie se assente nei dati esterni.
 - **`decodePokemon(base64)`**:
   Decodifica stringhe Base64 esterne con tolleranza avanzata agli errori, gestione del padding, auto-riparazione JSON e fallback Regex.
 
@@ -206,9 +213,10 @@ Configurazione dei **20 Boss Iconici**:
 
 ## 8. Test Automatici & Audit di Integrità (`/src/tests/`)
 
-La codebase è coperta da **13 suite di test** e **84 test unitari e di integrazione** eseguiti con Vitest:
+La codebase è coperta da **14 suite di test** e **141 test unitari e di integrazione** eseguiti con Vitest:
+- **`specialMovesAndMechanics.test.ts`**: Copre tutte le mosse e meccaniche tattiche (Falsofinale, Sostituto, Meteo, Schermi, Metronomo, Scambio Forzato, Stordiraggio, Trespolo, Splash, Nube, Scaccianebbia, Bruciapelo, Retromarcia/Invertivolt/Virata, Sbadiglio, Rintoccasana/Aromaterapia), tutte le **29 Abilità Core**, l'IA consapevole delle abilità e la compatibilità dei codici di scambio esterni.
 - **`battleAiAdvanced.test.ts`**: Verifica le decisioni dell'IA competitiva (esclusione immunità 0x, priorità mosse neutre, prevenzione spam boost/status e trigger della Ricarica Totale).
 - **`allTrainersAndBossesAudit.test.ts`**: Verifica che tutte le specie e mosse di ogni Boss e Allenatore siano censite e non generino fallback o errori di tipo.
 - **`bossRewardsCheat.test.ts`**: Valida la generazione conforme e con IV perfetti dei Pokémon del menù trucchi.
 - **`boxPagination.test.ts`**: Verifica le formule di calcolo delle pagine, il ritaglio esatto dei 40 Pokémon per pagina e la resilienza ai filtri.
-- **`battleSystemComplete.test.ts`**, **`battleAdvancedMechanics.test.ts`**, **`multiTurnMoves.test.ts`**: Validazione rigorosa delle formule di danno, meteo, abilità e mosse multi-turno.
+- **`battleSystemComplete.test.ts`**, **`battleAdvancedMechanics.test.ts`**, **`multiTurnMoves.test.ts`**, **`importPokemon.test.ts`**: Validazione rigorosa delle formule di danno, meteo, abilità, mosse multi-turno e importazione Pokédex esterno.

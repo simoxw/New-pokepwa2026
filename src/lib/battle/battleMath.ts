@@ -2,6 +2,7 @@ import { Pokemon, Move, BattleStages } from '../../types/game';
 import { getEffectiveness } from './typeChart';
 import { applyStatusStatModifiers } from './statusEffects';
 import { WeatherType, SideScreens, getWeatherDamageMultiplier, getScreenDamageMultiplier } from './fieldEffects';
+import { getResolvedCoreAbilityKey } from './abilities';
 
 export interface DamageResult {
   damage: number;
@@ -21,6 +22,7 @@ export interface CalculateDamageOptions {
   bossMutationType?: 'corazzato' | 'overclocked' | 'vampirico' | 'corrotto';
   weather?: WeatherType;
   defenderScreens?: SideScreens;
+  targetHp?: number;
 }
 
 export function getStageMultiplier(stage: number = 0): number {
@@ -95,6 +97,13 @@ export function calculateDamage(
   let rawA = isSpecial ? attackerStats.spAtk : attackerStats.attack;
   let rawD = isSpecial ? targetStats.spDef : targetStats.defense;
 
+  const attackerAbilityKey = getResolvedCoreAbilityKey(attacker);
+  const defenderAbilityKey = getResolvedCoreAbilityKey(target);
+
+  if (!isSpecial && (attackerAbilityKey === 'forzapura' || attackerAbilityKey === 'macroforza')) {
+    rawA = Math.floor(rawA * 2);
+  }
+
   if (options.attackMultiplier) {
     rawA = Math.floor(rawA * options.attackMultiplier);
   }
@@ -141,6 +150,16 @@ export function calculateDamage(
     if (screenMult !== 1.0) {
       baseDamage = Math.floor(baseDamage * screenMult);
     }
+  }
+
+  // 6d. Apply Defensive Core Abilities (Grassospesso / Thick Fat & Multisquame / Multiscale)
+  const moveTypeLower = move.type.toLowerCase();
+  if (defenderAbilityKey === 'grassospesso' && (moveTypeLower === 'fire' || moveTypeLower === 'ice')) {
+    baseDamage = Math.floor(baseDamage * 0.5);
+  }
+  const defenderLiveHp = options.targetHp ?? target.hp;
+  if (defenderAbilityKey === 'multisquame' && target.maxHp > 0 && defenderLiveHp >= target.maxHp) {
+    baseDamage = Math.floor(baseDamage * 0.5);
   }
 
   // 7. Extra Modifiers (Cursed Cards & Boss Mutations)

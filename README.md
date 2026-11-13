@@ -59,11 +59,12 @@ Combina la fedeltà delle meccaniche competitive Pokémon ufficiali (formule mat
   - Finestra di scelta interattiva per Pokémon con evoluzioni multiple (es. Eevee, Tyrogue, Slowpoke, Oddish).
   - Gestione tramite `instanceId` univoco: le copie di uno stesso Pokémon evolvono e salgono di livello in modo del tutto indipendente.
 - **Stati Alterati Completi**: Sonno con contatore dinamico di risveglio (1-3 turni), Paralisi con probabilità del 25% di blocco e dimezzamento della Velocità, Bruciatura con danno ricorrente e dimezzamento dell'Attacco fisico, Avvelenamento e Congelamento.
-- **Mosse Speciali & Complesse**:
-  - Mosse a due turni: *Volo*, *Fossa*, *Solarraggio*.
-  - Mosse con ricarica: *Iper Raggio*.
+- **Mosse Speciali & Tattiche**:
+  - Mosse a due turni: *Volo*, *Fossa*, *Sub*, *Rimbalzo*, *Solarraggio* e ricarica (*Iper Raggio*, *Gigaimpatto*).
+  - Mosse di ricambio tattico con cambio immediato: *Retromarcia*, *Invertivolt*, *Virata*.
+  - Controllo campo, stati e supporto squadra: *Nube*, *Scaccianebbia*, *Bruciapelo*, *Sbadiglio*, *Rintoccasana*, *Aromaterapia*, *Trespolo*, *Stordiraggio*, *Falsofinale*, *Sostituto*, *Boato/Turbine*.
   - Mosse con drain (assorbimento vita) e recoil (contraccolpo).
-- **Meteo & Abilità Passive Attive**: Pioggia, Sole Intenso, Tempesta di Sabbia, Grandine; oltre 30 abilità Pokémon native (*Erbaiuto*, *Aiutofuoco*, *Acquaiuto*, *Prepotenza*, *Levitazione*, *Statico*, *Pressione*, ecc.).
+- **Meteo & 29 Abilità Core Attive**: Pioggia, Sole Intenso, Tempesta di Sabbia, Grandine; 29 Abilità Core integrate (*Erbaiuto, Aiutofuoco, Acquaiuto, Statica, Corpodifuoco, Velenopunto, Cartavetro, Levitazione, Prepotenza, Vigore, Assorbacqua, Fuocardore, Parafulmine, Assorbivolt, Mangiaerba, Insonnia, Spiritovivo, Grassospesso, Multisquame, Nuotovelox, Clorofilla, Forzapura, Macroforza, Muta, Siccità, Piovischio, Sabbiafiume, Scendineve, Tecnico*) con IA consapevole delle immunità, visualizzazione in HUD/Dettagli e assegnazione automatica per specie sui Pokémon importati da Pokédex esterno privi del campo abilità.
 - **Genetica & Allenamento**: Valori IV individuali (0-31) e accumulo di EV (Effort Values fino a 252/510).
 - **Formula Ufficiale di Fuga**: Calcolo probabilistico basato sui valori di Velocità e sui tentativi effettuati.
 
@@ -169,7 +170,7 @@ npm run dev
 L'applicazione sarà accessibile su `http://localhost:3000`.
 
 ### Esecuzione dei Test Automatici
-La codebase dispone di una suite di **13 suite di test e 84 test automatizzati** con Vitest:
+La codebase dispone di una suite di **14 suite di test e 141 test automatizzati** con Vitest:
 ```bash
 npm test
 ```
